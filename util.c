@@ -26,6 +26,7 @@
 #include "largefile_wrappers.h"
 #include "number_set.h"
 #include "print_utils.h"
+#include "scno.h"
 #include "static_assert.h"
 #include "string_to_uint.h"
 #include "xlat.h"
@@ -570,6 +571,11 @@ printdev(struct tcb *tcp, int fd, const char *path)
 pid_t
 pidfd_get_pid(pid_t pid_of_fd, int fd)
 {
+	/* send no-op signal, to check if the referred process is visible from our namespace */
+	if (syscall(__NR_pidfd_send_signal, fd, 0, NULL, 0) < 0)
+		if (errno == EINVAL)
+			return -1;
+
 	char fdi_path[sizeof("/proc/%u/fdinfo/%u") + 2 * sizeof(int) * 3];
 	xsprintf(fdi_path, "/proc/%u/fdinfo/%u", pid_of_fd, fd);
 
