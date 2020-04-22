@@ -13,7 +13,9 @@
 
 #ifdef __NR_pidfd_getfd
 
+# include <signal.h>
 # include <stdio.h>
+# include <stdlib.h>
 # include <unistd.h>
 
 # ifndef PIDFD_PATH
@@ -29,12 +31,12 @@
 static const char *errstr;
 
 static long
-k_pidfd_getfd(const unsigned int pid, const unsigned int fd,
+k_pidfd_getfd(const unsigned int pidfd, const unsigned int fd,
 	      const unsigned int flags)
 {
 	const kernel_ulong_t fill = (kernel_ulong_t) 0xdefaced00000000ULL;
 	const kernel_ulong_t bad = (kernel_ulong_t) 0xbadc0dedbadc0dedULL;
-	const kernel_ulong_t arg1 = fill | pid;
+	const kernel_ulong_t arg1 = fill | pidfd;
 	const kernel_ulong_t arg2 = fill | fd;
 	const kernel_ulong_t arg3 = fill | flags;
 	const long rc = syscall(__NR_pidfd_getfd,
@@ -54,7 +56,12 @@ main(void)
 	rc = k_pidfd_getfd(0, 0, 0xbadc0ded);
 	printf("pidfd_getfd(0" FD0_PATH ", 0, 0xbadc0ded) = %s\n", errstr);
 
-	int pid = getpid();
+	int pid = fork();
+	if (pid == 0) {
+		sleep(1);
+		exit(0);
+	}
+
 	int pidfd = syscall(__NR_pidfd_open, pid, 0);
 #if PRINT_PIDFD
 	char pidfd_str[sizeof("<pid:>") + 3 * sizeof(int)];
@@ -63,8 +70,9 @@ main(void)
 	const char *pidfd_str = PIDFD_PATH;
 #endif
 	rc = k_pidfd_getfd(pidfd, 0, 0);
-	printf("pidfd_getfd(%d%s, 0, 0) = %s%s\n",
+	printf("pidfd_getfd(%d%s, %d%s, 0) = %s%s\n",
 	       pidfd, pidfd >= 0 ? pidfd_str : "",
+	       0, FD0_PATH,
 	       errstr, rc >= 0 ? FD0_PATH : "");
 
 	puts("+++ exited with 0 +++");
