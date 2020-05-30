@@ -52,9 +52,9 @@ struct proc_data {
 	int proc_pid;
 	short ns_count;
 	short refcount;
-	uint64_t ns_hierarchy[MAX_NS_DEPTH];
+	uint64_t ns_hierarchy[MAX_NS_DEPTH]; /* from bottom to top of NS hierarchy */
 	int id_count[PT_COUNT];
-	int *id_hierarchy[PT_COUNT];
+	int *id_hierarchy[PT_COUNT]; /* from top to bottom of NS hierarchy */
 };
 
 /**
@@ -407,8 +407,12 @@ invalidate_proc_data(struct proc_data *pd)
  */
 
 /**
- * tcp == NULL - strace's view
- * dest_pid == 0 - use the data from tcb
+ * Translates an ID from tcp's namespace to our namepace
+ *
+ * @param tcp             The tcb whose namepace dest_id is in (NULL means strace's namespace)
+ * @param dest_id         The id to be translated
+ * @param type            The type of ID
+ * @param proc_pid_ptr    If not NULL, writes the proc PID to this location
  */
 int
 find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
