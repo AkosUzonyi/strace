@@ -35,16 +35,16 @@ static const struct {
 	const char *str;
 	size_t size;
 } id_strs[PT_COUNT] = {
-	[PT_TID] =  { tid_str,  sizeof(tid_str)  },
-	[PT_TGID] = { tgid_str, sizeof(tgid_str) },
-	[PT_PGID] = { pgid_str, sizeof(pgid_str) },
-	[PT_SID] =  { sid_str,  sizeof(sid_str)  },
+	[PT_TID] =  { tid_str,  sizeof(tid_str)  - 1 },
+	[PT_TGID] = { tgid_str, sizeof(tgid_str) - 1 },
+	[PT_PGID] = { pgid_str, sizeof(pgid_str) - 1 },
+	[PT_SID] =  { sid_str,  sizeof(sid_str)  - 1 },
 };
 
 
 /**
  * Limit on PID NS hierarchy depth, imposed since Linux 3.7. NS traversal
- * is not possible before Linux 4.9, so we consider this limut pretty universal.
+ * is not possible before Linux 4.9, so we consider this limit pretty universal.
  */
 #define MAX_NS_DEPTH 32
 
@@ -128,7 +128,7 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size,
 
 		n++;
 
-		if (!last || ns_buf[n - 1] == last)
+		if (ns_buf[n - 1] == last)
 			break;
 
 		parent_fd = ioctl(fd, NS_GET_PARENT);
@@ -353,6 +353,7 @@ get_proc_data(int proc_pid)
 	if (!pd)
 		return NULL;
 
+	memset(pd, 0, sizeof(*pd));
 	pd->proc_pid = proc_pid;
 
 	return pd;
@@ -504,9 +505,6 @@ find_pid_get_pid:
 			continue;
 		}
 
-		if (pd->ns_hierarchy[pd->ns_count - 1] != dest_ns)
-			continue;
-
 		if (dest_ns == our_ns) {
 			if (pd->id_hierarchy[type][pd->id_count[type] -
 			    pd->ns_count] == dest_id) {
@@ -514,11 +512,11 @@ find_pid_get_pid:
 				goto find_pid_dir;
 			}
 		} else {
-			for (idx = 0; idx < pd->ns_count - 1; idx++) {
+			for (idx = 0; idx < pd->ns_count; idx++) {
 				if (pd->ns_hierarchy[idx] != dest_ns)
 					continue;
 				if (pd->id_hierarchy[type][pd->id_count[type] -
-				    idx + 1] != dest_id)
+				    idx - 1] != dest_id)
 					break;
 
 				res = pd->id_hierarchy[type][pd->id_count[type] -
@@ -573,7 +571,7 @@ printpid(struct tcb *tcp, int pid, enum pid_type type)
 	tprintf("%d", pid);
 
 	if (perform_ns_resolution) {
-		strace_pid = find_pid(tcp, 0, type, NULL);
+		strace_pid = find_pid(tcp, pid, type, NULL);
 
 		if ((strace_pid > 0) && (pid != strace_pid))
 			tprintf_comment("%d in strace's PID NS", strace_pid);
