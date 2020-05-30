@@ -1,4 +1,4 @@
-/*#include "defs.h"
+#include "defs.h"
 
 SYS_FUNC(getpid)
 {
@@ -27,4 +27,4 @@ SYS_FUNC(getsid)
 	printpid(tcp, tcp->u_arg[0], PT_TGID);
 
 	return RVAL_DECODED | RVAL_SID;
-}*/
+}

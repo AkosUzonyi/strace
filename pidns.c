@@ -1,4 +1,3 @@
-#if 0
 #include "defs.h"
 
 
@@ -599,4 +598,3 @@ printpid(struct tcb *tcp, int pid, enum pid_type type)
 			tprintf_comment("%d in strace's PID NS", strace_pid);
 	}
 }
-#endif
