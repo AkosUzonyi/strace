@@ -274,7 +274,7 @@ get_ns(struct tcb *tcp)
 				pid = -1;
 
 		if ((pid == -1) || !get_ns_hierarchy(pid, &tcp->pid_ns, 1, 0))
-			tcp->pid_ns = -1ULL;
+			tcp->pid_ns = 0;
 
 		tcp->pid_ns_inited = true;
 	}
@@ -289,14 +289,7 @@ get_our_ns(void)
 	static bool our_ns_initialised = false;
 
 	if (!our_ns_initialised) {
-		uint64_t ns_buf[MAX_NS_DEPTH];
-		size_t ret;
-
-		if (!(ret = get_ns_hierarchy(0, ns_buf, ARRAY_SIZE(ns_buf), 0)))
-			our_ns = -1ULL;
-		else
-			our_ns = ns_buf[0];
-
+		get_ns_hierarchy(0, &our_ns, 1, 0);
 		our_ns_initialised = true;
 	}
 
@@ -435,7 +428,9 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 	if ((type >= PT_COUNT) || (type < 0))
 		goto find_pid_exit;
 
-	if (is_proc_ours() && (!tcp || get_ns(tcp) == our_ns)) {
+	dest_ns = tcp ? get_ns(tcp) : our_ns;
+
+	if (is_proc_ours() && (dest_ns == our_ns)) {
 		if (proc_pid_ptr)
 			*proc_pid_ptr =
 				dest_id ? dest_id : syscall(__NR_gettid);
@@ -451,8 +446,6 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 		default:	return -1;
 		}
 	}
-
-	dest_ns = tcp ? get_ns(tcp) : our_ns;
 
 	pd = find_proc_data(dest_id, dest_ns, type);
 	if (pd) {
@@ -521,25 +514,17 @@ find_pid_get_pid:
 			continue;
 		}
 
-		if (dest_ns == our_ns) {
+		for (idx = 0; idx < pd->ns_count; idx++) {
+			if (pd->ns_hierarchy[idx] != dest_ns)
+				continue;
 			if (pd->id_hierarchy[type][pd->id_count[type] -
-			    pd->ns_count] == dest_id) {
-				res = dest_id;
-				goto find_pid_dir;
-			}
-		} else {
-			for (idx = 0; idx < pd->ns_count; idx++) {
-				if (pd->ns_hierarchy[idx] != dest_ns)
-					continue;
-				if (pd->id_hierarchy[type][pd->id_count[type] -
-				    idx - 1] != dest_id)
-					break;
+				idx - 1] != dest_id)
+				break;
 
-				res = pd->id_hierarchy[type][pd->id_count[type] -
-							     pd->ns_count];
+			res = pd->id_hierarchy[type][pd->id_count[type] -
+								pd->ns_count];
 
-				goto find_pid_dir;
-			}
+			goto find_pid_dir;
 		}
 
 		put_proc_data(pd);
