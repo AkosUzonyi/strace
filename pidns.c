@@ -189,7 +189,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 	char *p;
 	char *endp;
 	FILE *f;
-	size_t idx;
+	size_t idx = -1;
 	ssize_t ret;
 
 	ret = asprintf(&buf, "/proc/%s/status", pid_to_str(proc_pid));
@@ -378,10 +378,12 @@ update_proc_data_cache(struct proc_data *pd, enum pid_type type)
 /**
  * Removes references to the proc_data entry from all caches.
  */
+/*
 static void
 invalidate_proc_data(struct proc_data *pd)
 {
 }
+*/
 
 /**
  * Caches:
@@ -411,10 +413,8 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 
 	DIR *dp = NULL;
 	struct dirent *entry;
-	const char *id_str;
-	size_t idx;
+	int idx;
 	long proc_pid = -1;
-	int ret;
 	int res = -1;
 
 	if ((type >= PT_COUNT) || (type < 0))
@@ -425,7 +425,7 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 			*proc_pid_ptr =
 				dest_id ? dest_id : syscall(__NR_gettid);
 
-		if (dest_id) {
+		if (dest_id)
 			return dest_id;
 
 		switch (type) {
@@ -515,21 +515,21 @@ find_pid_get_pid:
 			}
 		} else {
 			for (idx = 0; idx < pd->ns_count - 1; idx++) {
-				if (pr->ns_hierarchy[idx] != dest_ns)
+				if (pd->ns_hierarchy[idx] != dest_ns)
 					continue;
-				if (pr->id_hierarchy[type][pd->id_count[type] -
+				if (pd->id_hierarchy[type][pd->id_count[type] -
 				    idx + 1] != dest_id)
 					break;
 
 				res = pd->id_hierarchy[type][pd->id_count[type] -
-							     pd->ns_count]
+							     pd->ns_count];
 
 				goto find_pid_dir;
 			}
 		}
 
 		put_proc_data(pd);
-	} while (1)
+	} while (1);
 
 find_pid_dir:
 	closedir(dp);
@@ -544,7 +544,7 @@ find_pid_exit:
 }
 
 int
-get_proc_pid(struct *tcp)
+get_proc_pid(struct tcb *tcp)
 {
 	if (!is_proc_ours()) {
 		int ret;
@@ -573,7 +573,7 @@ printpid(struct tcb *tcp, int pid, enum pid_type type)
 	tprintf("%d", pid);
 
 	if (perform_ns_resolution) {
-		find_pid(tcp, 0, type, NULL);
+		strace_pid = find_pid(tcp, 0, type, NULL);
 
 		if ((strace_pid > 0) && (pid != strace_pid))
 			tprintf_comment("%d in strace's PID NS", strace_pid);

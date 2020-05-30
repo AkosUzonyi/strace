@@ -9,7 +9,7 @@
 
 #include "btree.h"
 
-static const ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 3 : 2);
+static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 3 : 2);
 
 bool
 btree_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
@@ -166,7 +166,7 @@ btree_get_block(struct btree *b, uint64_t key, bool auto_create)
 					btree_filler((uintptr_t) BTREE_SET,
 						     ptr_sz_lg + 3);
 
-				for (i = 0; i < (1 << (sz - 3)); i++)
+				for (i = 0; i < ((unsigned int)1 << (sz - 3)); i++)
 					((uint64_t *) *cur_block)[i] = filler;
 			}
 		}
@@ -267,7 +267,6 @@ void
 btree_free_block(struct btree *b, uint64_t **block, uint8_t depth,
 		 int max_depth)
 {
-	size_t count;
 	size_t sz;
 	size_t i;
 
