@@ -108,8 +108,10 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size,
 		return 0;
 
 	fd = open(path, O_RDONLY | O_NONBLOCK);
-	if (fd < 0)
+	if (fd < 0) {
+		perror_msg("get_ns_hierarchy: opening /proc/<pid>/ns/pid");
 		return 0;
+	}
 
 	while (1) {
 		ret = fstat(fd, &st);
@@ -199,6 +201,10 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		return 0;
 
 	f = fopen(buf, "r");
+	if (!f) {
+		perror_msg("get_id_list: opening /proc/<pid>/status");
+		return 0;
+	}
 
 	free(buf);
 	buf = NULL;
@@ -214,6 +220,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 			ret = strtol(p, &endp, 10);
 
 			if (errno && (p[0] != '\t')) {
+				perror_msg("get_id_list: converting pid to int");
 				idx = -1;
 				goto get_id_list_exit;
 			}
@@ -459,8 +466,10 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 		goto find_pid_get_pid;
 
 	dp = opendir("/proc");
-	if (!dp)
+	if (!dp) {
+		perror_msg("find_pid: opening /proc");
 		goto find_pid_pd;
+	}
 
 	do {
 		errno = 0;
