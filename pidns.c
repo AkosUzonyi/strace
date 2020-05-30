@@ -192,11 +192,10 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 	char *p;
 	char *endp;
 	FILE *f;
-	size_t idx = -1;
+	int idx = 0;
 	ssize_t ret;
 
 	ret = asprintf(&buf, "/proc/%s/status", pid_to_str(proc_pid));
-
 	if (ret < 0)
 		return 0;
 
@@ -216,28 +215,32 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		p = buf + ns_str_size;
 
 		for (idx = 0; idx < MAX_NS_DEPTH; idx++) {
+			if (!p)
+				break;
+
 			errno = 0;
 			ret = strtol(p, &endp, 10);
 
 			if (errno && (p[0] != '\t')) {
 				perror_msg("get_id_list: converting pid to int");
-				idx = -1;
+				idx = 0;
 				goto get_id_list_exit;
 			}
 
 			if (debug_flag)
-				error_msg("PID %d: %s[%zu]: %zd",
+				error_msg("PID %d: %s[%d]: %zd",
 					  proc_pid, ns_str, idx, ret);
 
 			if (id_buf)
 				id_buf[idx] = ret;
 
 			strsep(&p, "\t");
-
-			/* In order to distinguish MAX_NS_DEPTH items */
-			if (!p)
-				break;
 		}
+
+		if (p)
+			idx++;
+
+		break;
 	}
 
 get_id_list_exit:
@@ -246,7 +249,7 @@ get_id_list_exit:
 	if (buf)
 		free(buf);
 
-	return idx + 1;
+	return idx;
 }
 
 static bool
