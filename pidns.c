@@ -219,7 +219,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 				break;
 
 			errno = 0;
-			ret = strtol(p, &endp, 10);
+			int id = strtol(p, &endp, 10);
 
 			if (errno && (p[0] != '\t')) {
 				perror_msg("get_id_list: converting pid to int");
@@ -228,11 +228,11 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 			}
 
 			if (debug_flag)
-				error_msg("PID %d: %s[%d]: %zd",
-					  proc_pid, ns_str, idx, ret);
+				error_msg("PID %d: %s[%d]: %d",
+					  proc_pid, ns_str, idx, id);
 
 			if (id_buf)
-				id_buf[idx] = ret;
+				id_buf[idx] = id;
 
 			strsep(&p, "\t");
 		}
