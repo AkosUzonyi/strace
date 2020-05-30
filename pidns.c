@@ -158,7 +158,7 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size,
 		fd = parent_fd;
 	}
 
-	//update_ns_hierarchy 
+	//update_ns_hierarchy
 
 	//parent_fd = ge
 
@@ -403,8 +403,6 @@ invalidate_proc_data(struct proc_data *pd)
 int
 find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 {
-	static long name_max = -1;
-
 	const uint64_t our_ns = get_our_ns();
 	uint64_t dest_ns;
 
@@ -413,11 +411,8 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 
 	DIR *dp = NULL;
 	struct dirent *entry;
-	struct dirent *entry_buf;
-	struct dirent *entry_ret;
 	const char *id_str;
 	size_t idx;
-	size_t entry_size;
 	long proc_pid = -1;
 	int ret;
 	int res = -1;
@@ -462,27 +457,15 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 	if (!dp)
 		goto find_pid_pd;
 
-
-	if (name_max == -1) {
-		name_max = pathconf("/proc", _PC_NAME_MAX);
-		if (name_max == -1)
-			name_max = 255;
-	}
-
-	entry_size = offsetof(struct dirent, d_name) + name_max + 1;
-	entry_buf = malloc(entry_size);
-	if (!entry_buf)
-		goto find_pid_dir;
-
 	do {
-		ret = readdir_r(dp, entry_buf, &entry);
-		if (ret) {
-			perror_msg("find_pid: readdir");
-			goto find_pid_entry;
-		}
+		errno = 0;
+		entry = readdir(dp);
+		if (!entry) {
+			if (errno)
+				perror_msg("find_pid: readdir");
 
-		if (!entry)
-			goto find_pid_entry;
+			goto find_pid_dir;
+		}
 
 		if (entry->d_type != DT_DIR)
 			continue;
@@ -497,7 +480,7 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 		pd = get_proc_data(proc_pid);
 		pd_valid = check_proc_data_validity(pd, type);
 		if (pd_valid == -1)
-			goto find_pid_entry;
+			goto find_pid_dir;
 		if (pd_valid == 1)
 			goto find_pid_get_pid;
 		if (pd_valid == 0)
@@ -509,7 +492,7 @@ find_pid_get_ids:
 			pd->id_hierarchy[type] = calloc(MAX_NS_DEPTH,
 				sizeof(pd->id_hierarchy[type][0]));
 		if (!pd->id_hierarchy[type])
-			goto find_pid_entry;
+			goto find_pid_dir;
 
 		pd->id_count[type] = get_id_list(proc_pid,
 			pd->id_hierarchy[type], type);
@@ -528,7 +511,7 @@ find_pid_get_pid:
 			if (pd->id_hierarchy[type][pd->id_count[type] -
 			    pd->ns_count] == dest_id) {
 				res = dest_id;
-				goto find_pid_entry;
+				goto find_pid_dir;
 			}
 		} else {
 			for (idx = 0; idx < pd->ns_count - 1; idx++) {
@@ -541,15 +524,13 @@ find_pid_get_pid:
 				res = pd->id_hierarchy[type][pd->id_count[type] -
 							     pd->ns_count]
 
-				goto find_pid_entry;
+				goto find_pid_dir;
 			}
 		}
 
 		put_proc_data(pd);
 	} while (1)
 
-find_pid_entry:
-	free(entry_buf);
 find_pid_dir:
 	closedir(dp);
 find_pid_pd:
