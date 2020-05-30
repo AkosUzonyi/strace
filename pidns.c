@@ -186,6 +186,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 	const char *ns_str = id_strs[type].str;
 	size_t ns_str_size = id_strs[type].size;
 	char *buf;
+	size_t bufsize = 0;
 	char *p;
 	char *endp;
 	FILE *f;
@@ -198,16 +199,13 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		return 0;
 
 	f = fopen(buf, "r");
+
 	free(buf);
+	buf = NULL;
 
-	if (!f)
-		return 0;
-
-	while (fscanf(f, "%m[^\n]", &buf) == 1) {
-		if (strncmp(buf, ns_str, ns_str_size)) {
-			free(buf);
+	while (getline(&buf, &bufsize, f) > 0) {
+		if (strncmp(buf, ns_str, ns_str_size))
 			continue;
-		}
 
 		p = buf + ns_str_size;
 
@@ -215,8 +213,10 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 			errno = 0;
 			ret = strtol(p, &endp, 10);
 
-			if (errno && (p[0] != '\t'))
-				return 0;
+			if (errno && (p[0] != '\t')) {
+				idx = -1;
+				goto get_id_list_exit;
+			}
 
 			if (debug_flag)
 				error_msg("PID %d: %s[%zu]: %zd",
@@ -233,7 +233,11 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		}
 	}
 
-	free(buf);
+get_id_list_exit:
+	if (f)
+		fclose(f);
+	if (buf)
+		free(buf);
 
 	return idx + 1;
 }
