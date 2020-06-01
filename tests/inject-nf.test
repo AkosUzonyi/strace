@@ -34,6 +34,12 @@ test_rval()
 test_rval 0
 test_rval 1
 test_rval 0x7fffffff
+
+#This test fails (overflow) with these large values,
+#as we use signed integers in pid translation code
+#(PID_MAX_LIMIT is 2^22, so that seems reasonable)
+#
+#Maybe we could use a different syscall, for example getuid?
 test_rval 0x80000000
 test_rval 0xfffff000
 test_rval 0xfffffffe

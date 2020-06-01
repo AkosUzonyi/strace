@@ -18,6 +18,10 @@
 #include "nsfs.h"
 #include "xmalloc.h"
 
+
+/*
+Can we check in any efficient way, that these two btree caches are valid?
+*/
 /* key - NS ID, value - parent NS ID. */
 // struct btree *ns_hierarchy;
 /*
@@ -50,6 +54,17 @@ static const struct {
 
 struct proc_data {
 	int proc_pid;
+
+	/*
+	Does it make sense to cache these values below?
+
+	As far as i know there is no other way to check this cache validity,
+	than re-reading these values from /proc. But then we have to read these
+	values again anyway, so no reason to cache.
+
+	The only thing I find useful to cache is proc_pid.
+	With a cached proc_pid we don't have to read all entries in proc, just one.
+	*/
 	short ns_count;
 	short refcount;
 	uint64_t ns_hierarchy[MAX_NS_DEPTH]; /* from bottom to top of NS hierarchy */
@@ -78,6 +93,11 @@ pid_to_str(pid_t pid)
 	return buf;
 }
 
+/*
+Do we need "last" parameter? Only 0 and our_ns are passed to it, but neither
+does anything useful, as we can't go higher than our_ns anyway
+(ioctl fails with EPERM).
+*/
 /**
  * Returns a list of PID NS IDs for the specified PID.
  *

@@ -39,6 +39,14 @@ enum btree_iterate_flags {
  */
 struct btree {
 	uint64_t set_value;         /**< Default set value */
+
+	/*
+	Would it make sense to make this pointer type of void**?
+	This type is quite confusing anyway, but maybe void** is a bit more clear.
+
+	As I see we always cast it to uint64_t* so we use it as a pointer to just
+	raw data, but for pointer arithmetic we need to point it to a pointer type.
+	*/
 	uint64_t **data;
 	uint8_t item_size_lg;       /**< Item size log2, in bits, 0..6. */
 	/** Pointer block size log2, in pointers sizes. 8-14, usually. */
