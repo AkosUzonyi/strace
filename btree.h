@@ -48,6 +48,7 @@ struct btree {
 	uint8_t key_size;           /**< Key size, in bits, 1..64. */
 };
 
+typedef void (*btree_iterate_fn)(void *data, uint64_t key, uint64_t val);
 
 bool btree_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 		 uint8_t data_block_size_lg, uint8_t key_size);
@@ -74,11 +75,11 @@ int btree_interval_set(struct btree *b, uint64_t begin, uint64_t end,
 		       uint64_t val);
 
 uint64_t btree_get_next_set_key(struct btree *b, uint64_t key);
+#endif
+
 uint64_t btree_iterate_keys(struct btree *b, uint64_t start, uint64_t end,
 			    enum btree_iterate_flags flags, btree_iterate_fn fn,
 			    void *fn_data);
-#endif
-
 
 uint64_t btree_get(struct btree *b, uint64_t key);
 
