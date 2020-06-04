@@ -225,18 +225,11 @@ uint64_t
 btree_get_next_set_key(struct btree *b, uint64_t key)
 {
 }
-
-uint64_t
-btree_iterate_set_keys(struct btree *b, uint64_t start, uint64_t end,
-		       btree_iterate_fn fn, void *fn_data)
-{
-}
 #endif
 
-uint64_t
-btree_get(struct btree *b, uint64_t key)
+static uint64_t
+btree_data_block_get(struct btree *b, uint64_t *data, uint64_t key)
 {
-	uint64_t *data = btree_get_block(b, key, false);
 	size_t mask;
 	size_t pos;
 	size_t offs;
@@ -255,6 +248,69 @@ btree_get(struct btree *b, uint64_t key)
 	offs = (key & ((1 << (6 - b->item_size_lg)) - 1)) * (1 << b->item_size_lg);
 
 	return (data[pos] >> offs) & (((uint64_t)1 << (1 << b->item_size_lg)) - 1);
+}
+
+uint64_t
+btree_get(struct btree *b, uint64_t key)
+{
+	return btree_data_block_get(b, btree_get_block(b, key, false), key);
+}
+
+static uint64_t
+btree_iterate_keys_block(struct btree *b, enum btree_iterate_flags flags,
+				btree_iterate_fn fn, void *fn_data,
+				uint64_t **block, uint64_t start, uint64_t end,
+				uint8_t depth, uint8_t max_depth)
+{
+	if (start > end)
+		return 0;
+
+	if ((block == BTREE_SET && !(flags & BTREE_ITERATE_KEYS_SET)) ||
+		(block == BTREE_UNSET && !(flags & BTREE_ITERATE_KEYS_UNSET)))
+		return 0;
+
+	if (block == BTREE_SET || block == BTREE_UNSET || depth == max_depth) {
+		for (uint64_t i = start; i <= end; i++)
+			fn(fn_data, i, btree_data_block_get(b, (uint64_t *) block, i));
+
+		return end - start + 1; //TODO: overflow
+	}
+
+	uint8_t parent_block_bit_off = depth == 0 ? b->key_size : btree_get_block_bit_offs(b, depth - 1, max_depth);
+	uint64_t first_key_in_block = start & (uint64_t) -1 << parent_block_bit_off;
+
+	uint8_t block_bit_off = btree_get_block_bit_offs(b, depth, max_depth);
+	uint8_t block_key_bits = parent_block_bit_off - block_bit_off;
+	uint64_t mask = ((uint64_t) 1 << (block_key_bits)) - 1;
+	uint64_t start_index = (start >> block_bit_off) & mask;
+	uint64_t end_index = (end >> block_bit_off) & mask;
+	uint64_t child_key_count = (uint64_t) 1 << block_bit_off;
+
+	uint64_t count = 0;
+
+	for (uint64_t i = start_index; i <= end_index; i++) {
+		uint64_t child_start = first_key_in_block + i * child_key_count;
+		uint64_t child_end = first_key_in_block + (i + 1) * child_key_count - 1;
+
+		if (child_start < start)
+			child_start = start;
+		if (child_end > end)
+			child_end = end;
+
+		count += btree_iterate_keys_block(b, flags, fn, fn_data,
+			(uint64_t **) block[i], child_start, child_end,
+			depth + 1, max_depth);
+	}
+
+	return count;
+}
+
+uint64_t btree_iterate_keys(struct btree *b, uint64_t start, uint64_t end,
+			    enum btree_iterate_flags flags, btree_iterate_fn fn,
+			    void *fn_data)
+{
+	return btree_iterate_keys_block(b, flags, fn, fn_data, b->data,
+		start, end, 0, btree_get_depth(b));
 }
 
 void
