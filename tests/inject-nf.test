@@ -9,18 +9,9 @@
 
 . "${srcdir=.}/scno_tampering.sh"
 
-case "$STRACE_ARCH" in
-alpha)
-	SYSCALL=getpgrp
-	;;
-*)
-	SYSCALL=getpid
-	;;
-esac
-
 run_prog
 prog="$args"
-fault_args="-a9 -e trace=${SYSCALL} -e inject=${SYSCALL}:retval="
+fault_args="-a9 -e trace=geteuid -e inject=geteuid:retval="
 
 test_rval()
 {
