@@ -51,25 +51,6 @@ struct proc_data {
 	int *id_hierarchy[PT_COUNT]; /* from top to bottom of NS hierarchy */
 };
 
-static int
-proc_data_get_id_in_our_ns(struct proc_data *pd, uint64_t ns, int id, enum pid_type type)
-{
-	if (!pd->ns_count || (pd->ns_count > pd->id_count[type]))
-		return 0;
-
-	for (int i = 0; i < pd->ns_count; i++) {
-		if (pd->ns_hierarchy[i] != ns)
-			continue;
-
-		if (pd->id_hierarchy[type][pd->id_count[type] - i - 1] != id)
-			return 0;
-
-		return pd->id_hierarchy[type][pd->id_count[type] - pd->ns_count];
-	}
-
-	return 0;
-}
-
 static uint8_t
 lg2(uint64_t n)
 {
@@ -238,10 +219,6 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 		fd = parent_fd;
 	}
 
-	//update_ns_hierarchy
-
-	//parent_fd = ge
-
 	close(fd);
 
 	return n;
@@ -348,7 +325,7 @@ get_ns(struct tcb *tcp)
 		int pid = tcp->pid;
 
 		if (!is_proc_ours())
-			if (find_pid(NULL, tcp->pid, PT_TID, &pid) < 1)
+			if (translate_pid(NULL, tcp->pid, PT_TID, &pid) < 1)
 				pid = -1;
 
 		if ((pid == -1) || !get_ns_hierarchy(pid, &tcp->pid_ns, 1))
@@ -488,157 +465,201 @@ invalidate_proc_data(struct proc_data *pd)
  *  Tracees have fixed pid ns.
  */
 
-struct find_pid_data {
+/**
+ * Paramters for id translation
+ */
+struct translate_id_params {
+	/* The result (output) */
 	int result_id;
+	/* The proc data of the process (output) */
 	struct proc_data *pd;
-	uint64_t dest_ns;
-	int dest_id;
+
+	/* The namespace to be translated from */
+	uint64_t from_ns;
+	/* The id to be translated */
+	int from_id;
+	/* The type of the id */
 	enum pid_type type;
 };
 
+/**
+ * Translates an id to our namespace, given the proc_pid of the process, by reading files in /proc.
+ *
+ * @param tip      The parameters
+ * @param proc_pid The proc pid of the process. If 0, use the cached values in tip->pd.
+ */
 static void
-proc_data_cache_iterator_fn(void* fn_data, uint64_t key, uint64_t val)
+translate_id_proc_pid(struct translate_id_params *tip, int proc_pid)
 {
-	struct find_pid_data *fpd = (struct find_pid_data *) fn_data;
-	struct proc_data *pd = (struct proc_data *) val;
+	struct proc_data *pd = proc_pid ? get_or_create_proc_data(proc_pid) : tip->pd;
+
+	tip->result_id = 0;
+	tip->pd = NULL;
 
 	if (!pd)
 		return;
 
-	/* Result already found in an earlier iteration */
-	if (fpd->result_id)
+	if (proc_pid && !update_proc_data(pd, tip->type))
 		return;
 
-	fpd->result_id = proc_data_get_id_in_our_ns(pd, fpd->dest_ns, fpd->dest_id, fpd->type);
-	if (!fpd->result_id)
-		return; /* According to cache, this is not what we are looking for, continue */
+	if (!pd->ns_count || (pd->id_count[tip->type] < pd->ns_count))
+		return;
 
-	/* If cache says this is our proc_data, update it to be sure */
+	int our_ns_id_idx = pd->id_count[tip->type] - pd->ns_count;
 
-	if (!update_proc_data(pd, fpd->type))
-		return; /* Process exited, continue */
+	for (int i = 0; i < pd->ns_count; i++) {
+		if (pd->ns_hierarchy[i] != tip->from_ns)
+			continue;
 
-	fpd->result_id = proc_data_get_id_in_our_ns(pd, fpd->dest_ns, fpd->dest_id, fpd->type);
-	if (!fpd->result_id)
-		return; /* Cache was wrong, proc_data changed, continue */
+		int id_idx = pd->id_count[tip->type] - i - 1;
+		if (pd->id_hierarchy[tip->type][id_idx] != tip->from_id)
+			return;
 
-	/* Cache was right, save our pd as result */
-	fpd->pd = pd;
+		tip->result_id = pd->id_hierarchy[tip->type][our_ns_id_idx];
+		tip->pd = pd;
+		return;
+	}
 }
 
 /**
- * Translates an ID from tcp's namespace to our namepace
+ * Translates an id to our namespace, by reading all proc entries in dir.
  *
- * @param tcp             The tcb whose namepace dest_id is in (NULL means strace's namespace)
- * @param dest_id         The id to be translated
- * @param type            The type of ID
- * @param proc_pid_ptr    If not NULL, writes the proc PID to this location
+ * @param tip            The parameters
+ * @param path           The path of the dir to be read.
+ * @param read_task_dir  Whether recurse to "task" subdirectory.
  */
-int
-find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
+static void
+translate_id_dir(struct translate_id_params *tip, const char *path, bool read_task_dir)
 {
-	const uint64_t our_ns = get_our_ns();
-	uint64_t dest_ns;
-
-	struct proc_data *pd;
-
-	DIR *dp = NULL;
-	struct dirent *entry;
-	long proc_pid = 0;
-	int res = 0;
-
-	if ((type >= PT_COUNT) || (type < 0))
-		goto find_pid_exit;
-
-	dest_ns = tcp ? get_ns(tcp) : our_ns;
-
-	if (is_proc_ours() && (dest_ns == our_ns)) {
-		if (proc_pid_ptr)
-			*proc_pid_ptr =
-				dest_id ? dest_id : syscall(__NR_gettid);
-
-		if (dest_id)
-			return dest_id;
-
-		switch (type) {
-		case PT_TID:	return syscall(__NR_gettid);
-		case PT_TGID:	return getpid();
-		case PT_PGID:	return getpgrp();
-		case PT_SID:	return getsid(getpid());
-		default:	return -1;
-		}
+	DIR *dir = opendir(path);
+	if (!dir) {
+		perror_msg("translate_id_dir: opening dir: %s", path);
+		return;
 	}
 
-	/* Look for a cached proc_pid for this (dest_ns, dest_id) pair */
-	proc_pid = get_cached_proc_pid(dest_ns, dest_id, type);
-	if (proc_pid) {
-		pd = get_or_create_proc_data(proc_pid);
-		if (!pd)
-			goto find_pid_exit;
-
-		/* Refresh proc_data, and if it is still valid, return */
-		if (update_proc_data(pd, type)) {
-			res = proc_data_get_id_in_our_ns(pd, dest_ns, dest_id, type);
-			if (res)
-				goto find_pid_exit;
-		}
-	}
-
-	/* Iterate through the cache, find potential proc_data */
-	struct find_pid_data fpd = {0, NULL, dest_ns, dest_id, type};
-	btree_iterate_keys(proc_data_cache, 0, get_pid_max(), 0, proc_data_cache_iterator_fn, &fpd);
-	/* (proc_data_cache_iterator_fn takes care about updating proc_data) */
-	if (fpd.result_id) {
-		proc_pid = fpd.pd->proc_pid;
-		res = fpd.result_id;
-		goto find_pid_exit;
-	}
-
-	dp = opendir("/proc");
-	if (!dp) {
-		perror_msg("find_pid: opening /proc");
-		goto find_pid_exit;
-	}
-
-	while (!res) {
+	while (!tip->result_id) {
 		errno = 0;
-		entry = readdir(dp);
+		struct dirent *entry = readdir(dir);
 		if (!entry) {
 			if (errno)
-				perror_msg("find_pid: readdir");
+				perror_msg("translate_id_dir: readdir");
 
-			goto find_pid_exit;
+			break;
 		}
 
 		if (entry->d_type != DT_DIR)
 			continue;
 
 		errno = 0;
-		proc_pid = strtol(entry->d_name, NULL, 10);
+		int proc_pid = strtol(entry->d_name, NULL, 10);
 		if (errno)
 			continue;
 		if ((proc_pid < 1) || (proc_pid > INT_MAX))
 			continue;
 
-		pd = get_or_create_proc_data(proc_pid);
-		if (!pd)
-			goto find_pid_exit;
+		if (read_task_dir) {
+			char task_dir_path[PATH_MAX + 1];
+			snprintf(task_dir_path, sizeof(task_dir_path), "/proc/%d/task", proc_pid);
+			translate_id_dir(tip, task_dir_path, false);
+		}
 
-		if (update_proc_data(pd, type))
-			res = proc_data_get_id_in_our_ns(pd, dest_ns, dest_id, type);
+		if (tip->result_id)
+			break;
+
+		translate_id_proc_pid(tip, proc_pid);
 	}
 
-find_pid_exit:
-	if (dp)
-		closedir(dp);
+	closedir(dir);
+}
 
-	if (proc_pid)
-		put_proc_pid(dest_ns, dest_id, type, proc_pid);
+/**
+ * Iterator function of the proc_data_cache for id translation.
+ * If the cache contains the id we are looking for, reads the corresponding
+ * directory in /proc, and if cache is valid, saves the result.
+ */
+static void
+proc_data_cache_iterator_fn(void* fn_data, uint64_t key, uint64_t val)
+{
+	struct translate_id_params *tip = (struct translate_id_params *) fn_data;
+	struct proc_data *pd = (struct proc_data *) val;
 
-	if (proc_pid_ptr)
-		*proc_pid_ptr = proc_pid;
+	if (!pd)
+		return;
 
-	return res;
+	/* Result already found in an earlier iteration */
+	if (tip->result_id)
+		return;
+
+	/* Translate from cache */
+	tip->pd = pd;
+	translate_id_proc_pid(tip, 0);
+	if (!tip->result_id)
+		return; /* According to cache, this is not what we are looking for, continue */
+
+	/* Now translate it from actual data in /proc, to check cache validity */
+	translate_id_proc_pid(tip, pd->proc_pid);
+}
+
+/**
+ * Translates an ID from tcp's namespace to our namepace
+ *
+ * @param tcp             The tcb whose namepace from_id is in (NULL means strace's namespace)
+ * @param from_id         The id to be translated
+ * @param type            The type of ID
+ * @param proc_pid_ptr    If not NULL, writes the proc PID to this location
+ */
+int
+translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_ptr)
+{
+	const uint64_t our_ns = get_our_ns();
+
+	struct translate_id_params tip = {
+		.result_id = 0,
+		.pd = NULL,
+		.from_ns = tcp ? get_ns(tcp) : our_ns,
+		.from_id = from_id,
+		.type = type,
+	};
+
+	if ((tip.type >= PT_COUNT) || (tip.type < 0))
+		goto translate_pid_exit;
+
+	/* If translation is trivial */
+	if (tip.from_ns == our_ns && (is_proc_ours() || !proc_pid_ptr)) {
+		if (proc_pid_ptr)
+			*proc_pid_ptr = from_id;
+
+		tip.result_id = tip.from_id;
+		goto translate_pid_exit;
+	}
+
+	/* Look for a cached proc_pid for this (from_ns, from_id) pair */
+	int cached_proc_pid = get_cached_proc_pid(tip.from_ns, tip.from_id, tip.type);
+	if (cached_proc_pid) {
+		translate_id_proc_pid(&tip, cached_proc_pid);
+		if (tip.result_id)
+			goto translate_pid_exit;
+	}
+
+	/* Iterate through the cache, find potential proc_data */
+	btree_iterate_keys(proc_data_cache, 0, get_pid_max(), 0, proc_data_cache_iterator_fn, &tip);
+	/* (proc_data_cache_iterator_fn takes care about updating proc_data) */
+	if (tip.result_id)
+		goto translate_pid_exit;
+
+	/* No cache helped, read all entries in /proc */
+	translate_id_dir(&tip, "/proc", true);
+
+translate_pid_exit:
+	if (tip.pd) {
+		if (tip.pd->proc_pid)
+			put_proc_pid(tip.from_ns, tip.from_id, tip.type, tip.pd->proc_pid);
+
+		if (proc_pid_ptr)
+			*proc_pid_ptr = tip.pd->proc_pid;
+	}
+
+	return tip.result_id;
 }
 
 int
@@ -647,7 +668,7 @@ get_proc_pid(struct tcb *tcp)
 	if (!is_proc_ours()) {
 		int ret;
 
-		if (find_pid(NULL, tcp->pid, PT_TID, &ret) < 0)
+		if (translate_pid(NULL, tcp->pid, PT_TID, &ret) < 0)
 			return -1;
 
 		return ret;
@@ -671,7 +692,7 @@ printpid(struct tcb *tcp, int pid, enum pid_type type)
 	tprintf("%d", pid);
 
 	if (perform_ns_resolution) {
-		strace_pid = find_pid(tcp, pid, type, NULL);
+		strace_pid = translate_pid(tcp, pid, type, NULL);
 
 		if ((strace_pid > 0) && (pid != strace_pid))
 			tprintf_comment("%d in strace's PID NS", strace_pid);

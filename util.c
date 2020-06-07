@@ -641,7 +641,7 @@ printed:
 void
 printfd_pid_tracee_ns(struct tcb *tcp, pid_t pid, int fd)
 {
-	int strace_pid = find_pid(tcp, pid, PT_TGID, NULL);
+	int strace_pid = translate_pid(tcp, pid, PT_TGID, NULL);
 	printfd_pid(tcp, strace_pid, fd);
 }
 
