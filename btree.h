@@ -6,8 +6,8 @@
 #define BTREE_SET   ((uint64_t **) ~(intptr_t) 0)
 #define BTREE_UNSET ((uint64_t **) NULL)
 
-#define PTR_BLOCK_SIZE_LG_MAX   18
-#define DATA_BLOCK_SIZE_LG_MAX  20
+#define PTR_BLOCK_SIZE_LG_MAX   24
+#define DATA_BLOCK_SIZE_LG_MAX  23
 
 enum btree_iterate_flags {
 	BTREE_ITERATE_KEYS_SET   = 1 << 0,
@@ -41,9 +41,9 @@ struct btree {
 	uint64_t set_value;         /**< Default set value */
 	uint64_t **data;
 	uint8_t item_size_lg;       /**< Item size log2, in bits, 0..6. */
-	/** Pointer block size log2, in pointers sizes. 8-14, usually. */
+	/** Pointer block size log2, in bits. 14-20, usually. */
 	uint8_t ptr_block_size_lg;
-	/** Data block size log2, in bytes. 8-14, usually. */
+	/** Data block size log2, in bits. 11-17, usually. */
 	uint8_t data_block_size_lg;
 	uint8_t key_size;           /**< Key size, in bits, 1..64. */
 };
