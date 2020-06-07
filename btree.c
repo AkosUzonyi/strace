@@ -9,7 +9,7 @@
 
 #include "btree.h"
 
-static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 3 : 2);
+static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 6 : 5);
 
 bool
 btree_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
@@ -19,11 +19,11 @@ btree_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 		return false;
 	if (key_size < 1 || key_size > 64)
 		return false;
-	if (ptr_block_size_lg < 1 || ptr_block_size_lg > PTR_BLOCK_SIZE_LG_MAX)
+	if (ptr_block_size_lg < ptr_sz_lg || ptr_block_size_lg > PTR_BLOCK_SIZE_LG_MAX)
 		return false;
 	if (data_block_size_lg > DATA_BLOCK_SIZE_LG_MAX ||
-	    data_block_size_lg < 3 ||
-	    item_size_lg > (data_block_size_lg + 3))
+	    data_block_size_lg < 6 ||
+	    item_size_lg > data_block_size_lg)
 		return false;
 
 	return true;
@@ -47,8 +47,8 @@ btree_init(struct btree *b, uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 static uint8_t
 btree_get_depth(struct btree *b)
 {
-	return (b->key_size - (b->data_block_size_lg + 3 - b->item_size_lg) +
-		b->ptr_block_size_lg - 1) / b->ptr_block_size_lg;
+	return (b->key_size - (b->data_block_size_lg - b->item_size_lg) +
+		b->ptr_block_size_lg - ptr_sz_lg - 1) / (b->ptr_block_size_lg - ptr_sz_lg);
 }
 
 /**
@@ -56,9 +56,9 @@ btree_get_depth(struct btree *b)
  * provided is less than zero, it is calculated via btree_get_depth call.
  */
 static uint8_t
-btree_get_block_size(struct btree *b, uint8_t depth, uint8_t max_depth)
+btree_get_block_size(struct btree *b, uint8_t depth, int max_depth)
 {
-	if (!max_depth)
+	if (max_depth < 0)
 		max_depth = btree_get_depth(b);
 
 	/* Last level contains data and we allow it having a different size */
@@ -67,11 +67,10 @@ btree_get_block_size(struct btree *b, uint8_t depth, uint8_t max_depth)
 	/* Last level of the tree can be smaller */
 	if (depth == max_depth - 1)
 		return (b->key_size -
-			(b->data_block_size_lg + 3 - b->item_size_lg) +
-			b->ptr_block_size_lg - 1) %
-			b->ptr_block_size_lg + 1 + ptr_sz_lg;
+			(b->data_block_size_lg - b->item_size_lg) - 1) %
+			(b->ptr_block_size_lg - ptr_sz_lg) + 1 + ptr_sz_lg;
 
-	return b->ptr_block_size_lg + ptr_sz_lg;
+	return b->ptr_block_size_lg;
 }
 
 #define round_down(a, b) (((a) / (b)) * (b))
@@ -91,16 +90,16 @@ btree_get_block_bit_offs(struct btree *b, uint8_t depth, int max_depth)
 	if (depth == max_depth)
 		return 0;
 
-	offs = b->data_block_size_lg + 3 - b->item_size_lg;
+	offs = b->data_block_size_lg - b->item_size_lg;
 
 	if (depth == max_depth - 1)
 		return offs;
 
 	/* data_block_size + remainder */
-	offs = b->key_size - round_down(b->key_size - offs - 1,
-		b->ptr_block_size_lg);
+	offs += btree_get_block_size(b, max_depth - 1, max_depth) - ptr_sz_lg;
+	offs += (max_depth - depth - 2) * (b->ptr_block_size_lg - ptr_sz_lg);
 
-	return offs + (max_depth - depth - 2) * b->ptr_block_size_lg;
+	return offs;
 }
 
 struct btree *
@@ -143,7 +142,7 @@ btree_get_block(struct btree *b, uint64_t key, bool auto_create)
 	uint8_t max_depth;
 	uint8_t sz;
 
-	if (b->key_size < 64 && key > (uint64_t) 1 << (1 << b->key_size))
+	if (b->key_size < 64 && key > (uint64_t) 1 << b->key_size)
 		return NULL;
 
 	max_depth = btree_get_depth(b);
@@ -157,17 +156,14 @@ btree_get_block(struct btree *b, uint64_t key, bool auto_create)
 			if (!auto_create)
 				return (uint64_t *) (*cur_block);
 
-			*cur_block = xcalloc(1 << sz, 1);
+			*cur_block = xcalloc(1 << sz, 8);
 
 			if (old_val == BTREE_SET) {
-				uint64_t filler = (cur_depth == max_depth) ?
-					btree_filler(b->set_value,
-						     b->item_size_lg) :
-					btree_filler((uintptr_t) BTREE_SET,
-						     ptr_sz_lg + 3);
+				uint64_t fill_value = cur_depth == max_depth ? b->set_value : (uintptr_t) BTREE_SET;
+				uint8_t fill_size = cur_depth == max_depth ? b->item_size_lg : ptr_sz_lg;
 
 				for (i = 0; i < ((unsigned int)1 << (sz - 3)); i++)
-					((uint64_t *) *cur_block)[i] = filler;
+					((uint64_t *) *cur_block)[i] = btree_filler(fill_value, fill_size);
 			}
 		}
 
@@ -186,7 +182,7 @@ bool
 btree_set(struct btree *b, uint64_t key, uint64_t val)
 {
 	uint64_t *data = btree_get_block(b, key, true);
-	size_t mask = (1 << (b->data_block_size_lg - 3)) - 1;
+	size_t mask = (1 << (b->data_block_size_lg - b->item_size_lg)) - 1;
 	size_t pos = (key & mask) >> (6 - b->item_size_lg);
 
 	if (!data)
@@ -195,10 +191,8 @@ btree_set(struct btree *b, uint64_t key, uint64_t val)
 	if (b->item_size_lg == 6) {
 		data[pos] = val;
 	} else {
-		size_t offs = (key & ((1 << (6 - b->item_size_lg)) - 1)) <<
-			b->item_size_lg;
-		uint64_t mask =
-			(uint64_t) ((1 << (1 << b->item_size_lg)) - 1) << offs;
+		size_t offs = (key & ((1 << (6 - b->item_size_lg)) - 1)) * (1 << b->item_size_lg);
+		uint64_t mask = (((uint64_t) 1 << (1 << b->item_size_lg)) - 1) << offs;
 
 		data[pos] &= ~mask;
 		data[pos] |= (val << offs) & mask;
@@ -252,15 +246,15 @@ btree_get(struct btree *b, uint64_t key)
 	if ((void *) data == (void *) BTREE_SET)
 		return b->set_value;
 
-	mask = (1 << (b->data_block_size_lg - 3)) - 1;
+	mask = (1 << (b->data_block_size_lg - b->item_size_lg)) - 1;
 	pos = (key & mask) >> (6 - b->item_size_lg);
 
 	if (b->item_size_lg == 6)
 		return data[pos];
 
-	offs = (key & ((1 << (6 - b->item_size_lg)) - 1)) << b->item_size_lg;
+	offs = (key & ((1 << (6 - b->item_size_lg)) - 1)) * (1 << b->item_size_lg);
 
-	return (data[pos] >> offs) & ((1 << (1 << b->item_size_lg)) - 1);
+	return (data[pos] >> offs) & (((uint64_t)1 << (1 << b->item_size_lg)) - 1);
 }
 
 void
@@ -280,10 +274,7 @@ btree_free_block(struct btree *b, uint64_t **block, uint8_t depth,
 	sz = 1 << (btree_get_block_size(b, depth, max_depth) - ptr_sz_lg);
 
 	for (i = 0; i < sz; i++)
-		if (((void *) block[i] != (void *) BTREE_SET) &&
-		    ((void *) block[i] != (void *) BTREE_UNSET))
-			btree_free_block(b, (uint64_t **) (block[i]), depth + 1,
-					 max_depth);
+		btree_free_block(b, (uint64_t **) (block[i]), depth + 1, max_depth);
 
 free_block:
 	free(block);
