@@ -173,8 +173,7 @@ pid_to_str(pid_t pid)
  *                 MAX_NS_DEPTH values have been written to the array, however).
  */
 static size_t
-get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size,
-		 uint64_t last)
+get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 {
 	char path[PATH_MAX + 1];
 	struct stat st;
@@ -211,9 +210,6 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size,
 			error_msg("Got NS: %" PRIu64, ns_buf[n]);
 
 		n++;
-
-		if (ns_buf[n - 1] == last)
-			break;
 
 		parent_fd = ioctl(fd, NS_GET_PARENT);
 		if (parent_fd == -1) {
@@ -355,7 +351,7 @@ get_ns(struct tcb *tcp)
 			if (find_pid(NULL, tcp->pid, PT_TID, &pid) < 1)
 				pid = -1;
 
-		if ((pid == -1) || !get_ns_hierarchy(pid, &tcp->pid_ns, 1, 0))
+		if ((pid == -1) || !get_ns_hierarchy(pid, &tcp->pid_ns, 1))
 			tcp->pid_ns = 0;
 
 		tcp->pid_ns_inited = true;
@@ -371,7 +367,7 @@ get_our_ns(void)
 	static bool our_ns_initialised = false;
 
 	if (!our_ns_initialised) {
-		get_ns_hierarchy(0, &our_ns, 1, 0);
+		get_ns_hierarchy(0, &our_ns, 1);
 		our_ns_initialised = true;
 	}
 
@@ -444,8 +440,7 @@ static bool
 update_proc_data(struct proc_data *pd, enum pid_type type)
 {
 	pd->ns_count = get_ns_hierarchy(pd->proc_pid,
-		pd->ns_hierarchy, MAX_NS_DEPTH,
-		0);
+		pd->ns_hierarchy, MAX_NS_DEPTH);
 	if (!pd->ns_count)
 		goto fail;
 
