@@ -2289,6 +2289,7 @@ init(int argc, char *argv[])
 			break;
 		case 'Y':
 			perform_ns_resolution++;
+			pidns_init();
 			break;
 		case 'z':
 			clear_number_set_array(status_set, 1);

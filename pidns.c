@@ -14,17 +14,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-//#include "btree.h"
+#include "btree.h"
 #include "nsfs.h"
 #include "xmalloc.h"
 
-/* key - NS ID, value - parent NS ID. */
-// struct btree *ns_hierarchy;
-/*
- * key - NS ID, value - struct btree * with PID tree;
- * PID tree has PID in NS as a key and PID in parent NS as a value.
- */
-// struct btree *ns_pid_tree;
+struct btree *ns_pid_to_proc_pid[PT_COUNT];
+struct btree *proc_data_cache;
 
 static const char tid_str[]  = "NSpid:\t";
 static const char tgid_str[] = "NStgid:\t";
@@ -50,12 +45,99 @@ static const struct {
 
 struct proc_data {
 	int proc_pid;
-	short ns_count;
-	short refcount;
+	int ns_count;
 	uint64_t ns_hierarchy[MAX_NS_DEPTH]; /* from bottom to top of NS hierarchy */
 	int id_count[PT_COUNT];
 	int *id_hierarchy[PT_COUNT]; /* from top to bottom of NS hierarchy */
 };
+
+static int
+proc_data_get_id_in_our_ns(struct proc_data *pd, uint64_t ns, int id, enum pid_type type)
+{
+	if (!pd->ns_count || (pd->ns_count > pd->id_count[type]))
+		return 0;
+
+	for (int i = 0; i < pd->ns_count; i++) {
+		if (pd->ns_hierarchy[i] != ns)
+			continue;
+
+		if (pd->id_hierarchy[type][pd->id_count[type] - i - 1] != id)
+			return 0;
+
+		return pd->id_hierarchy[type][pd->id_count[type] - pd->ns_count];
+	}
+
+	return 0;
+}
+
+static uint8_t
+lg2(uint64_t n)
+{
+	uint8_t res = 0;
+	while (n) {
+		res++;
+		n >>= 1;
+	}
+	return res;
+}
+
+static int
+get_pid_max(void)
+{
+	static int pid_max = -1;
+
+	if (pid_max < 0) {
+		pid_max = INT_MAX;
+
+		FILE *f = fopen("/proc/sys/kernel/pid_max", "r");
+		if (!f)
+			perror_msg("get_pid_max: opening /proc/sys/kernel/pid_max");
+		else
+			fscanf(f, "%d", &pid_max);
+	}
+
+	return pid_max;
+}
+
+void
+pidns_init(void)
+{
+	static bool inited = false;
+	if (inited)
+		return;
+
+	for (int i = 0; i < PT_COUNT; i++)
+		ns_pid_to_proc_pid[i] = btree_create(6, 16, 16, 64, 0);
+
+	proc_data_cache = btree_create(6, 16, 16, lg2(get_pid_max() - 1), 0);
+
+	inited = true;
+}
+
+static void
+put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
+{
+	struct btree *b = (struct btree *) btree_get(ns_pid_to_proc_pid[type], ns);
+	if (!b) {
+		int pid_max = get_pid_max();
+		uint8_t pid_max_size = lg2(pid_max - 1);
+		uint8_t pid_max_size_lg = lg2(pid_max_size - 1);
+		b = btree_create(pid_max_size_lg, 16, 16, pid_max_size, 0);
+
+		btree_set(ns_pid_to_proc_pid[type], ns, (uint64_t) b);
+	}
+	btree_set(b, ns_pid, proc_pid);
+}
+
+static int
+get_cached_proc_pid(uint64_t ns, int ns_pid, enum pid_type type)
+{
+	struct btree *b = (struct btree *) btree_get(ns_pid_to_proc_pid[type], ns);
+	if (!b)
+		return 0;
+
+	return btree_get(b, ns_pid);
+}
 
 /**
  * Helper function, converts pid to string, or to "self" for pid == 0.
@@ -334,53 +416,58 @@ dens_id(int proc_pid,
 } */
 
 /**
- * Checks whether proc data record is actual, and updates it in case it doesn't.
- * Automatically removes invalid entries if found.
- *
- * -1 - error
- *  0 - cache is invalid
- *  1 - cache is valid
- *  2 - only NS cache is valid
+ * Returns the cached proc_data struct associated with proc_pid.
+ * If none found, allocates a new proc_data.
  */
-static int
-check_proc_data_validity(struct proc_data *pd, enum pid_type type)
-{
-	/* ns_cnt = get_ns_hierarchy(proc_pid, &ns_buf, our_ns);
-	if (!ns_cnt || (ns_cnt >= MAX_NS_DEPTH) ||
-	    (ns_buf[ns_cnt - 1] != our_ns)) */
-	return 0;
-
-}
-
 static struct proc_data *
-get_proc_data(int proc_pid)
+get_or_create_proc_data(int proc_pid)
 {
-	struct proc_data *pd = calloc(1, sizeof(*pd));
+	struct proc_data *pd = (struct proc_data *) btree_get(proc_data_cache, proc_pid);
 
-	if (!pd)
-		return NULL;
+	if (!pd) {
+		pd = calloc(1, sizeof(*pd));
+		if (!pd)
+			return NULL;
 
-	memset(pd, 0, sizeof(*pd));
-	pd->proc_pid = proc_pid;
+		pd->proc_pid = proc_pid;
+		btree_set(proc_data_cache, proc_pid, (uint64_t) pd);
+	}
 
 	return pd;
 }
 
-static struct proc_data *
-find_proc_data(int id, uint64_t ns, enum pid_type type)
+/**
+ * Updates the proc_data from /proc
+ * If the process does not exists, returns false, and frees the proc_data
+ */
+static bool
+update_proc_data(struct proc_data *pd, enum pid_type type)
 {
-	return NULL;
-}
+	pd->ns_count = get_ns_hierarchy(pd->proc_pid,
+		pd->ns_hierarchy, MAX_NS_DEPTH,
+		0);
+	if (!pd->ns_count)
+		goto fail;
 
-static void
-put_proc_data(struct proc_data *pd)
-{
-	free(pd);
-}
+	if (!pd->id_hierarchy[type])
+		pd->id_hierarchy[type] = calloc(MAX_NS_DEPTH,
+			sizeof(pd->id_hierarchy[type][0]));
+	if (!pd->id_hierarchy[type])
+		goto fail;
 
-static void
-update_proc_data_cache(struct proc_data *pd, enum pid_type type)
-{
+	pd->id_count[type] = get_id_list(pd->proc_pid,
+		pd->id_hierarchy[type], type);
+	if (!pd->id_count[type])
+		goto fail;
+
+	return true;
+
+fail:
+	if (pd)
+		free(pd);
+
+	btree_set(proc_data_cache, pd->proc_pid, (uint64_t) NULL);
+	return false;
 }
 
 /**
@@ -406,6 +493,44 @@ invalidate_proc_data(struct proc_data *pd)
  *  Tracees have fixed pid ns.
  */
 
+struct find_pid_data {
+	int result_id;
+	struct proc_data *pd;
+	uint64_t dest_ns;
+	int dest_id;
+	enum pid_type type;
+};
+
+static void
+proc_data_cache_iterator_fn(void* fn_data, uint64_t key, uint64_t val)
+{
+	struct find_pid_data *fpd = (struct find_pid_data *) fn_data;
+	struct proc_data *pd = (struct proc_data *) val;
+
+	if (!pd)
+		return;
+
+	/* Result already found in an earlier iteration */
+	if (fpd->result_id)
+		return;
+
+	fpd->result_id = proc_data_get_id_in_our_ns(pd, fpd->dest_ns, fpd->dest_id, fpd->type);
+	if (!fpd->result_id)
+		return; /* According to cache, this is not what we are looking for, continue */
+
+	/* If cache says this is our proc_data, update it to be sure */
+
+	if (!update_proc_data(pd, fpd->type))
+		return; /* Process exited, continue */
+
+	fpd->result_id = proc_data_get_id_in_our_ns(pd, fpd->dest_ns, fpd->dest_id, fpd->type);
+	if (!fpd->result_id)
+		return; /* Cache was wrong, proc_data changed, continue */
+
+	/* Cache was right, save our pd as result */
+	fpd->pd = pd;
+}
+
 /**
  * Translates an ID from tcp's namespace to our namepace
  *
@@ -421,13 +546,11 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 	uint64_t dest_ns;
 
 	struct proc_data *pd;
-	int pd_valid = 0;
 
 	DIR *dp = NULL;
 	struct dirent *entry;
-	int idx;
-	long proc_pid = -1;
-	int res = -1;
+	long proc_pid = 0;
+	int res = 0;
 
 	if ((type >= PT_COUNT) || (type < 0))
 		goto find_pid_exit;
@@ -451,34 +574,45 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 		}
 	}
 
-	pd = find_proc_data(dest_id, dest_ns, type);
-	if (pd) {
-		pd_valid = check_proc_data_validity(pd, type);
-		if (pd_valid == -1)
-			goto find_pid_pd;
-		if (pd_valid == 0)
-			put_proc_data(pd);
-		if (pd_valid == 2)
-			goto find_pid_get_ids;
+	/* Look for a cached proc_pid for this (dest_ns, dest_id) pair */
+	proc_pid = get_cached_proc_pid(dest_ns, dest_id, type);
+	if (proc_pid) {
+		pd = get_or_create_proc_data(proc_pid);
+		if (!pd)
+			goto find_pid_exit;
+
+		/* Refresh proc_data, and if it is still valid, return */
+		if (update_proc_data(pd, type)) {
+			res = proc_data_get_id_in_our_ns(pd, dest_ns, dest_id, type);
+			if (res)
+				goto find_pid_exit;
+		}
 	}
 
-	if (pd_valid)
-		goto find_pid_get_pid;
+	/* Iterate through the cache, find potential proc_data */
+	struct find_pid_data fpd = {0, NULL, dest_ns, dest_id, type};
+	btree_iterate_keys(proc_data_cache, 0, get_pid_max(), 0, proc_data_cache_iterator_fn, &fpd);
+	/* (proc_data_cache_iterator_fn takes care about updating proc_data) */
+	if (fpd.result_id) {
+		proc_pid = fpd.pd->proc_pid;
+		res = fpd.result_id;
+		goto find_pid_exit;
+	}
 
 	dp = opendir("/proc");
 	if (!dp) {
 		perror_msg("find_pid: opening /proc");
-		goto find_pid_pd;
+		goto find_pid_exit;
 	}
 
-	do {
+	while (!res) {
 		errno = 0;
 		entry = readdir(dp);
 		if (!entry) {
 			if (errno)
 				perror_msg("find_pid: readdir");
 
-			goto find_pid_dir;
+			goto find_pid_exit;
 		}
 
 		if (entry->d_type != DT_DIR)
@@ -491,55 +625,21 @@ find_pid(struct tcb *tcp, int dest_id, enum pid_type type, int *proc_pid_ptr)
 		if ((proc_pid < 1) || (proc_pid > INT_MAX))
 			continue;
 
-		pd = get_proc_data(proc_pid);
-		pd_valid = check_proc_data_validity(pd, type);
-		if (pd_valid == -1)
-			goto find_pid_dir;
-		if (pd_valid == 1)
-			goto find_pid_get_pid;
-		if (pd_valid == 0)
-			pd->ns_count = get_ns_hierarchy(proc_pid,
-				pd->ns_hierarchy, ARRAY_SIZE(pd->ns_hierarchy),
-				our_ns);
-find_pid_get_ids:
-		if (!pd->id_hierarchy[type])
-			pd->id_hierarchy[type] = calloc(MAX_NS_DEPTH,
-				sizeof(pd->id_hierarchy[type][0]));
-		if (!pd->id_hierarchy[type])
-			goto find_pid_dir;
+		pd = get_or_create_proc_data(proc_pid);
+		if (!pd)
+			goto find_pid_exit;
 
-		pd->id_count[type] = get_id_list(proc_pid,
-			pd->id_hierarchy[type], type);
-
-		update_proc_data_cache(pd, type);
-
-find_pid_get_pid:
-		if (!pd->ns_count || (pd->ns_count > pd->id_count[type])) {
-			continue;
-		}
-
-		for (idx = 0; idx < pd->ns_count; idx++) {
-			if (pd->ns_hierarchy[idx] != dest_ns)
-				continue;
-			if (pd->id_hierarchy[type][pd->id_count[type] -
-				idx - 1] != dest_id)
-				break;
-
-			res = pd->id_hierarchy[type][pd->id_count[type] -
-								pd->ns_count];
-
-			goto find_pid_dir;
-		}
-
-		put_proc_data(pd);
-	} while (1);
-
-find_pid_dir:
-	closedir(dp);
-find_pid_pd:
-	put_proc_data(pd);
+		if (update_proc_data(pd, type))
+			res = proc_data_get_id_in_our_ns(pd, dest_ns, dest_id, type);
+	}
 
 find_pid_exit:
+	if (dp)
+		closedir(dp);
+
+	if (proc_pid)
+		put_proc_pid(dest_ns, dest_id, type, proc_pid);
+
 	if (proc_pid_ptr)
 		*proc_pid_ptr = proc_pid;
 
