@@ -136,7 +136,7 @@ btree_filler(uint64_t val, uint8_t item_size)
 static uint64_t *
 btree_get_block(struct btree *b, uint64_t key, bool auto_create)
 {
-	uint64_t ***cur_block = &(b->data);
+	void **cur_block = &(b->data);
 	unsigned i;
 	uint8_t cur_depth;
 	uint8_t max_depth;
@@ -151,7 +151,7 @@ btree_get_block(struct btree *b, uint64_t key, bool auto_create)
 		sz = btree_get_block_size(b, cur_depth, max_depth);
 
 		if (*cur_block == BTREE_SET || *cur_block == BTREE_UNSET) {
-			uint64_t **old_val = *cur_block;
+			void *old_val = *cur_block;
 
 			if (!auto_create)
 				return (uint64_t *) (*cur_block);
@@ -171,7 +171,7 @@ btree_get_block(struct btree *b, uint64_t key, bool auto_create)
 			size_t pos = (key >> btree_get_block_bit_offs(b,
 				cur_depth, max_depth)) & ((1 << (sz - ptr_sz_lg)) - 1);
 
-			cur_block = (uint64_t ***) ((*cur_block) + pos);
+			cur_block = (((void **) (*cur_block)) + pos);
 		}
 	}
 

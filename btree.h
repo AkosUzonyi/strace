@@ -3,8 +3,8 @@
 
 /* Simple B-tree interface */
 
-#define BTREE_SET   ((uint64_t **) ~(intptr_t) 0)
-#define BTREE_UNSET ((uint64_t **) NULL)
+#define BTREE_SET   ((void *) ~(intptr_t) 0)
+#define BTREE_UNSET ((void *) NULL)
 
 #define PTR_BLOCK_SIZE_LG_MAX   24
 #define DATA_BLOCK_SIZE_LG_MAX  23
@@ -39,7 +39,7 @@ enum btree_iterate_flags {
  */
 struct btree {
 	uint64_t set_value;         /**< Default set value */
-	uint64_t **data;
+	void *data;
 	uint8_t item_size_lg;       /**< Item size log2, in bits, 0..6. */
 	/** Pointer block size log2, in bits. 14-20, usually. */
 	uint8_t ptr_block_size_lg;
