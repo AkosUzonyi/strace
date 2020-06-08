@@ -351,43 +351,6 @@ get_our_ns(void)
 	return our_ns;
 }
 
-
-/**
- * Returns ID in our NS. If orig_ns_id is provided, also returns ID in orig_ns.
- */
-/* static int
-dens_id(int proc_pid,
-	uint64_t *ns_buf, size_t ns_count,
-	int *id_buf, size_t id_count,
-	uint64_t orig_ns, uint64_t our_ns, int *orig_ns_id)
-{
-	bool orig_idx_found = false;
-	size_t idx;
-
-	if (!ns_count || (ns_count > MAX_NS_DEPTH) ||
-	    !id_count || (id_count > MAX_NS_DEPTH))
-		return -1;
-
-	if (is_proc_ours()) {
-	}
-
-	for (idx = 0; idx < ns_count; idx++) {
-		if (ns_buf[idx] != orig_ns)
-			continue;
-
-		orig_idx = idx;
-		orig_idx_found = true;
-		break;
-	}
-
-	if (!orig_idx_found) {
-		free(ns_buf);
-
-		return -1;
-	}
-
-} */
-
 /**
  * Returns the cached proc_data struct associated with proc_pid.
  * If none found, allocates a new proc_data.
@@ -441,29 +404,6 @@ fail:
 	btree_set(proc_data_cache, pd->proc_pid, (uint64_t) NULL);
 	return false;
 }
-
-/**
- * Removes references to the proc_data entry from all caches.
- */
-/*
-static void
-invalidate_proc_data(struct proc_data *pd)
-{
-}
-*/
-
-/**
- * Caches:
- *  * tidns:ns -> tid in our ns
- *   * How to check validity: get cached proc path, with additional check for
- *     ns and that it also has tidns at the relevant level in NSpid
- *  * tid (in our ns) -> proc_tid
- *   * How to check validity: open cached /proc/pid/status and check relevant
- *     NSpid record, check that /proc/pid/ns/pid is accessible [and leads to our
- *     ns]
- *
- *  Tracees have fixed pid ns.
- */
 
 /**
  * Paramters for id translation
@@ -675,13 +615,6 @@ get_proc_pid(struct tcb *tcp)
 	}
 
 	return tcp->pid;
-}
-
-/* To be called on tracee exits or other clear indications that pid is no more
- * relevant */
-void
-clear_proc_pid(struct tcb *tcp, int pid)
-{
 }
 
 void
