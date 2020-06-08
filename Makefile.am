@@ -68,6 +68,7 @@ libstrace_a_SOURCES =	\
 	bpf_fprog.h	\
 	bpf_seccomp_filter.c \
 	bpf_sock_filter.c \
+	btree.c \
 	btrfs.c		\
 	cacheflush.c	\
 	capability.c	\
@@ -233,6 +234,7 @@ libstrace_a_SOURCES =	\
 	personality.c	\
 	pidfd_getfd.c	\
 	pidfd_open.c	\
+	pidns.c		\
 	pkeys.c		\
 	poll.c		\
 	prctl.c		\

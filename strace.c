@@ -133,6 +133,8 @@ static unsigned int daemonized_tracer;
 static int post_attach_sigstop = TCB_IGNORE_ONE_SIGSTOP;
 #define use_seize (post_attach_sigstop == 0)
 
+unsigned int perform_ns_resolution;
+
 static bool detach_on_execve;
 
 static int exit_code;
@@ -2013,7 +2015,7 @@ init(int argc, char *argv[])
 	qualify_signals("all");
 
 	static const char optstring[] =
-		"+a:Ab:cCdDe:E:fFhiI:ko:O:p:P:qrs:S:tTu:U:vVwxX:yzZ";
+		"+a:Ab:cCdDe:E:fFhiI:ko:O:p:P:qrs:S:tTu:U:vVwxX:yYzZ";
 
 	enum {
 		GETOPT_SECCOMP = 0x100,
@@ -2284,6 +2286,10 @@ init(int argc, char *argv[])
 			break;
 		case 'y':
 			yflag_short++;
+			break;
+		case 'Y':
+			perform_ns_resolution++;
+			pidns_init();
 			break;
 		case 'z':
 			clear_number_set_array(status_set, 1);

@@ -641,12 +641,8 @@ printed:
 void
 printfd_pid_tracee_ns(struct tcb *tcp, pid_t pid, int fd)
 {
-	/*
-	 * TODO: We want to have the same formatting as printfd here,
-	 *       but we should figure out first which process in strace's
-	 *       PID NS is referred to by pid in tracee's PID NS.
-	 */
-	tprintf("%d", fd);
+	int strace_pid = translate_pid(tcp, pid, PT_TGID, NULL);
+	printfd_pid(tcp, strace_pid, fd);
 }
 
 /*
