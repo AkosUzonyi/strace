@@ -133,6 +133,8 @@ static unsigned int daemonized_tracer;
 static int post_attach_sigstop = TCB_IGNORE_ONE_SIGSTOP;
 #define use_seize (post_attach_sigstop == 0)
 
+unsigned int pidns_translation;
+
 static bool detach_on_execve;
 
 static int exit_code;
@@ -2013,7 +2015,7 @@ init(int argc, char *argv[])
 	qualify_signals("all");
 
 	static const char optstring[] =
-		"+a:Ab:cCdDe:E:fFhiI:ko:O:p:P:qrs:S:tTu:U:vVwxX:yzZ";
+		"+a:Ab:cCdDe:E:fFhiI:ko:O:p:P:qrs:S:tTu:U:vVwxX:yYzZ";
 
 	enum {
 		GETOPT_SECCOMP = 0x100,
@@ -2072,6 +2074,7 @@ init(int argc, char *argv[])
 		{ "summary-wall-clock", no_argument,	   0, 'w' },
 		{ "strings-in-hex",	optional_argument, 0, GETOPT_HEX_STR },
 		{ "const-print-style",	required_argument, 0, 'X' },
+		{ "pidns-translation",	no_argument      , 0, 'Y' },
 		{ "successful-only",	no_argument,	   0, 'z' },
 		{ "failed-only",	no_argument,	   0, 'Z' },
 		{ "failing-only",	no_argument,	   0, 'Z' },
@@ -2284,6 +2287,9 @@ init(int argc, char *argv[])
 			break;
 		case 'y':
 			yflag_short++;
+			break;
+		case 'Y':
+			pidns_translation++;
 			break;
 		case 'z':
 			clear_number_set_array(status_set, 1);
@@ -2672,6 +2678,8 @@ init(int argc, char *argv[])
 	 */
 	print_pid_pfx = outfname && !output_separately &&
 		((followfork && !output_separately) || nprocs > 1);
+
+	pidns_init();
 }
 
 static struct tcb *
