@@ -2,6 +2,7 @@ Noteworthy changes in release ?.? (????-??-??)
 ==============================================
 
 * Improvements
+  * Added --pidns-translation option for PID namespace translation.
 
 * Bug fixes
 
