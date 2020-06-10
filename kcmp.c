@@ -30,7 +30,10 @@ SYS_FUNC(kcmp)
 	kernel_ulong_t idx1 = tcp->u_arg[3];
 	kernel_ulong_t idx2 = tcp->u_arg[4];
 
-	tprintf("%d, %d, ", pid1, pid2);
+	printpid(tcp, pid1, PT_TGID);
+	tprintf(", ");
+	printpid(tcp, pid2, PT_TGID);
+	tprintf(", ");
 	printxval(kcmp_types, type, "KCMP_???");
 
 	switch (type) {
@@ -38,7 +41,7 @@ SYS_FUNC(kcmp)
 			tprints(", ");
 			printfd_pid_tracee_ns(tcp, pid1, idx1);
 			tprints(", ");
-			printfd_pid_tracee_ns(tcp, pid1, idx2);
+			printfd_pid_tracee_ns(tcp, pid2, idx2);
 
 			break;
 

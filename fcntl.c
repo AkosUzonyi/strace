@@ -20,7 +20,7 @@
 #include "xlat/notifyflags.h"
 
 static void
-print_struct_flock64(const struct_kernel_flock64 *fl, const int getlk)
+print_struct_flock64(struct tcb *const tcp, const struct_kernel_flock64 *fl, const int getlk)
 {
 	tprints("{l_type=");
 	printxval(lockfcmds, (unsigned short) fl->l_type, "F_???");
@@ -28,8 +28,10 @@ print_struct_flock64(const struct_kernel_flock64 *fl, const int getlk)
 	printxval(whence_codes, (unsigned short) fl->l_whence, "SEEK_???");
 	tprintf(", l_start=%" PRId64 ", l_len=%" PRId64,
 		(int64_t) fl->l_start, (int64_t) fl->l_len);
-	if (getlk)
-		tprintf(", l_pid=%lu", (unsigned long) fl->l_pid);
+	if (getlk) {
+		tprintf(", l_pid=");
+		printpid(tcp, (unsigned long) fl->l_pid, PT_TGID);
+	}
 	tprints("}");
 }
 
@@ -39,7 +41,7 @@ printflock64(struct tcb *const tcp, const kernel_ulong_t addr, const int getlk)
 	struct_kernel_flock64 fl;
 
 	if (fetch_struct_flock64(tcp, addr, &fl))
-		print_struct_flock64(&fl, getlk);
+		print_struct_flock64(tcp, &fl, getlk);
 }
 
 static void
@@ -48,7 +50,7 @@ printflock(struct tcb *const tcp, const kernel_ulong_t addr, const int getlk)
 	struct_kernel_flock64 fl;
 
 	if (fetch_struct_flock(tcp, addr, &fl))
-		print_struct_flock64(&fl, getlk);
+		print_struct_flock64(tcp, &fl, getlk);
 }
 
 static void
@@ -61,7 +63,9 @@ print_f_owner_ex(struct tcb *const tcp, const kernel_ulong_t addr)
 
 	tprints("{type=");
 	printxval(f_owner_types, owner.type, "F_OWNER_???");
-	tprintf(", pid=%d}", owner.pid);
+	tprintf(", pid=");
+	printpid(tcp, owner.pid, PT_TGID);
+	tprintf("}");
 }
 
 static int
