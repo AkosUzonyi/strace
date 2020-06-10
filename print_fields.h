@@ -277,4 +277,18 @@
 			       (size_), (hwtype_));			\
 	} while (0)
 
+# define PRINT_FIELD_LEN(prefix_, struct_t_, struct_val_, field_, len_,	\
+			print_func_, args...)				\
+do {									\
+	unsigned int start = offsetof(struct struct_t_, field_);	\
+	unsigned int end = start + sizeof(struct_val_.field_);		\
+	if (len_ >= end) {						\
+		print_func_(prefix_, struct_val_, field_, ##args);	\
+	} else if (len_ > start) {					\
+		tprintf("%s%s=", prefix_, #field_);			\
+		print_quoted_string((void *)&struct_val_.field_,	\
+				len_ - start, QUOTE_FORCE_HEX);		\
+	}								\
+} while (0);
+
 #endif /* !STRACE_PRINT_FIELDS_H */
