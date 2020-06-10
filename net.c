@@ -620,9 +620,9 @@ print_get_ucred(struct tcb *const tcp, const kernel_ulong_t addr,
 	if (len < sizeof(uc.pid)) {
 		tprints("{pid=");
 		print_quoted_string((void *) &uc.pid,
-				    len, QUOTE_FORCE_HEX);
+				    len, QUOTE_FORCE_HEX); //TODO
 	} else {
-		PRINT_FIELD_D("{", uc, pid);
+		PRINT_FIELD_TGID("{", uc, pid, tcp);
 
 		if (len > offsetof(struct ucred, uid)) {
 			len -= offsetof(struct ucred, uid);
