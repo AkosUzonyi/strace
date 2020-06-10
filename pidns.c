@@ -614,11 +614,9 @@ get_proc_pid(struct tcb *tcp)
 }
 
 void
-printpid(struct tcb *tcp, int pid, enum pid_type type)
+printpid_translation(struct tcb *tcp, int pid, enum pid_type type)
 {
 	int strace_pid;
-
-	tprintf("%d", pid);
 
 	if (perform_ns_resolution) {
 		strace_pid = translate_pid(tcp, pid, type, NULL);
@@ -626,4 +624,11 @@ printpid(struct tcb *tcp, int pid, enum pid_type type)
 		if ((strace_pid > 0) && (pid != strace_pid))
 			tprintf_comment("%d in strace's PID NS", strace_pid);
 	}
+}
+
+void
+printpid(struct tcb *tcp, int pid, enum pid_type type)
+{
+	tprintf("%d", pid);
+	printpid_translation(tcp, pid, type);
 }

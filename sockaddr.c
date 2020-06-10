@@ -411,6 +411,11 @@ print_sockaddr_data_nl(const void *const buf, const int addrlen)
 {
 	const struct sockaddr_nl *const sa_nl = buf;
 
+	/*
+	TODO
+	We don't have a tcb here to translate this PID
+	Should I add a tcb parameter to sockaddr_printer?
+	*/
 	PRINT_FIELD_D("", *sa_nl, nl_pid);
 	PRINT_FIELD_0X(", ", *sa_nl, nl_groups);
 }
