@@ -392,6 +392,18 @@ printnum_fd(struct tcb *const tcp, const kernel_ulong_t addr)
 	return true;
 }
 
+bool
+printnum_pid(struct tcb *const tcp, const kernel_ulong_t addr, enum pid_type type)
+{
+	int pid;
+	if (umove_or_printaddr(tcp, addr, &pid))
+		return false;
+	tprints("[");
+	printpid(tcp, pid, type);
+	tprints("]");
+	return true;
+}
+
 /**
  * Prints time to a (static internal) buffer and returns pointer to it.
  * Returns NULL if the provided time specification is not correct.
