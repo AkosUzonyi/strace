@@ -58,6 +58,11 @@
 static void
 printsigsource(const siginfo_t *sip)
 {
+	/*
+	TODO
+	We don't have a tcb here to translate this PID
+	Should I add a tcb parameter to every function in the call hiearchy?
+	*/
 	tprintf(", si_pid=%u, si_uid=%u",
 		(unsigned int) sip->si_pid,
 		(unsigned int) sip->si_uid);

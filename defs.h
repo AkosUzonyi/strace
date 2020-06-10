@@ -1083,6 +1083,7 @@ printfd(struct tcb *tcp, int fd)
  */
 extern void printfd_pid_tracee_ns(struct tcb *tcp, pid_t pid, int fd);
 extern void printpid(struct tcb *tcp, int pid, enum pid_type type);
+extern void printpid_translation(struct tcb *tcp, int pid, enum pid_type type);
 extern void print_sockaddr(const void *sa, int len);
 extern bool
 print_inet_addr(int af, const void *addr, unsigned int len, const char *var_name);
@@ -1531,6 +1532,9 @@ DECL_PRINTNUM_ADDR(int64);
 
 extern bool
 printnum_fd(struct tcb *, kernel_ulong_t addr);
+
+extern bool
+printnum_pid(struct tcb *const tcp, const kernel_ulong_t addr, enum pid_type type);
 
 static inline bool
 printnum_slong(struct tcb *tcp, kernel_ulong_t addr)
