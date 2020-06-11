@@ -51,17 +51,6 @@ struct proc_data {
 	int *id_hierarchy[PT_COUNT]; /* from top to bottom of NS hierarchy */
 };
 
-static uint8_t
-lg2(uint64_t n)
-{
-	uint8_t res = 0;
-	while (n) {
-		res++;
-		n >>= 1;
-	}
-	return res;
-}
-
 static int
 get_pid_max(void)
 {
@@ -90,7 +79,7 @@ pidns_init(void)
 	for (int i = 0; i < PT_COUNT; i++)
 		ns_pid_to_proc_pid[i] = btree_create(6, 16, 16, 64, 0);
 
-	proc_data_cache = btree_create(6, 16, 16, lg2(get_pid_max() - 1), 0);
+	proc_data_cache = btree_create(6, 16, 16, ilog2_32(get_pid_max() - 1), 0);
 
 	inited = true;
 }
@@ -101,8 +90,8 @@ put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 	struct btree *b = (struct btree *) btree_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
 		int pid_max = get_pid_max();
-		uint8_t pid_max_size = lg2(pid_max - 1);
-		uint8_t pid_max_size_lg = lg2(pid_max_size - 1);
+		uint8_t pid_max_size = ilog2_32(pid_max - 1);
+		uint8_t pid_max_size_lg = ilog2_32(pid_max_size - 1);
 		b = btree_create(pid_max_size_lg, 16, 16, pid_max_size, 0);
 
 		btree_set(ns_pid_to_proc_pid[type], ns, (uint64_t) b);
