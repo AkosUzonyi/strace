@@ -1,4 +1,4 @@
-/* Simple B-tree implementation for key-value mapping storage */
+/* Simple trie implementation for key-value mapping storage */
 
 #include "defs.h"
 
@@ -7,12 +7,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "btree.h"
+#include "trie.h"
 
 static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 6 : 5);
 
 bool
-btree_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
+trie_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 	    uint8_t data_block_size_lg, uint8_t key_size)
 {
 	if (item_size_lg > 6)
@@ -30,47 +30,47 @@ btree_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 }
 
 void
-btree_init(struct btree *b, uint8_t item_size_lg, uint8_t ptr_block_size_lg,
+trie_init(struct trie *t, uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 	   uint8_t data_block_size_lg, uint8_t key_size, uint64_t set_value)
 {
-	assert(btree_check(item_size_lg, ptr_block_size_lg, data_block_size_lg,
+	assert(trie_check(item_size_lg, ptr_block_size_lg, data_block_size_lg,
 			   key_size));
 
-	b->set_value = set_value;
-	b->data = BTREE_UNSET;
-	b->item_size_lg = item_size_lg;
-	b->ptr_block_size_lg = ptr_block_size_lg;
-	b->data_block_size_lg = data_block_size_lg;
-	b->key_size = key_size;
+	t->set_value = set_value;
+	t->data = TRIE_UNSET;
+	t->item_size_lg = item_size_lg;
+	t->ptr_block_size_lg = ptr_block_size_lg;
+	t->data_block_size_lg = data_block_size_lg;
+	t->key_size = key_size;
 }
 
 static uint8_t
-btree_get_depth(struct btree *b)
+trie_get_depth(struct trie *t)
 {
-	return (b->key_size - (b->data_block_size_lg - b->item_size_lg) +
-		b->ptr_block_size_lg - ptr_sz_lg - 1) / (b->ptr_block_size_lg - ptr_sz_lg);
+	return (t->key_size - (t->data_block_size_lg - t->item_size_lg) +
+		t->ptr_block_size_lg - ptr_sz_lg - 1) / (t->ptr_block_size_lg - ptr_sz_lg);
 }
 
 /**
- * Returns lg2 of block size for the specific level of B-tree. If max_depth
- * provided is less than zero, it is calculated via btree_get_depth call.
+ * Returns lg2 of block size for the specific level of the trie. If max_depth
+ * provided is less than zero, it is calculated via trie_get_depth call.
  */
 static uint8_t
-btree_get_block_size(struct btree *b, uint8_t depth, int max_depth)
+trie_get_block_size(struct trie *t, uint8_t depth, int max_depth)
 {
 	if (max_depth < 0)
-		max_depth = btree_get_depth(b);
+		max_depth = trie_get_depth(t);
 
 	/* Last level contains data and we allow it having a different size */
 	if (depth == max_depth)
-		return b->data_block_size_lg;
+		return t->data_block_size_lg;
 	/* Last level of the tree can be smaller */
 	if (depth == max_depth - 1)
-		return (b->key_size -
-			(b->data_block_size_lg - b->item_size_lg) - 1) %
-			(b->ptr_block_size_lg - ptr_sz_lg) + 1 + ptr_sz_lg;
+		return (t->key_size -
+			(t->data_block_size_lg - t->item_size_lg) - 1) %
+			(t->ptr_block_size_lg - ptr_sz_lg) + 1 + ptr_sz_lg;
 
-	return b->ptr_block_size_lg;
+	return t->ptr_block_size_lg;
 }
 
 #define round_down(a, b) (((a) / (b)) * (b))
@@ -80,50 +80,50 @@ btree_get_block_size(struct btree *b, uint8_t depth, int max_depth)
  * at the specific level.
  */
 static uint8_t
-btree_get_block_bit_offs(struct btree *b, uint8_t depth, int max_depth)
+trie_get_block_bit_offs(struct trie *t, uint8_t depth, int max_depth)
 {
 	uint8_t offs;
 
 	if (max_depth < 0)
-		max_depth = btree_get_depth(b);
+		max_depth = trie_get_depth(t);
 
 	if (depth == max_depth)
 		return 0;
 
-	offs = b->data_block_size_lg - b->item_size_lg;
+	offs = t->data_block_size_lg - t->item_size_lg;
 
 	if (depth == max_depth - 1)
 		return offs;
 
 	/* data_block_size + remainder */
-	offs += btree_get_block_size(b, max_depth - 1, max_depth) - ptr_sz_lg;
-	offs += (max_depth - depth - 2) * (b->ptr_block_size_lg - ptr_sz_lg);
+	offs += trie_get_block_size(t, max_depth - 1, max_depth) - ptr_sz_lg;
+	offs += (max_depth - depth - 2) * (t->ptr_block_size_lg - ptr_sz_lg);
 
 	return offs;
 }
 
-struct btree *
-btree_create(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
+struct trie *
+trie_create(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 	     uint8_t data_block_size_lg, uint8_t key_size, uint64_t set_value)
 {
-	struct btree *b;
+	struct trie *t;
 
-	if (!btree_check(item_size_lg, ptr_block_size_lg, data_block_size_lg,
+	if (!trie_check(item_size_lg, ptr_block_size_lg, data_block_size_lg,
 	    key_size))
 		return NULL;
 
-	b = malloc(sizeof(*b));
-	if (!b)
+	t = malloc(sizeof(*t));
+	if (!t)
 		return NULL;
 
-	btree_init(b, item_size_lg, ptr_block_size_lg, data_block_size_lg,
+	trie_init(t, item_size_lg, ptr_block_size_lg, data_block_size_lg,
 		   key_size, set_value);
 
-	return b;
+	return t;
 }
 
 static uint64_t
-btree_filler(uint64_t val, uint8_t item_size)
+trie_filler(uint64_t val, uint8_t item_size)
 {
 	val &= (1 << (1 << item_size)) - 1;
 
@@ -134,23 +134,23 @@ btree_filler(uint64_t val, uint8_t item_size)
 }
 
 static uint64_t *
-btree_get_block(struct btree *b, uint64_t key, bool auto_create)
+trie_get_block(struct trie *t, uint64_t key, bool auto_create)
 {
-	void **cur_block = &(b->data);
+	void **cur_block = &(t->data);
 	unsigned i;
 	uint8_t cur_depth;
 	uint8_t max_depth;
 	uint8_t sz;
 
-	if (b->key_size < 64 && key > (uint64_t) 1 << b->key_size)
+	if (t->key_size < 64 && key > (uint64_t) 1 << t->key_size)
 		return NULL;
 
-	max_depth = btree_get_depth(b);
+	max_depth = trie_get_depth(t);
 
 	for (cur_depth = 0; cur_depth <= max_depth; cur_depth++) {
-		sz = btree_get_block_size(b, cur_depth, max_depth);
+		sz = trie_get_block_size(t, cur_depth, max_depth);
 
-		if (*cur_block == BTREE_SET || *cur_block == BTREE_UNSET) {
+		if (*cur_block == TRIE_SET || *cur_block == TRIE_UNSET) {
 			void *old_val = *cur_block;
 
 			if (!auto_create)
@@ -158,17 +158,17 @@ btree_get_block(struct btree *b, uint64_t key, bool auto_create)
 
 			*cur_block = xcalloc(1 << sz, 8);
 
-			if (old_val == BTREE_SET) {
-				uint64_t fill_value = cur_depth == max_depth ? b->set_value : (uintptr_t) BTREE_SET;
-				uint8_t fill_size = cur_depth == max_depth ? b->item_size_lg : ptr_sz_lg;
+			if (old_val == TRIE_SET) {
+				uint64_t fill_value = cur_depth == max_depth ? t->set_value : (uintptr_t) TRIE_SET;
+				uint8_t fill_size = cur_depth == max_depth ? t->item_size_lg : ptr_sz_lg;
 
 				for (i = 0; i < ((unsigned int)1 << (sz - 3)); i++)
-					((uint64_t *) *cur_block)[i] = btree_filler(fill_value, fill_size);
+					((uint64_t *) *cur_block)[i] = trie_filler(fill_value, fill_size);
 			}
 		}
 
 		if (cur_depth < max_depth) {
-			size_t pos = (key >> btree_get_block_bit_offs(b,
+			size_t pos = (key >> trie_get_block_bit_offs(t,
 				cur_depth, max_depth)) & ((1 << (sz - ptr_sz_lg)) - 1);
 
 			cur_block = (((void **) (*cur_block)) + pos);
@@ -179,20 +179,20 @@ btree_get_block(struct btree *b, uint64_t key, bool auto_create)
 }
 
 bool
-btree_set(struct btree *b, uint64_t key, uint64_t val)
+trie_set(struct trie *t, uint64_t key, uint64_t val)
 {
-	uint64_t *data = btree_get_block(b, key, true);
-	size_t mask = (1 << (b->data_block_size_lg - b->item_size_lg)) - 1;
-	size_t pos = (key & mask) >> (6 - b->item_size_lg);
+	uint64_t *data = trie_get_block(t, key, true);
+	size_t mask = (1 << (t->data_block_size_lg - t->item_size_lg)) - 1;
+	size_t pos = (key & mask) >> (6 - t->item_size_lg);
 
 	if (!data)
 		return false;
 
-	if (b->item_size_lg == 6) {
+	if (t->item_size_lg == 6) {
 		data[pos] = val;
 	} else {
-		size_t offs = (key & ((1 << (6 - b->item_size_lg)) - 1)) * (1 << b->item_size_lg);
-		uint64_t mask = (((uint64_t) 1 << (1 << b->item_size_lg)) - 1) << offs;
+		size_t offs = (key & ((1 << (6 - t->item_size_lg)) - 1)) * (1 << t->item_size_lg);
+		uint64_t mask = (((uint64_t) 1 << (1 << t->item_size_lg)) - 1) << offs;
 
 		data[pos] &= ~mask;
 		data[pos] |= (val << offs) & mask;
@@ -203,7 +203,7 @@ btree_set(struct btree *b, uint64_t key, uint64_t val)
 
 #if 0
 int
-btree_mask_set(struct btree *b, uint64_t key, uint8_t mask_bits)
+trie_mask_set(struct trie *t, uint64_t key, uint8_t mask_bits)
 {
 }
 
@@ -212,23 +212,23 @@ btree_mask_set(struct btree *b, uint64_t key, uint8_t mask_bits)
  * key.
  */
 int
-btree_mask_unset(struct btree *b, uint64_t key, uint8_t mask_bits)
+trie_mask_unset(struct trie *t, uint64_t key, uint8_t mask_bits)
 {
 }
 
 int
-btree_interval_set(struct btree *b, uint64_t begin, uint64_t end, uint64_t val)
+trie_interval_set(struct trie *t, uint64_t begin, uint64_t end, uint64_t val)
 {
 }
 
 uint64_t
-btree_get_next_set_key(struct btree *b, uint64_t key)
+trie_get_next_set_key(struct trie *t, uint64_t key)
 {
 }
 #endif
 
 static uint64_t
-btree_data_block_get(struct btree *b, uint64_t *data, uint64_t key)
+trie_data_block_get(struct trie *t, uint64_t *data, uint64_t key)
 {
 	size_t mask;
 	size_t pos;
@@ -236,50 +236,50 @@ btree_data_block_get(struct btree *b, uint64_t *data, uint64_t key)
 
 	if (!data)
 		return 0;
-	if ((void *) data == (void *) BTREE_SET)
-		return b->set_value;
+	if ((void *) data == (void *) TRIE_SET)
+		return t->set_value;
 
-	mask = (1 << (b->data_block_size_lg - b->item_size_lg)) - 1;
-	pos = (key & mask) >> (6 - b->item_size_lg);
+	mask = (1 << (t->data_block_size_lg - t->item_size_lg)) - 1;
+	pos = (key & mask) >> (6 - t->item_size_lg);
 
-	if (b->item_size_lg == 6)
+	if (t->item_size_lg == 6)
 		return data[pos];
 
-	offs = (key & ((1 << (6 - b->item_size_lg)) - 1)) * (1 << b->item_size_lg);
+	offs = (key & ((1 << (6 - t->item_size_lg)) - 1)) * (1 << t->item_size_lg);
 
-	return (data[pos] >> offs) & (((uint64_t)1 << (1 << b->item_size_lg)) - 1);
+	return (data[pos] >> offs) & (((uint64_t)1 << (1 << t->item_size_lg)) - 1);
 }
 
 uint64_t
-btree_get(struct btree *b, uint64_t key)
+trie_get(struct trie *b, uint64_t key)
 {
-	return btree_data_block_get(b, btree_get_block(b, key, false), key);
+	return trie_data_block_get(b, trie_get_block(b, key, false), key);
 }
 
 static uint64_t
-btree_iterate_keys_block(struct btree *b, enum btree_iterate_flags flags,
-				btree_iterate_fn fn, void *fn_data,
+trie_iterate_keys_block(struct trie *t, enum trie_iterate_flags flags,
+				trie_iterate_fn fn, void *fn_data,
 				uint64_t **block, uint64_t start, uint64_t end,
 				uint8_t depth, uint8_t max_depth)
 {
 	if (start > end)
 		return 0;
 
-	if ((block == BTREE_SET && !(flags & BTREE_ITERATE_KEYS_SET)) ||
-		(block == BTREE_UNSET && !(flags & BTREE_ITERATE_KEYS_UNSET)))
+	if ((block == TRIE_SET && !(flags & TRIE_ITERATE_KEYS_SET)) ||
+		(block == TRIE_UNSET && !(flags & TRIE_ITERATE_KEYS_UNSET)))
 		return 0;
 
-	if (block == BTREE_SET || block == BTREE_UNSET || depth == max_depth) {
+	if (block == TRIE_SET || block == TRIE_UNSET || depth == max_depth) {
 		for (uint64_t i = start; i <= end; i++)
-			fn(fn_data, i, btree_data_block_get(b, (uint64_t *) block, i));
+			fn(fn_data, i, trie_data_block_get(t, (uint64_t *) block, i));
 
 		return end - start + 1; //TODO: overflow
 	}
 
-	uint8_t parent_block_bit_off = depth == 0 ? b->key_size : btree_get_block_bit_offs(b, depth - 1, max_depth);
+	uint8_t parent_block_bit_off = depth == 0 ? t->key_size : trie_get_block_bit_offs(t, depth - 1, max_depth);
 	uint64_t first_key_in_block = start & (uint64_t) -1 << parent_block_bit_off;
 
-	uint8_t block_bit_off = btree_get_block_bit_offs(b, depth, max_depth);
+	uint8_t block_bit_off = trie_get_block_bit_offs(t, depth, max_depth);
 	uint8_t block_key_bits = parent_block_bit_off - block_bit_off;
 	uint64_t mask = ((uint64_t) 1 << (block_key_bits)) - 1;
 	uint64_t start_index = (start >> block_bit_off) & mask;
@@ -297,7 +297,7 @@ btree_iterate_keys_block(struct btree *b, enum btree_iterate_flags flags,
 		if (child_end > end)
 			child_end = end;
 
-		count += btree_iterate_keys_block(b, flags, fn, fn_data,
+		count += trie_iterate_keys_block(t, flags, fn, fn_data,
 			(uint64_t **) block[i], child_start, child_end,
 			depth + 1, max_depth);
 	}
@@ -305,40 +305,40 @@ btree_iterate_keys_block(struct btree *b, enum btree_iterate_flags flags,
 	return count;
 }
 
-uint64_t btree_iterate_keys(struct btree *b, uint64_t start, uint64_t end,
-			    enum btree_iterate_flags flags, btree_iterate_fn fn,
+uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
+			    enum trie_iterate_flags flags, trie_iterate_fn fn,
 			    void *fn_data)
 {
-	return btree_iterate_keys_block(b, flags, fn, fn_data, b->data,
-		start, end, 0, btree_get_depth(b));
+	return trie_iterate_keys_block(t, flags, fn, fn_data, t->data,
+		start, end, 0, trie_get_depth(t));
 }
 
 void
-btree_free_block(struct btree *b, uint64_t **block, uint8_t depth,
+trie_free_block(struct trie *t, uint64_t **block, uint8_t depth,
 		 int max_depth)
 {
 	size_t sz;
 	size_t i;
 
-	if (block == BTREE_SET || block == BTREE_UNSET)
+	if (block == TRIE_SET || block == TRIE_UNSET)
 		return;
 	if (max_depth < 0)
-		max_depth = btree_get_depth(b);
+		max_depth = trie_get_depth(t);
 	if (depth >= max_depth)
 		goto free_block;
 
-	sz = 1 << (btree_get_block_size(b, depth, max_depth) - ptr_sz_lg);
+	sz = 1 << (trie_get_block_size(t, depth, max_depth) - ptr_sz_lg);
 
 	for (i = 0; i < sz; i++)
-		btree_free_block(b, (uint64_t **) (block[i]), depth + 1, max_depth);
+		trie_free_block(t, (uint64_t **) (block[i]), depth + 1, max_depth);
 
 free_block:
 	free(block);
 }
 
 void
-btree_free(struct btree *b)
+trie_free(struct trie *t)
 {
-	btree_free_block(b, b->data, 0, -1);
-	free(b);
+	trie_free_block(t, t->data, 0, -1);
+	free(t);
 }
