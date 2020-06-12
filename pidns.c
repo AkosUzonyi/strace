@@ -491,7 +491,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path, bool read_ta
 			continue;
 
 		errno = 0;
-		int proc_pid = strtol(entry->d_name, NULL, 10);
+		long proc_pid = strtol(entry->d_name, NULL, 10);
 		if (errno)
 			continue;
 		if ((proc_pid < 1) || (proc_pid > INT_MAX))
@@ -499,7 +499,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path, bool read_ta
 
 		if (read_task_dir) {
 			char task_dir_path[PATH_MAX + 1];
-			snprintf(task_dir_path, sizeof(task_dir_path), "/proc/%d/task", proc_pid);
+			snprintf(task_dir_path, sizeof(task_dir_path), "/proc/%ld/task", proc_pid);
 			translate_id_dir(tip, task_dir_path, false);
 		}
 
