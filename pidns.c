@@ -170,10 +170,8 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 		return 0;
 
 	fd = open(path, O_RDONLY | O_NONBLOCK);
-	if (fd < 0) {
-		perror_msg("get_ns_hierarchy: opening /proc/<pid>/ns/pid");
+	if (fd < 0)
 		return 0;
-	}
 
 	while (1) {
 		ret = fstat(fd, &st);
@@ -255,10 +253,8 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		return 0;
 
 	f = fopen(buf, "r");
-	if (!f) {
-		perror_msg("get_id_list: opening /proc/<pid>/status");
+	if (!f)
 		return 0;
-	}
 
 	free(buf);
 	buf = NULL;
