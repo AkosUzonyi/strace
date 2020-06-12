@@ -14,12 +14,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "btree.h"
+#include "trie.h"
 #include "nsfs.h"
 #include "xmalloc.h"
 
-struct btree *ns_pid_to_proc_pid[PT_COUNT];
-struct btree *proc_data_cache;
+struct trie *ns_pid_to_proc_pid[PT_COUNT];
+struct trie *proc_data_cache;
 
 static const char tid_str[]  = "NSpid:\t";
 static const char tgid_str[] = "NStgid:\t";
@@ -88,9 +88,9 @@ pidns_init(void)
 		return;
 
 	for (int i = 0; i < PT_COUNT; i++)
-		ns_pid_to_proc_pid[i] = btree_create(6, 16, 16, 64, 0);
+		ns_pid_to_proc_pid[i] = trie_create(6, 16, 16, 64, 0);
 
-	proc_data_cache = btree_create(6, 16, 16, lg2(get_pid_max() - 1), 0);
+	proc_data_cache = trie_create(6, 16, 16, lg2(get_pid_max() - 1), 0);
 
 	inited = true;
 }
@@ -98,26 +98,26 @@ pidns_init(void)
 static void
 put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 {
-	struct btree *b = (struct btree *) btree_get(ns_pid_to_proc_pid[type], ns);
+	struct trie *b = (struct trie *) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
 		int pid_max = get_pid_max();
 		uint8_t pid_max_size = lg2(pid_max - 1);
 		uint8_t pid_max_size_lg = lg2(pid_max_size - 1);
-		b = btree_create(pid_max_size_lg, 16, 16, pid_max_size, 0);
+		b = trie_create(pid_max_size_lg, 16, 16, pid_max_size, 0);
 
-		btree_set(ns_pid_to_proc_pid[type], ns, (uint64_t) b);
+		trie_set(ns_pid_to_proc_pid[type], ns, (uint64_t) b);
 	}
-	btree_set(b, ns_pid, proc_pid);
+	trie_set(b, ns_pid, proc_pid);
 }
 
 static int
 get_cached_proc_pid(uint64_t ns, int ns_pid, enum pid_type type)
 {
-	struct btree *b = (struct btree *) btree_get(ns_pid_to_proc_pid[type], ns);
+	struct trie *b = (struct trie *) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b)
 		return 0;
 
-	return btree_get(b, ns_pid);
+	return trie_get(b, ns_pid);
 }
 
 /**
@@ -354,7 +354,7 @@ get_our_ns(void)
 static struct proc_data *
 get_or_create_proc_data(int proc_pid)
 {
-	struct proc_data *pd = (struct proc_data *) btree_get(proc_data_cache, proc_pid);
+	struct proc_data *pd = (struct proc_data *) trie_get(proc_data_cache, proc_pid);
 
 	if (!pd) {
 		pd = calloc(1, sizeof(*pd));
@@ -362,7 +362,7 @@ get_or_create_proc_data(int proc_pid)
 			return NULL;
 
 		pd->proc_pid = proc_pid;
-		btree_set(proc_data_cache, proc_pid, (uint64_t) pd);
+		trie_set(proc_data_cache, proc_pid, (uint64_t) pd);
 	}
 
 	return pd;
@@ -397,7 +397,7 @@ fail:
 	if (pd)
 		free(pd);
 
-	btree_set(proc_data_cache, pd->proc_pid, (uint64_t) NULL);
+	trie_set(proc_data_cache, pd->proc_pid, (uint64_t) NULL);
 	return false;
 }
 
@@ -578,7 +578,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_pt
 	}
 
 	/* Iterate through the cache, find potential proc_data */
-	btree_iterate_keys(proc_data_cache, 0, get_pid_max(), 0, proc_data_cache_iterator_fn, &tip);
+	trie_iterate_keys(proc_data_cache, 0, get_pid_max(), 0, proc_data_cache_iterator_fn, &tip);
 	/* (proc_data_cache_iterator_fn takes care about updating proc_data) */
 	if (tip.result_id)
 		goto translate_pid_exit;
