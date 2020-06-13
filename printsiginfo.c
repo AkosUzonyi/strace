@@ -56,16 +56,11 @@
 #endif
 
 static void
-printsigsource(const siginfo_t *sip)
+printsigsource(struct tcb *tcp, const siginfo_t *sip)
 {
-	/*
-	TODO
-	We don't have a tcb here to translate this PID
-	Should I add a tcb parameter to every function in the call hiearchy?
-	*/
-	tprintf(", si_pid=%u, si_uid=%u",
-		(unsigned int) sip->si_pid,
-		(unsigned int) sip->si_uid);
+	tprints(", si_pid=");
+	printpid(tcp, sip->si_pid, PT_TGID);
+	tprintf(", si_uid=%u", (unsigned int) sip->si_uid);
 }
 
 static void
@@ -122,7 +117,7 @@ print_si_code(int si_signo, unsigned int si_code)
 }
 
 static void
-print_si_info(const siginfo_t *sip)
+print_si_info(struct tcb *tcp, const siginfo_t *sip)
 {
 	if (sip->si_errno)
 		PRINT_FIELD_ERR_U(", ", *sip, si_errno);
@@ -130,10 +125,10 @@ print_si_info(const siginfo_t *sip)
 	if (SI_FROMUSER(sip)) {
 		switch (sip->si_code) {
 		case SI_USER:
-			printsigsource(sip);
+			printsigsource(tcp, sip);
 			break;
 		case SI_TKILL:
-			printsigsource(sip);
+			printsigsource(tcp, sip);
 			break;
 #if defined HAVE_SIGINFO_T_SI_TIMERID && defined HAVE_SIGINFO_T_SI_OVERRUN
 		case SI_TIMER:
@@ -143,7 +138,7 @@ print_si_info(const siginfo_t *sip)
 			break;
 #endif
 		default:
-			printsigsource(sip);
+			printsigsource(tcp, sip);
 			if (sip->si_ptr)
 				printsigval(sip);
 			break;
@@ -151,7 +146,7 @@ print_si_info(const siginfo_t *sip)
 	} else {
 		switch (sip->si_signo) {
 		case SIGCHLD:
-			printsigsource(sip);
+			printsigsource(tcp, sip);
 			tprints(", si_status=");
 			if (sip->si_code == CLD_EXITED)
 				tprintf("%d", sip->si_status);
@@ -210,7 +205,7 @@ print_si_info(const siginfo_t *sip)
 #endif
 		default:
 			if (sip->si_pid || sip->si_uid)
-				printsigsource(sip);
+				printsigsource(tcp, sip);
 			if (sip->si_ptr)
 				printsigval(sip);
 		}
@@ -221,7 +216,7 @@ print_si_info(const siginfo_t *sip)
 static
 #endif
 void
-printsiginfo(const siginfo_t *sip)
+printsiginfo(struct tcb *tcp, const siginfo_t *sip)
 {
 	if (sip->si_signo == 0) {
 		tprints("{}");
@@ -236,7 +231,7 @@ printsiginfo(const siginfo_t *sip)
 #ifdef SI_NOINFO
 	if (sip->si_code != SI_NOINFO)
 #endif
-		print_si_info(sip);
+		print_si_info(tcp, sip);
 
 	tprints("}");
 }
@@ -247,13 +242,13 @@ MPERS_PRINTER_DECL(void, printsiginfo_at,
 	siginfo_t si;
 
 	if (!umove_or_printaddr(tcp, addr, &si))
-		printsiginfo(&si);
+		printsiginfo(tcp, &si);
 }
 
 static bool
 print_siginfo_t(struct tcb *tcp, void *elem_buf, size_t elem_size, void *data)
 {
-	printsiginfo((const siginfo_t *) elem_buf);
+	printsiginfo(tcp, (const siginfo_t *) elem_buf);
 	return true;
 }
 
