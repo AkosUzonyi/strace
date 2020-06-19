@@ -171,6 +171,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	pc \
 	perf_event_open_nonverbose \
 	perf_event_open_unabbrev \
+	pidns \
 	poll-P \
 	ppoll-P \
 	ppoll-v \
@@ -386,6 +387,7 @@ MISC_TESTS = \
 	opipe.test \
 	options-syntax.test \
 	pc.test \
+	pidns.test \
 	printpath-umovestr-legacy.test \
 	printstrn-umoven-legacy.test \
 	qual_fault-syntax.test \
