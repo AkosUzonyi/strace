@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define CHLID_STACK_SIZE 8192
+#define CHLID_STACK_SIZE (1 << 15)
 
 enum pid_type {
 	PT_TID,
@@ -53,6 +53,18 @@ print_id_pair(struct id_pair id_pair)
 	printf("%d", id_pair.id);
 	if (id_pair.id != id_pair.strace_id)
 		printf(" /* %d in strace's PID NS */", id_pair.strace_id);
+}
+
+static pid_t
+do_clone(int (*func)(void *), void *arg)
+{
+	char *stack_end = (char *) malloc(CHLID_STACK_SIZE) + CHLID_STACK_SIZE;
+	fflush(stdout);
+	pid_t pid = clone(func, stack_end, SIGCHLD, arg);
+	if (pid < 0)
+		perror_msg_and_fail("clone");
+
+	return pid;
 }
 
 static int
@@ -103,35 +115,13 @@ child_fn(void* arg)
 }
 
 static pid_t
-launch_child(pid_t pgid, bool new_sid, int *ns_fd)
+launch_child(pid_t pgid, bool new_sid)
 {
-	char *stack_end = (char *) malloc(CHLID_STACK_SIZE) + CHLID_STACK_SIZE;
-
 	int child_pipe[2];
 	if (pipe(child_pipe) < 0)
 		perror_msg_and_fail("pipe");
 
-	int clone_flags = SIGCHLD;
-
-	if (*ns_fd) {
-		if (setns(*ns_fd, CLONE_NEWPID) < 0)
-			perror_msg_and_fail("setns");
-	} else {
-		clone_flags |= CLONE_NEWPID;
-	}
-
-	fflush(stdout);
-	pid_t pid = clone(child_fn, stack_end, clone_flags, child_pipe);
-	if (pid < 0)
-		perror_msg_and_fail("clone");
-
-	if (!*ns_fd) {
-		char ns_fd_path[PATH_MAX + 1];
-		snprintf(ns_fd_path, sizeof(ns_fd_path), "/proc/%d/ns/pid", pid);
-		*ns_fd = open(ns_fd_path, O_RDONLY);
-		if (!*ns_fd)
-			perror_msg_and_fail("open");
-	}
+	pid_t pid = do_clone(child_fn, child_pipe);
 
 	struct id_pair child_ids[PT_COUNT];
 	child_ids[PT_TID].strace_id = pid;
@@ -165,26 +155,35 @@ launch_child(pid_t pgid, bool new_sid, int *ns_fd)
 	return pid;
 }
 
+static int pause_fn(void *arg)
+{
+	pause();
+	return 0;
+}
+
 int
 main(void)
 {
-	pid_t parent_pid = getpid();
-	printf("%d getpid() = %d\n", parent_pid, parent_pid);
-	assert(kill(parent_pid, 0) == 0);
-	printf("%d kill(%d, 0) = 0\n", parent_pid, parent_pid);
+	pid_t pid = getpid();
+	printf("%d getpid() = %d\n", pid, pid);
 
-	int ns_fd = 0;
-	launch_child(-1, false, &ns_fd);
-	launch_child(-1, true, &ns_fd);
-	pid_t tgid = launch_child(0, false, &ns_fd);
-	launch_child(tgid, false, &ns_fd);
-	launch_child(tgid, true, &ns_fd);
+	unshare(CLONE_NEWPID);
 
-	/* Now remove all zombies */
+	/* Create sleeping process, to keep PID namespace alive */
+	pid_t pause_pid = do_clone(pause_fn, NULL);
+
+	launch_child(-1, false);
+	launch_child(-1, true);
+	pid_t tgid = launch_child(0, false);
+	launch_child(tgid, false);
+	launch_child(tgid, true);
+
+	kill(pause_pid, SIGKILL);
+	printf("%d kill(%d, SIGKILL) = 0\n", pid, pause_pid);
 	while (wait(NULL) > 0);
 	if (errno != ECHILD)
 		perror_msg_and_fail("wait");
 
-	printf("%d +++ exited with 0 +++\n", parent_pid);
+	printf("%d +++ exited with 0 +++\n", pid);
 	return 0;
 }
