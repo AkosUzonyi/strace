@@ -7,10 +7,19 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+set -a
 . "${srcdir=.}/init.sh"
+set +a
 
 require_min_kernel_version_or_skip 2.6.24
+check_prog unshare
+
+if [[ $(id -u) -ne 0 ]]; then
+        skip_ "must be run as root"
+fi
 
 SYSCALLS='kill,gettid,getpid,getpgid,getsid,setsid,pidfd_open'
-run_strace_match_diff -a9 -Y -f -e trace=$SYSCALLS -e signal=none
-check_prog unshare
+RUN_STRACE="run_strace_match_diff -a15 -Y -f -e trace=$SYSCALLS -e signal=none"
+
+$RUN_STRACE
+unshare -fp bash -c "$RUN_STRACE"

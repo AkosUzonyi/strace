@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -44,7 +45,7 @@ struct id_pair {
 static void
 print_strace_tid(struct id_pair *ids)
 {
-	printf("%d ", ids[PT_TID].strace_id);
+	printf("%-5d ", ids[PT_TID].strace_id);
 }
 
 static void
@@ -206,7 +207,7 @@ int
 main(void)
 {
 	pid_t pid = getpid();
-	printf("%d getpid() = %d\n", pid, pid);
+	printf("%-5d getpid() = %d\n", pid, pid);
 
 	unshare(CLONE_NEWPID);
 
@@ -220,11 +221,11 @@ main(void)
 	launch_child(pgid, true);
 
 	kill(pause_pid, SIGKILL);
-	printf("%d kill(%d, SIGKILL) = 0\n", pid, pause_pid);
+	printf("%-5d kill(%d, SIGKILL) = 0\n", pid, pause_pid);
 	while (wait(NULL) > 0);
 	if (errno != ECHILD)
 		perror_msg_and_fail("wait");
 
-	printf("%d +++ exited with 0 +++\n", pid);
+	printf("%-5d +++ exited with 0 +++\n", pid);
 	return 0;
 }
