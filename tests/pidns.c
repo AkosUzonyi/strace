@@ -1,10 +1,10 @@
 /*
- * This file is part of execve strace test.
+ * Test PID namespace translation
  *
- * Copyright (c) 2020- The strace developers.
+ * Copyright (c) 2020 Ákos Uzonyi <uzonyi.akos@gmail.com>
  * All rights reserved.
  *
- * SPDX-License-Identifier: GPL-2.0-or-later
+ * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
 #include "tests.h"
