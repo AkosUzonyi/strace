@@ -48,7 +48,7 @@ struct proc_data {
 	int ns_count;
 	uint64_t ns_hierarchy[MAX_NS_DEPTH]; /* from bottom to top of NS hierarchy */
 	int id_count[PT_COUNT];
-	int *id_hierarchy[PT_COUNT]; /* from top to bottom of NS hierarchy */
+	int id_hierarchy[PT_COUNT][MAX_NS_DEPTH]; /* from top to bottom of NS hierarchy */
 };
 
 static int
@@ -229,21 +229,21 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 {
 	const char *ns_str = id_strs[type].str;
 	size_t ns_str_size = id_strs[type].size;
-	char *buf;
+	char *buf = NULL;
 	size_t bufsize = 0;
 	char *p;
 	char *endp;
-	FILE *f;
+	FILE *f = NULL;
 	int idx = 0;
 	ssize_t ret;
 
 	ret = asprintf(&buf, "/proc/%s/status", pid_to_str(proc_pid));
 	if (ret < 0)
-		return 0;
+		goto get_id_list_exit;
 
 	f = fopen(buf, "r");
 	if (!f)
-		return 0;
+		goto get_id_list_exit;
 
 	free(buf);
 	buf = NULL;
@@ -367,12 +367,6 @@ update_proc_data(struct proc_data *pd, enum pid_type type)
 	pd->ns_count = get_ns_hierarchy(pd->proc_pid,
 		pd->ns_hierarchy, MAX_NS_DEPTH);
 	if (!pd->ns_count)
-		goto fail;
-
-	if (!pd->id_hierarchy[type])
-		pd->id_hierarchy[type] = calloc(MAX_NS_DEPTH,
-			sizeof(pd->id_hierarchy[type][0]));
-	if (!pd->id_hierarchy[type])
 		goto fail;
 
 	pd->id_count[type] = get_id_list(pd->proc_pid,
@@ -555,7 +549,6 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_pt
 		tip.result_id = tip.from_id;
 		goto translate_pid_exit;
 	}
-
 	/* Look for a cached proc_pid for this (from_ns, from_id) pair */
 	int cached_proc_pid = get_cached_proc_pid(tip.from_ns, tip.from_id, tip.type);
 	if (cached_proc_pid) {
