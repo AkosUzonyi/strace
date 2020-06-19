@@ -81,6 +81,7 @@ child_fn(void* arg)
 		ids[PT_SID].id = setsid();
 		ids[PT_PGID].id = ids[PT_SID].id;
 		print_strace_tid(ids);
+		//TODO
 		printf("setsid() = %d\n", ids[PT_SID].id);
 	}
 
@@ -107,6 +108,46 @@ child_fn(void* arg)
 	printf("getsid(0) = ");
 	print_id_pair(ids[PT_SID]);
 	printf("\n");
+
+	int rc;
+	rc = syscall(__NR_pidfd_open, ids[PT_TGID].id, 0);
+	print_strace_tid(ids);
+	printf("pidfd_open(");
+	print_id_pair(ids[PT_TGID]);
+	printf(", 0) = %d", rc);
+	printf("\n");
+
+	rc = syscall(__NR_pidfd_open, ids[PT_TGID].id, 0);
+	print_strace_tid(ids);
+	printf("pidfd_open(");
+	print_id_pair(ids[PT_TGID]);
+	printf(", 0) = %d", rc);
+	printf("\n");
+
+	struct id_pair kill_id_pair = ids[PT_PGID];
+	kill_id_pair.id *= -1;
+	kill(kill_id_pair.id, 0);
+	print_strace_tid(ids);
+	printf("kill(");
+	print_id_pair(kill_id_pair);
+	printf(", 0) = 0\n");
+
+	kill(ids[PT_TGID].id, 0);
+	print_strace_tid(ids);
+	printf("kill(");
+	print_id_pair(ids[PT_TGID]);
+	printf(", 0) = 0\n");
+
+	kill(-1, 0);
+	print_strace_tid(ids);
+	if (ids[PT_PGID].id)
+		printf("kill(-1, 0) = 0\n");
+	else
+		printf("kill(-1, 0) = -1 %s (%m)\n", errno2name());
+
+	kill(0, 0);
+	print_strace_tid(ids);
+	printf("kill(0, 0) = 0\n");
 
 	print_strace_tid(ids);
 	printf("+++ exited with 0 +++\n");
@@ -169,14 +210,14 @@ main(void)
 
 	unshare(CLONE_NEWPID);
 
-	/* Create sleeping process, to keep PID namespace alive */
+	/* Create sleeping process to keep PID namespace alive */
 	pid_t pause_pid = do_clone(pause_fn, NULL);
 
 	launch_child(-1, false);
 	launch_child(-1, true);
-	pid_t tgid = launch_child(0, false);
-	launch_child(tgid, false);
-	launch_child(tgid, true);
+	pid_t pgid = launch_child(0, false);
+	launch_child(pgid, false);
+	launch_child(pgid, true);
 
 	kill(pause_pid, SIGKILL);
 	printf("%d kill(%d, SIGKILL) = 0\n", pid, pause_pid);

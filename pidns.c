@@ -383,10 +383,8 @@ update_proc_data(struct proc_data *pd, enum pid_type type)
 	return true;
 
 fail:
-	if (pd)
-		free(pd);
-
 	trie_set(proc_data_cache, pd->proc_pid, (uint64_t) NULL);
+	free(pd);
 	return false;
 }
 

@@ -11,6 +11,6 @@
 
 require_min_kernel_version_or_skip 2.6.24
 
-SYSCALLS='kill,gettid,getpid,getpgid,getsid,setsid'
+SYSCALLS='kill,gettid,getpid,getpgid,getsid,setsid,pidfd_open'
 run_strace_match_diff -a9 -Y -f -e trace=$SYSCALLS -e signal=none
 check_prog unshare
