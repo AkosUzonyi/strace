@@ -6,7 +6,6 @@
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
-
 #include "tests.h"
 #include "scno.h"
 #include "limits.h"
@@ -43,7 +42,7 @@ struct id_pair {
 };
 
 static void
-print_strace_tid(struct id_pair *ids)
+child_print_leader(struct id_pair *ids)
 {
 	printf("%-5d ", ids[PT_TID].strace_id);
 }
@@ -81,45 +80,51 @@ child_fn(void* arg)
 	if (ids[PT_SID].strace_id) {
 		ids[PT_SID].id = setsid();
 		ids[PT_PGID].id = ids[PT_SID].id;
-		print_strace_tid(ids);
+		child_print_leader(ids);
 		//TODO
 		printf("setsid() = %d\n", ids[PT_SID].id);
 	}
 
 	ids[PT_TID].id = syscall(__NR_gettid);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("gettid() = ");
 	print_id_pair(ids[PT_TID]);
 	printf("\n");
 
 	ids[PT_TGID].id = getpid();
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("getpid() = ");
 	print_id_pair(ids[PT_TGID]);
 	printf("\n");
 
 	ids[PT_PGID].id = getpgid(0);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("getpgid(0) = ");
 	print_id_pair(ids[PT_PGID]);
 	printf("\n");
 
+	getpgrp();
+	child_print_leader(ids);
+	printf("getpgrp() = ");
+	print_id_pair(ids[PT_PGID]);
+	printf("\n");
+
 	ids[PT_SID].id = getsid(0);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("getsid(0) = ");
 	print_id_pair(ids[PT_SID]);
 	printf("\n");
 
 	int rc;
 	rc = syscall(__NR_pidfd_open, ids[PT_TGID].id, 0);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("pidfd_open(");
 	print_id_pair(ids[PT_TGID]);
 	printf(", 0) = %d", rc);
 	printf("\n");
 
 	rc = syscall(__NR_pidfd_open, ids[PT_TGID].id, 0);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("pidfd_open(");
 	print_id_pair(ids[PT_TGID]);
 	printf(", 0) = %d", rc);
@@ -128,32 +133,44 @@ child_fn(void* arg)
 	struct id_pair kill_id_pair = ids[PT_PGID];
 	kill_id_pair.id *= -1;
 	kill(kill_id_pair.id, 0);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("kill(");
 	print_id_pair(kill_id_pair);
 	printf(", 0) = 0\n");
 
 	kill(ids[PT_TGID].id, 0);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("kill(");
 	print_id_pair(ids[PT_TGID]);
 	printf(", 0) = 0\n");
 
 	kill(-1, 0);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	if (ids[PT_PGID].id)
 		printf("kill(-1, 0) = 0\n");
 	else
-		printf("kill(-1, 0) = -1 %s (%m)\n", errno2name());
+		printf("kill(-1, 0) = -1 ESRCH (%s)\n", strerror(ESRCH));
 
 	kill(0, 0);
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("kill(0, 0) = 0\n");
 
-	print_strace_tid(ids);
+	child_print_leader(ids);
 	printf("+++ exited with 0 +++\n");
 	fflush(stdout);
 	return 0;
+}
+
+static void
+parent_print_leader(void)
+{
+	static pid_t pid;
+	if (!pid) {
+		pid = getpid();
+		parent_print_leader();
+		printf("getpid() = %d\n", pid);
+	}
+	printf("%-5d ", pid);
 }
 
 static pid_t
@@ -191,8 +208,12 @@ launch_child(pid_t pgid, bool new_sid)
 	close(child_pipe[1]);
 
 	/* WNOWAIT: leave the zombie, to be able to use it as a process group */
-	if (waitid(P_PID, pid, NULL, WEXITED | WNOWAIT) < 0)
+	siginfo_t siginfo;
+	if (waitid(P_PID, pid, &siginfo, WEXITED | WNOWAIT) < 0)
 		perror_msg_and_fail("wait");
+	if (siginfo.si_code != CLD_EXITED || siginfo.si_status)
+		error_msg_and_fail("child exited with nonzero exit status");
+
 
 	return pid;
 }
@@ -206,9 +227,6 @@ static int pause_fn(void *arg)
 int
 main(void)
 {
-	pid_t pid = getpid();
-	printf("%-5d getpid() = %d\n", pid, pid);
-
 	unshare(CLONE_NEWPID);
 
 	/* Create sleeping process to keep PID namespace alive */
@@ -220,12 +238,14 @@ main(void)
 	launch_child(pgid, false);
 	launch_child(pgid, true);
 
+	parent_print_leader();
 	kill(pause_pid, SIGKILL);
-	printf("%-5d kill(%d, SIGKILL) = 0\n", pid, pause_pid);
+	printf("kill(%d, SIGKILL) = 0\n", pause_pid);
 	while (wait(NULL) > 0);
 	if (errno != ECHILD)
 		perror_msg_and_fail("wait");
 
-	printf("%-5d +++ exited with 0 +++\n", pid);
+	parent_print_leader();
+	printf("+++ exited with 0 +++\n");
 	return 0;
 }

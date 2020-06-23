@@ -18,8 +18,8 @@ if [[ $(id -u) -ne 0 ]]; then
         skip_ "must be run as root"
 fi
 
-SYSCALLS='kill,gettid,getpid,getpgid,getsid,setsid,pidfd_open'
+SYSCALLS='kill,gettid,getpid,getpgid,getpgrp,getsid,setsid,pidfd_open'
 RUN_STRACE="run_strace_match_diff -a15 -Y -f -e trace=$SYSCALLS -e signal=none"
 
 $RUN_STRACE
-unshare -fp bash -c "$RUN_STRACE"
+unshare -fp sh -c "$RUN_STRACE"
