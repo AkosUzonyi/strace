@@ -86,7 +86,7 @@ pidns_init(void)
 	for (int i = 0; i < PT_COUNT; i++)
 		ns_pid_to_proc_pid[i] = trie_create(6, 16, 16, 64, 0);
 
-	proc_data_cache = trie_create(6, 16, 16, ilog2_32(get_pid_max() - 1), 0);
+	proc_data_cache = trie_create(6, 16, 16, 22/*ilog2_32(get_pid_max() - 1) + 1*/, 0);
 
 	inited = true;
 }
@@ -97,8 +97,8 @@ put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 	struct trie *b = (struct trie *) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
 		int pid_max = get_pid_max();
-		uint8_t pid_max_size = ilog2_32(pid_max - 1);
-		uint8_t pid_max_size_lg = ilog2_32(pid_max_size - 1);
+		uint8_t pid_max_size = ilog2_32(pid_max - 1) + 1;
+		uint8_t pid_max_size_lg = ilog2_32(pid_max_size - 1) + 1;
 		b = trie_create(pid_max_size_lg, 16, 16, pid_max_size, 0);
 
 		trie_set(ns_pid_to_proc_pid[type], ns, (uint64_t) b);
@@ -514,6 +514,8 @@ proc_data_cache_iterator_fn(void* fn_data, uint64_t key, uint64_t val)
 	if (tip->result_id)
 		return;
 
+	//tprintf("proc_data_cache_iterator_fn: %ld\n", key);
+
 	/* Translate from cache */
 	tip->pd = pd;
 	translate_id_proc_pid(tip, 0);
@@ -558,6 +560,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_pt
 	}
 	/* Look for a cached proc_pid for this (from_ns, from_id) pair */
 	int cached_proc_pid = get_cached_proc_pid(tip.from_ns, tip.from_id, tip.type);
+	cached_proc_pid = 0;
 	if (cached_proc_pid) {
 		translate_id_proc_pid(&tip, cached_proc_pid);
 		if (tip.result_id)
@@ -571,6 +574,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_pt
 		goto translate_pid_exit;
 
 	/* No cache helped, read all entries in /proc */
+	//tprintf("\n\t\t\t\t\ttranslate_id_dir\n");
 	translate_id_dir(&tip, "/proc", true);
 
 translate_pid_exit:
