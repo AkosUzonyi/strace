@@ -387,6 +387,35 @@ test_prog_set()
 	test_pure_prog_set "$@" < "$srcdir/$NAME.in"
 }
 
+test_pidns()
+{
+	local syscalls strace_pid log_filtered
+	log_filtered="log.filtered"
+
+	require_min_kernel_version_or_skip 2.6.24
+	check_prog unshare
+
+	syscalls='gettid,getpid,getpgid,getpgrp,getsid,setsid'
+	set -- "$(echo "$*" | sed "/(-e trace|--trace)=/! s/^/-e trace=${NAME},${syscalls} /")"
+	set -- "$(echo "$*" | sed "s/(-e trace|--trace)=[^[:space:]]*/\0,${syscalls}/")"
+
+	run_prog > /dev/null
+	run_strace -Y -f $@ $args > "$EXP"
+	strace_pid="$(head -n 1 $LOG | cut -d' ' -f1)"
+	grep -E -v "^$strace_pid " "$LOG" > "$log_filtered"
+	match_diff "$log_filtered" "$EXP"
+
+#	TODO
+#	STRACE_CMD="run_strace_match_diff $args -a0 -Y -f"
+#	$STRACE_CMD
+#	export -f run_strace
+#	export LOG STRACE
+#	if [[ $(id -u) -e 0 ]]; then
+#		unshare -fp sh -c "$STRACE_CMD"
+#		skip_ "must be run as root"
+#	fi
+}
+
 check_prog cat
 check_prog rm
 

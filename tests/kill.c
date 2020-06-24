@@ -11,6 +11,7 @@
 
 #include "tests.h"
 #include "scno.h"
+#include "pidns.h"
 
 #ifdef __NR_kill
 
@@ -26,6 +27,8 @@ handler(int sig)
 int
 main(void)
 {
+	pidns_test_init();
+
 	const struct sigaction act = { .sa_handler = handler };
 	if (sigaction(SIGALRM, &act, NULL))
 		perror_msg_and_fail("sigaction");
@@ -36,19 +39,26 @@ main(void)
 	if (sigprocmask(SIG_UNBLOCK, &mask, NULL))
 		perror_msg_and_fail("sigprocmask");
 
-	const int pid = getpid();
-	long rc = syscall(__NR_kill, pid, (long) 0xdefaced00000000ULL | SIGALRM);
-	printf("kill(%d, SIGALRM) = %ld\n", pid, rc);
+	long rc = syscall(__NR_kill, pidns_ids[PT_TGID], (long) 0xdefaced00000000ULL | SIGALRM);
+	pidns_print_leader();
+	printf("kill(");
+	pidns_print_id_pair(PT_TGID);
+	printf(", SIGALRM) = %ld\n", rc);
 
 	const long big_pid = (long) 0xfacefeedbadc0dedULL;
 	const long big_sig = (long) 0xdeadbeefcafef00dULL;
 	rc = syscall(__NR_kill, big_pid, big_sig);
+	pidns_print_leader();
 	printf("kill(%d, %d) = %ld %s (%m)\n",
 	       (int) big_pid, (int) big_sig, rc, errno2name());
 
-	rc = syscall(__NR_kill, (long) 0xdefaced00000000ULL | pid, 0);
-	printf("kill(%d, 0) = %ld\n", pid, rc);
+	rc = syscall(__NR_kill, (long) 0xdefaced00000000ULL | pidns_ids[PT_TGID], 0);
+	pidns_print_leader();
+	printf("kill(");
+	pidns_print_id_pair(PT_TGID);
+	printf(", 0) = %ld\n", rc);
 
+	pidns_print_leader();
 	puts("+++ exited with 0 +++");
 	return 0;
 }

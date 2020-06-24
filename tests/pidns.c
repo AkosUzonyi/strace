@@ -9,6 +9,7 @@
 #include "tests.h"
 #include "scno.h"
 #include "limits.h"
+#include "pidns.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -24,186 +25,110 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define CHLID_STACK_SIZE (1 << 15)
+pid_t pidns_ids[PT_COUNT];
+pid_t pidns_strace_ids[PT_COUNT];
 
-enum pid_type {
-	PT_TID,
-	PT_TGID,
-	PT_PGID,
-	PT_SID,
-
-	PT_COUNT,
-	PT_NONE = -1
-};
-
-struct id_pair {
-	pid_t id;
-	pid_t strace_id;
-};
-
-static void
-child_print_leader(struct id_pair *ids)
+void
+pidns_print_leader(void)
 {
-	printf("%-5d ", ids[PT_TID].strace_id);
+	printf("%-5d ", pidns_strace_ids[PT_TID]);
+}
+
+void
+pidns_print_id_pair(enum pid_type type)
+{
+	printf("%d", pidns_ids[type]);
+	if (pidns_ids[type] != pidns_strace_ids[type])
+		printf(" /* %d in strace's PID NS */", pidns_strace_ids[type]);
 }
 
 static void
-print_id_pair(struct id_pair id_pair)
+fill_ids(int *child_pipe)
 {
-	printf("%d", id_pair.id);
-	if (id_pair.id != id_pair.strace_id)
-		printf(" /* %d in strace's PID NS */", id_pair.strace_id);
-}
+	if (child_pipe) {
+		read(child_pipe[0], pidns_strace_ids, sizeof(pidns_strace_ids));
+		close(child_pipe[0]);
+		close(child_pipe[1]);
 
-static pid_t
-do_clone(int (*func)(void *), void *arg)
-{
-	char *stack_end = (char *) malloc(CHLID_STACK_SIZE) + CHLID_STACK_SIZE;
-	fflush(stdout);
-	pid_t pid = clone(func, stack_end, SIGCHLD, arg);
-	if (pid < 0)
-		perror_msg_and_fail("clone");
-
-	return pid;
-}
-
-static int
-child_fn(void* arg)
-{
-	struct id_pair ids[PT_COUNT];
-
-	int *child_pipe = (int *) arg;
-	read(child_pipe[0], ids, sizeof(ids));
-	close(child_pipe[0]);
-	close(child_pipe[1]);
-
-	if (ids[PT_SID].strace_id) {
-		ids[PT_SID].id = setsid();
-		ids[PT_PGID].id = ids[PT_SID].id;
-		child_print_leader(ids);
-		//TODO
-		printf("setsid() = %d\n", ids[PT_SID].id);
+		if (pidns_strace_ids[PT_SID]) {
+			pidns_ids[PT_SID] = setsid();
+			pidns_print_leader();
+			//TODO
+			printf("setsid() = %d\n", pidns_ids[PT_SID]);
+		}
 	}
 
-	ids[PT_TID].id = syscall(__NR_gettid);
-	child_print_leader(ids);
+	pidns_ids[PT_TID] = syscall(__NR_gettid);
+	pidns_ids[PT_TGID] = getpid();
+	pidns_ids[PT_PGID] = getpgid(0);
+	pidns_ids[PT_SID] = getsid(0);
+
+	pidns_print_leader();
 	printf("gettid() = ");
-	print_id_pair(ids[PT_TID]);
+	pidns_print_id_pair(PT_TID);
 	printf("\n");
 
-	ids[PT_TGID].id = getpid();
-	child_print_leader(ids);
+	pidns_print_leader();
 	printf("getpid() = ");
-	print_id_pair(ids[PT_TGID]);
+	pidns_print_id_pair(PT_TGID);
 	printf("\n");
 
-	ids[PT_PGID].id = getpgid(0);
-	child_print_leader(ids);
+	pidns_print_leader();
 	printf("getpgid(0) = ");
-	print_id_pair(ids[PT_PGID]);
+	pidns_print_id_pair(PT_PGID);
+	printf("\n");
+
+	pidns_print_leader();
+	printf("getsid(0) = ");
+	pidns_print_id_pair(PT_SID);
 	printf("\n");
 
 	getpgrp();
-	child_print_leader(ids);
+	pidns_print_leader();
 	printf("getpgrp() = ");
-	print_id_pair(ids[PT_PGID]);
+	pidns_print_id_pair(PT_PGID);
 	printf("\n");
 
-	ids[PT_SID].id = getsid(0);
-	child_print_leader(ids);
-	printf("getsid(0) = ");
-	print_id_pair(ids[PT_SID]);
-	printf("\n");
-
-	int rc;
-	rc = syscall(__NR_pidfd_open, ids[PT_TGID].id, 0);
-	child_print_leader(ids);
-	printf("pidfd_open(");
-	print_id_pair(ids[PT_TGID]);
-	printf(", 0) = %d", rc);
-	printf("\n");
-
-	rc = syscall(__NR_pidfd_open, ids[PT_TGID].id, 0);
-	child_print_leader(ids);
-	printf("pidfd_open(");
-	print_id_pair(ids[PT_TGID]);
-	printf(", 0) = %d", rc);
-	printf("\n");
-
-	struct id_pair kill_id_pair = ids[PT_PGID];
-	kill_id_pair.id *= -1;
-	kill(kill_id_pair.id, 0);
-	child_print_leader(ids);
-	printf("kill(");
-	print_id_pair(kill_id_pair);
-	printf(", 0) = 0\n");
-
-	kill(ids[PT_TGID].id, 0);
-	child_print_leader(ids);
-	printf("kill(");
-	print_id_pair(ids[PT_TGID]);
-	printf(", 0) = 0\n");
-
-	kill(-1, 0);
-	child_print_leader(ids);
-	if (ids[PT_PGID].id)
-		printf("kill(-1, 0) = 0\n");
-	else
-		printf("kill(-1, 0) = -1 ESRCH (%s)\n", strerror(ESRCH));
-
-	kill(0, 0);
-	child_print_leader(ids);
-	printf("kill(0, 0) = 0\n");
-
-	child_print_leader(ids);
-	printf("+++ exited with 0 +++\n");
-	fflush(stdout);
-	return 0;
-}
-
-static void
-parent_print_leader(void)
-{
-	static pid_t pid;
-	if (!pid) {
-		pid = getpid();
-		parent_print_leader();
-		printf("getpid() = %d\n", pid);
+	if (!child_pipe) {
+		for (int i = 0; i < PT_COUNT; i++)
+			pidns_strace_ids[i] = pidns_ids[i];
 	}
-	printf("%-5d ", pid);
 }
 
 static pid_t
-launch_child(pid_t pgid, bool new_sid)
+fork_child(int *child_pipe, pid_t pgid, bool new_sid)
 {
-	int child_pipe[2];
 	if (pipe(child_pipe) < 0)
 		perror_msg_and_fail("pipe");
 
-	pid_t pid = do_clone(child_fn, child_pipe);
+	fflush(stdout);
+	pid_t pid = fork();
+	if (pid < 0)
+		perror_msg_and_fail("fork");
+	if (!pid)
+		return 0;
 
-	struct id_pair child_ids[PT_COUNT];
-	child_ids[PT_TID].strace_id = pid;
-	child_ids[PT_TGID].strace_id = pid;
+	pidns_strace_ids[PT_TID] = pid;
+	pidns_strace_ids[PT_TGID] = pid;
+	pidns_strace_ids[PT_PGID] = 0;
+	pidns_strace_ids[PT_SID] = 0;
+
+	if (!pgid)
+		pgid = pid;
 
 	if (pgid > 0) {
-		setpgid(pid, pgid);
-		child_ids[PT_PGID].strace_id = pgid;
-	} else if (pgid == 0) {
-		setpgid(pid, pid);
-		child_ids[PT_PGID].strace_id = pid;
-	} else {
-		child_ids[PT_PGID].strace_id = 0;
+		if (setpgid(pid, pgid) < 0)
+			perror_msg_and_fail("setpgid");
+
+		pidns_strace_ids[PT_PGID] = pgid;
 	}
 
 	if (new_sid) {
-		child_ids[PT_SID].strace_id = pid;
-		child_ids[PT_PGID].strace_id = pid;
-	} else {
-		child_ids[PT_SID].strace_id = 0;
+		pidns_strace_ids[PT_SID] = pid;
+		pidns_strace_ids[PT_PGID] = pid;
 	}
 
-	write(child_pipe[1], child_ids, sizeof(child_ids));
+	write(child_pipe[1], pidns_strace_ids, sizeof(pidns_strace_ids));
 	close(child_pipe[0]);
 	close(child_pipe[1]);
 
@@ -212,40 +137,57 @@ launch_child(pid_t pgid, bool new_sid)
 	if (waitid(P_PID, pid, &siginfo, WEXITED | WNOWAIT) < 0)
 		perror_msg_and_fail("wait");
 	if (siginfo.si_code != CLD_EXITED || siginfo.si_status)
-		error_msg_and_fail("child exited with nonzero exit status");
-
+		error_msg_and_fail("child terminated with nonzero exit status");
 
 	return pid;
 }
 
-static int pause_fn(void *arg)
+void
+pidns_test_init(void)
 {
-	pause();
-	return 0;
-}
+	/* Write our PID to log, to be able to filter out our syscalls */
+	getpid();
 
-int
-main(void)
-{
-	unshare(CLONE_NEWPID);
+	if (unshare(CLONE_NEWPID) < 0) {
+		if (errno != EPERM)
+			perror_msg_and_fail("unshare");
+
+		fill_ids(NULL);
+		return;
+	}
 
 	/* Create sleeping process to keep PID namespace alive */
-	pid_t pause_pid = do_clone(pause_fn, NULL);
+	pid_t pause_pid = fork();
+	if (!pause_pid) {
+		pause();
+		_exit(0);
+	}
 
-	launch_child(-1, false);
-	launch_child(-1, true);
-	pid_t pgid = launch_child(0, false);
-	launch_child(pgid, false);
-	launch_child(pgid, true);
+	int child_pipe[2];
 
-	parent_print_leader();
+	if (!fork_child(child_pipe, -1, false))
+		goto pidns_test_init_run_test;
+
+	if (!fork_child(child_pipe, -1, true))
+		goto pidns_test_init_run_test;
+
+	pid_t pgid;
+	if (!(pgid = fork_child(child_pipe, 0, false)))
+		goto pidns_test_init_run_test;
+
+	if (!fork_child(child_pipe, pgid, false))
+		goto pidns_test_init_run_test;
+
+	if (!fork_child(child_pipe, pgid, true))
+		goto pidns_test_init_run_test;
+
 	kill(pause_pid, SIGKILL);
-	printf("kill(%d, SIGKILL) = 0\n", pause_pid);
 	while (wait(NULL) > 0);
 	if (errno != ECHILD)
 		perror_msg_and_fail("wait");
 
-	parent_print_leader();
-	printf("+++ exited with 0 +++\n");
-	return 0;
+	exit(0);
+
+pidns_test_init_run_test:
+	fill_ids(child_pipe);
 }
