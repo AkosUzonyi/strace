@@ -52,12 +52,12 @@ pidns_pid2str(enum pid_type type)
 }
 
 static void
-fill_ids(int *child_pipe)
+fill_ids(int *strace_ids_pipe)
 {
-	if (child_pipe) {
-		read(child_pipe[0], pidns_strace_ids, sizeof(pidns_strace_ids));
-		close(child_pipe[0]);
-		close(child_pipe[1]);
+	if (strace_ids_pipe) {
+		read(strace_ids_pipe[0], pidns_strace_ids, sizeof(pidns_strace_ids));
+		close(strace_ids_pipe[0]);
+		close(strace_ids_pipe[1]);
 
 		if (pidns_strace_ids[PT_SID]) {
 			pidns_ids[PT_SID] = setsid();
@@ -72,7 +72,7 @@ fill_ids(int *child_pipe)
 	pidns_ids[PT_SID] = getsid(0);
 	getpgrp();
 
-	if (!child_pipe) {
+	if (!strace_ids_pipe) {
 		for (int i = 0; i < PT_COUNT; i++)
 			pidns_strace_ids[i] = pidns_ids[i];
 	}
@@ -85,9 +85,9 @@ fill_ids(int *child_pipe)
 }
 
 static pid_t
-fork_child(int *child_pipe, pid_t pgid, bool new_sid)
+fork_child(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 {
-	if (child_pipe && pipe(child_pipe) < 0)
+	if (strace_ids_pipe && pipe(strace_ids_pipe) < 0)
 		perror_msg_and_fail("pipe");
 
 	fflush(stdout);
@@ -117,10 +117,10 @@ fork_child(int *child_pipe, pid_t pgid, bool new_sid)
 		pidns_strace_ids[PT_PGID] = pid;
 	}
 
-	if (child_pipe) {
-		write(child_pipe[1], pidns_strace_ids, sizeof(pidns_strace_ids));
-		close(child_pipe[0]);
-		close(child_pipe[1]);
+	if (strace_ids_pipe) {
+		write(strace_ids_pipe[1], pidns_strace_ids, sizeof(pidns_strace_ids));
+		close(strace_ids_pipe[0]);
+		close(strace_ids_pipe[1]);
 	}
 
 	/* WNOWAIT: leave the zombie, to be able to use it as a process group */
@@ -158,22 +158,22 @@ pidns_test_init(void)
 		_exit(0);
 	}
 
-	int child_pipe[2];
+	int strace_ids_pipe[2];
 
-	if (!fork_child(child_pipe, -1, false))
+	if (!fork_child(strace_ids_pipe, -1, false))
 		goto pidns_test_init_run_test;
 
-	if (!fork_child(child_pipe, -1, true))
+	if (!fork_child(strace_ids_pipe, -1, true))
 		goto pidns_test_init_run_test;
 
 	pid_t pgid;
-	if (!(pgid = fork_child(child_pipe, 0, false)))
+	if (!(pgid = fork_child(strace_ids_pipe, 0, false)))
 		goto pidns_test_init_run_test;
 
-	if (!fork_child(child_pipe, pgid, false))
+	if (!fork_child(strace_ids_pipe, pgid, false))
 		goto pidns_test_init_run_test;
 
-	if (!fork_child(child_pipe, pgid, true))
+	if (!fork_child(strace_ids_pipe, pgid, true))
 		goto pidns_test_init_run_test;
 
 	kill(pause_pid, SIGKILL);
@@ -185,5 +185,5 @@ pidns_test_init(void)
 	exit(0);
 
 pidns_test_init_run_test:
-	fill_ids(child_pipe);
+	fill_ids(strace_ids_pipe);
 }
