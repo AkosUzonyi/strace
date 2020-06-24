@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <sched.h>
+#include <stdarg.h>
 
 #include <unistd.h>
 #include <sys/wait.h>
@@ -29,9 +30,14 @@ pid_t pidns_ids[PT_COUNT];
 pid_t pidns_strace_ids[PT_COUNT];
 
 void
-pidns_print_leader(void)
+pidns_printf(const char *format, ...)
 {
 	printf("%-5d ", pidns_strace_ids[PT_TID]);
+
+	va_list args;
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
 }
 
 const char *
@@ -55,9 +61,8 @@ fill_ids(int *child_pipe)
 
 		if (pidns_strace_ids[PT_SID]) {
 			pidns_ids[PT_SID] = setsid();
-			pidns_print_leader();
 			//TODO
-			printf("setsid() = %d\n", pidns_ids[PT_SID]);
+			pidns_printf("setsid() = %d\n", pidns_ids[PT_SID]);
 		}
 	}
 
@@ -67,16 +72,11 @@ fill_ids(int *child_pipe)
 	pidns_ids[PT_SID] = getsid(0);
 	getpgrp();
 
-	pidns_print_leader();
-	printf("gettid() = %s\n", pidns_pid2str(PT_TID));
-	pidns_print_leader();
-	printf("getpid() = %s\n", pidns_pid2str(PT_TGID));
-	pidns_print_leader();
-	printf("getpgid(0) = %s\n", pidns_pid2str(PT_PGID));
-	pidns_print_leader();
-	printf("getsid(0) = %s\n", pidns_pid2str(PT_SID));
-	pidns_print_leader();
-	printf("getpgrp() = %s\n", pidns_pid2str(PT_PGID));
+	pidns_printf("gettid() = %s\n", pidns_pid2str(PT_TID));
+	pidns_printf("getpid() = %s\n", pidns_pid2str(PT_TGID));
+	pidns_printf("getpgid(0) = %s\n", pidns_pid2str(PT_PGID));
+	pidns_printf("getsid(0) = %s\n", pidns_pid2str(PT_SID));
+	pidns_printf("getpgrp() = %s\n", pidns_pid2str(PT_PGID));
 
 	if (!child_pipe) {
 		for (int i = 0; i < PT_COUNT; i++)
