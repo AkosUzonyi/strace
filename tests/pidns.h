@@ -25,7 +25,7 @@ extern pid_t pidns_ids[PT_COUNT];
 extern pid_t pidns_strace_ids[PT_COUNT];
 
 void pidns_print_leader(void);
-void pidns_print_id_pair(enum pid_type type);
+const char *pidns_pid2str(enum pid_type type);
 void pidns_test_init(void);
 
 #endif

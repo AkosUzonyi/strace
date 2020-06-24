@@ -34,12 +34,15 @@ pidns_print_leader(void)
 	printf("%-5d ", pidns_strace_ids[PT_TID]);
 }
 
-void
-pidns_print_id_pair(enum pid_type type)
+const char *
+pidns_pid2str(enum pid_type type)
 {
-	printf("%d", pidns_ids[type]);
+	static char buf[sizeof(" /*  in strace's PID NS */") + sizeof(int) * 6];
+	int len = snprintf(buf, sizeof(buf), "%d", pidns_ids[type]);
 	if (pidns_ids[type] != pidns_strace_ids[type])
-		printf(" /* %d in strace's PID NS */", pidns_strace_ids[type]);
+		snprintf(buf + len, sizeof(buf) - len, " /* %d in strace's PID NS */", pidns_strace_ids[type]);
+
+	return buf;
 }
 
 static void
@@ -62,32 +65,18 @@ fill_ids(int *child_pipe)
 	pidns_ids[PT_TGID] = getpid();
 	pidns_ids[PT_PGID] = getpgid(0);
 	pidns_ids[PT_SID] = getsid(0);
-
-	pidns_print_leader();
-	printf("gettid() = ");
-	pidns_print_id_pair(PT_TID);
-	printf("\n");
-
-	pidns_print_leader();
-	printf("getpid() = ");
-	pidns_print_id_pair(PT_TGID);
-	printf("\n");
-
-	pidns_print_leader();
-	printf("getpgid(0) = ");
-	pidns_print_id_pair(PT_PGID);
-	printf("\n");
-
-	pidns_print_leader();
-	printf("getsid(0) = ");
-	pidns_print_id_pair(PT_SID);
-	printf("\n");
-
 	getpgrp();
+
 	pidns_print_leader();
-	printf("getpgrp() = ");
-	pidns_print_id_pair(PT_PGID);
-	printf("\n");
+	printf("gettid() = %s\n", pidns_pid2str(PT_TID));
+	pidns_print_leader();
+	printf("getpid() = %s\n", pidns_pid2str(PT_TGID));
+	pidns_print_leader();
+	printf("getpgid(0) = %s\n", pidns_pid2str(PT_PGID));
+	pidns_print_leader();
+	printf("getsid(0) = %s\n", pidns_pid2str(PT_SID));
+	pidns_print_leader();
+	printf("getpgrp() = %s\n", pidns_pid2str(PT_PGID));
 
 	if (!child_pipe) {
 		for (int i = 0; i < PT_COUNT; i++)

@@ -39,11 +39,10 @@ main(void)
 	if (sigprocmask(SIG_UNBLOCK, &mask, NULL))
 		perror_msg_and_fail("sigprocmask");
 
-	long rc = syscall(__NR_kill, pidns_ids[PT_TGID], (long) 0xdefaced00000000ULL | SIGALRM);
+	const int pid = pidns_ids[PT_TGID];
+	long rc = syscall(__NR_kill, pid, (long) 0xdefaced00000000ULL | SIGALRM);
 	pidns_print_leader();
-	printf("kill(");
-	pidns_print_id_pair(PT_TGID);
-	printf(", SIGALRM) = %ld\n", rc);
+	printf("kill(%s, SIGALRM) = %ld\n", pidns_pid2str(PT_TGID), rc);
 
 	const long big_pid = (long) 0xfacefeedbadc0dedULL;
 	const long big_sig = (long) 0xdeadbeefcafef00dULL;
@@ -52,11 +51,9 @@ main(void)
 	printf("kill(%d, %d) = %ld %s (%m)\n",
 	       (int) big_pid, (int) big_sig, rc, errno2name());
 
-	rc = syscall(__NR_kill, (long) 0xdefaced00000000ULL | pidns_ids[PT_TGID], 0);
+	rc = syscall(__NR_kill, (long) 0xdefaced00000000ULL | pid, 0);
 	pidns_print_leader();
-	printf("kill(");
-	pidns_print_id_pair(PT_TGID);
-	printf(", 0) = %ld\n", rc);
+	printf("kill(%s, 0) = %ld\n", pidns_pid2str(PT_TGID), rc);
 
 	pidns_print_leader();
 	puts("+++ exited with 0 +++");
