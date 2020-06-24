@@ -72,22 +72,22 @@ fill_ids(int *child_pipe)
 	pidns_ids[PT_SID] = getsid(0);
 	getpgrp();
 
+	if (!child_pipe) {
+		for (int i = 0; i < PT_COUNT; i++)
+			pidns_strace_ids[i] = pidns_ids[i];
+	}
+
 	pidns_printf("gettid() = %s\n", pidns_pid2str(PT_TID));
 	pidns_printf("getpid() = %s\n", pidns_pid2str(PT_TGID));
 	pidns_printf("getpgid(0) = %s\n", pidns_pid2str(PT_PGID));
 	pidns_printf("getsid(0) = %s\n", pidns_pid2str(PT_SID));
 	pidns_printf("getpgrp() = %s\n", pidns_pid2str(PT_PGID));
-
-	if (!child_pipe) {
-		for (int i = 0; i < PT_COUNT; i++)
-			pidns_strace_ids[i] = pidns_ids[i];
-	}
 }
 
 static pid_t
 fork_child(int *child_pipe, pid_t pgid, bool new_sid)
 {
-	if (pipe(child_pipe) < 0)
+	if (child_pipe && pipe(child_pipe) < 0)
 		perror_msg_and_fail("pipe");
 
 	fflush(stdout);
@@ -117,9 +117,11 @@ fork_child(int *child_pipe, pid_t pgid, bool new_sid)
 		pidns_strace_ids[PT_PGID] = pid;
 	}
 
-	write(child_pipe[1], pidns_strace_ids, sizeof(pidns_strace_ids));
-	close(child_pipe[0]);
-	close(child_pipe[1]);
+	if (child_pipe) {
+		write(child_pipe[1], pidns_strace_ids, sizeof(pidns_strace_ids));
+		close(child_pipe[0]);
+		close(child_pipe[1]);
+	}
 
 	/* WNOWAIT: leave the zombie, to be able to use it as a process group */
 	siginfo_t siginfo;
@@ -137,12 +139,16 @@ pidns_test_init(void)
 	/* Write our PID to log, to be able to filter out our syscalls */
 	getpid();
 
+	if (!fork_child(NULL, -1, false)) {
+		fill_ids(NULL);
+		return;
+	}
+
 	if (unshare(CLONE_NEWPID) < 0) {
 		if (errno != EPERM)
 			perror_msg_and_fail("unshare");
 
-		fill_ids(NULL);
-		return;
+		exit(0);
 	}
 
 	/* Create sleeping process to keep PID namespace alive */
