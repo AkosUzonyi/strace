@@ -396,11 +396,11 @@ test_pidns()
 	check_prog unshare
 
 	syscalls='gettid,getpid,getpgid,getpgrp,getsid,setsid'
-	set -- "$(echo "$*" | sed "/(-e trace|--trace)=/! s/^/-e trace=${NAME},${syscalls} /")"
-	set -- "$(echo "$*" | sed "s/(-e trace|--trace)=[^[:space:]]*/\0,${syscalls}/")"
+	set -- "$(echo "$*" | sed -E "/(-e trace|--trace)=/! s/^/-e trace=${NAME},${syscalls} /")"
+	set -- "$(echo "$*" | sed -E "s/(-e trace|--trace)=[^[:space:]]*/\0,${syscalls}/")"
 
 	run_prog > /dev/null
-	run_strace -Y -f $@ $args > "$EXP"
+	run_strace -Y -f $@ -a0 $args > "$EXP"
 	strace_pid="$(head -n 1 $LOG | cut -d' ' -f1)"
 	grep -E -v "^$strace_pid " "$LOG" > "$log_filtered"
 	match_diff "$log_filtered" "$EXP"

@@ -526,7 +526,7 @@ s390_sthyi-v	-e trace=s390_sthyi -a47 -v
 sched	test_trace_expr times -e/sched
 sched_get_priority_mxx	-a33 -e trace=sched_get_priority_min,sched_get_priority_max
 sched_rr_get_interval	-a31
-sched_xetaffinity	-a28 -e trace=sched_getaffinity,sched_setaffinity
+sched_xetaffinity	test_pidns -a28 -e trace=sched_getaffinity,sched_setaffinity
 sched_xetattr	-a29 -e trace=sched_getattr,sched_setattr
 sched_xetparam	-a23 -e trace=sched_getparam,sched_setparam
 sched_xetscheduler	-a22 -e trace=sched_getscheduler,sched_setscheduler
