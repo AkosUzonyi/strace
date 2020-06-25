@@ -389,7 +389,7 @@ test_prog_set()
 
 test_pidns()
 {
-	local syscalls strace_pid log_filtered
+	local syscalls parent_pid log_filtered
 	log_filtered="log.filtered"
 
 	require_min_kernel_version_or_skip 2.6.24
@@ -401,8 +401,8 @@ test_pidns()
 
 	run_prog > /dev/null
 	run_strace -Y -f -e signal=none $@ -a0 $args > "$EXP"
-	strace_pid="$(head -n 1 $LOG | cut -d' ' -f1)"
-	grep -E -v "^$strace_pid " "$LOG" > "$log_filtered"
+	parent_pid="$(head -n 1 $LOG | cut -d' ' -f1)"
+	grep -E -v "^$parent_pid " "$LOG" > "$log_filtered"
 	match_diff "$log_filtered" "$EXP"
 
 #	TODO
