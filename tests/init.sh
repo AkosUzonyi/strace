@@ -400,7 +400,7 @@ test_pidns()
 	set -- "$(echo "$*" | sed -E "s/(-e trace|--trace)=[^[:space:]]*/\0,${syscalls}/")"
 
 	run_prog > /dev/null
-	run_strace -Y -f $@ -a0 $args > "$EXP"
+	run_strace -Y -f -e signal=none $@ -a0 $args > "$EXP"
 	strace_pid="$(head -n 1 $LOG | cut -d' ' -f1)"
 	grep -E -v "^$strace_pid " "$LOG" > "$log_filtered"
 	match_diff "$log_filtered" "$EXP"

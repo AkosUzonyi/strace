@@ -177,7 +177,6 @@ pidns_test_init(void)
 		goto pidns_test_init_run_test;
 
 	kill(pause_pid, SIGKILL);
-	printf("%-5d +++ killed by SIGKILL +++\n", pause_pid);
 	while (wait(NULL) > 0);
 	if (errno != ECHILD)
 		perror_msg_and_fail("wait");
