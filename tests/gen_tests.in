@@ -512,7 +512,7 @@ riscv_flush_icache	-a34
 rmdir	-a22
 rt_sigpending	-a20
 rt_sigprocmask
-rt_sigqueueinfo	-esignal=none
+rt_sigqueueinfo	test_pidns -esignal=none
 rt_sigreturn	-esignal='!USR1'
 rt_sigsuspend	-a20 -esignal=none
 rt_sigtimedwait	-a38
