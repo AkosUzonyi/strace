@@ -387,6 +387,28 @@ test_prog_set()
 	test_pure_prog_set "$@" < "$srcdir/$NAME.in"
 }
 
+test_pidns_run_strace()
+{
+	local syscalls parent_pid log_filtered
+	log_filtered="log.filtered"
+
+	run_prog > /dev/null
+	run_strace -Y -f -e signal=none $@ $args > "$EXP"
+	parent_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
+	grep -E -v "^$parent_pid " "$LOG" > "$log_filtered"
+	match_diff "$log_filtered" "$EXP"
+}
+
+test_pidns()
+{
+	require_min_kernel_version_or_skip 3.8
+	check_prog unshare
+
+	test_pidns_run_strace "$@"
+	STRACE="unshare -Urpf $STRACE"
+	test_pidns_run_strace "$@"
+}
+
 check_prog cat
 check_prog rm
 
