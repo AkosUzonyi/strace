@@ -7,6 +7,7 @@
 
 #include "tests.h"
 #include "scno.h"
+#include "pidns.h"
 
 #if defined __NR_getpid && (!defined __NR_getxpid || __NR_getxpid != __NR_getpid)
 
@@ -16,7 +17,14 @@
 int
 main(void)
 {
-	printf("getpid() = %ld\n", syscall(__NR_getpid));
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
+
+	pidns_print_leader();
+	printf("getpid() = %d%s\n", (int) syscall(__NR_getpid),
+		pidns_pid2str(PT_TGID));
+	pidns_print_leader();
 	puts("+++ exited with 0 +++");
 	return 0;
 }

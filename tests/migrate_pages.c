@@ -10,6 +10,7 @@
 
 #include "tests.h"
 #include "scno.h"
+#include "pidns.h"
 
 #ifdef __NR_migrate_pages
 
@@ -19,11 +20,17 @@
 int
 main(void)
 {
-	const long pid = (long) 0xfacefeedffffffffULL;
-	long rc = syscall(__NR_migrate_pages, pid, 0, 0, 0);
-	printf("migrate_pages(%d, 0, NULL, NULL) = %ld %s (%m)\n",
-	       (int) pid, rc, errno2name());
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
 
+	const long pid = (long) 0xfacefeed00000000ULL | getpid();
+	long rc = syscall(__NR_migrate_pages, pid, 0, 0, 0);
+	pidns_print_leader();
+	printf("migrate_pages(%d%s, 0, NULL, NULL) = %ld %s (%m)\n",
+	       (int) pid, pidns_pid2str(PT_TGID), rc, errno2name());
+
+	pidns_print_leader();
 	puts("+++ exited with 0 +++");
 	return 0;
 }
