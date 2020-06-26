@@ -106,6 +106,7 @@
 /* printargs_d does the right thing */
 # define sys_exit		printargs_d
 # define sys_nice		printargs_d
+# define sys_setpgrp            printargs_d
 # define sys_timer_delete	printargs_d
 # define sys_timer_getoverrun	printargs_d
 

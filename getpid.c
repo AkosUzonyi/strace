@@ -37,8 +37,3 @@ SYS_FUNC(setpgid)
 
 	return RVAL_DECODED;
 }
-
-SYS_FUNC(setpgrp)
-{
-	return RVAL_DECODED | RVAL_PGID;
-}
