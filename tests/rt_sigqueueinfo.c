@@ -6,7 +6,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef PIDNS_TEST_INIT
+# define PIDNS_TEST_INIT pidns_test_init();
+#endif
+
 #include "tests.h"
+#include "pidns.h"
 #include <assert.h>
 #include <stdio.h>
 #include <signal.h>
@@ -15,6 +20,8 @@
 int
 main(void)
 {
+	PIDNS_TEST_INIT;
+
 	struct sigaction sa = {
 		.sa_handler = SIG_IGN
 	};
@@ -26,11 +33,12 @@ main(void)
 	assert(sigaction(SIGUSR1, &sa, NULL) == 0);
 	if (sigqueue(pid, SIGUSR1, value))
 		perror_msg_and_skip("sigqueue");
-	printf("rt_sigqueueinfo(%u, SIGUSR1, {si_signo=SIGUSR1, "
-		"si_code=SI_QUEUE, si_pid=%u, si_uid=%u, "
+	pidns_printf("rt_sigqueueinfo(%d%s, SIGUSR1, {si_signo=SIGUSR1, "
+		"si_code=SI_QUEUE, si_pid=%d%s, si_uid=%u, "
 		"si_value={int=%d, ptr=%p}}) = 0\n",
-		pid, pid, getuid(), value.sival_int, value.sival_ptr);
-	printf("+++ exited with 0 +++\n");
+		pid, pidns_pid2str(PT_TGID), pid, pidns_pid2str(PT_TGID),
+		getuid(), value.sival_int, value.sival_ptr);
+	pidns_printf("+++ exited with 0 +++\n");
 
 	return 0;
 }

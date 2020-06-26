@@ -7,9 +7,14 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef PIDNS_TEST_INIT
+# define PIDNS_TEST_INIT pidns_test_init();
+#endif
+
 #include "tests.h"
 #include <unistd.h>
 #include "scno.h"
+#include "pidns.h"
 
 #ifdef __NR_pidfd_send_signal
 
@@ -36,6 +41,8 @@ sys_pidfd_send_signal(int pidfd, int sig, const void *info, int flags)
 int
 main(void)
 {
+	PIDNS_TEST_INIT;
+
 	static const char null_path[] = "/dev/null";
 
 	int fd = open(null_path, O_RDONLY);
@@ -46,20 +53,21 @@ main(void)
 	const void *esi = (const void *) si + 1;
 
 	sys_pidfd_send_signal(fd, SIGUSR1, esi, 0);
-	printf("pidfd_send_signal(%d, SIGUSR1, %p, 0) = %s\n",
+	pidns_printf("pidfd_send_signal(%d, SIGUSR1, %p, 0) = %s\n",
 	       fd, esi, errstr);
 
 	si->si_signo = SIGUSR1;
 	si->si_code = SI_QUEUE;
+	si->si_pid = getpid();
 
 	sys_pidfd_send_signal(fd, SIGUSR2, si, -1);
-	printf("pidfd_send_signal(%d, SIGUSR2, {si_signo=SIGUSR1"
-	       ", si_code=SI_QUEUE, si_errno=%u, si_pid=%d, si_uid=%u"
+	pidns_printf("pidfd_send_signal(%d, SIGUSR2, {si_signo=SIGUSR1"
+	       ", si_code=SI_QUEUE, si_errno=%u, si_pid=%d%s, si_uid=%u"
 	       ", si_value={int=%d, ptr=%p}}, %#x) = %s\n",
-	       fd, si->si_errno, si->si_pid, si->si_uid, si->si_int, si->si_ptr,
-	       -1, errstr);
+	       fd, si->si_errno, si->si_pid, pidns_pid2str(PT_TGID), si->si_uid,
+	       si->si_int, si->si_ptr, -1, errstr);
 
-	puts("+++ exited with 0 +++");
+	pidns_printf("+++ exited with 0 +++\n");
 	return 0;
 }
 

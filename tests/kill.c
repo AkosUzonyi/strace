@@ -9,8 +9,13 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef PIDNS_TEST_INIT
+# define PIDNS_TEST_INIT pidns_test_init();
+#endif
+
 #include "tests.h"
 #include "scno.h"
+#include "pidns.h"
 
 #ifdef __NR_kill
 
@@ -26,6 +31,8 @@ handler(int sig)
 int
 main(void)
 {
+	PIDNS_TEST_INIT;
+
 	const struct sigaction act = { .sa_handler = handler };
 	if (sigaction(SIGALRM, &act, NULL))
 		perror_msg_and_fail("sigaction");
@@ -38,18 +45,18 @@ main(void)
 
 	const int pid = getpid();
 	long rc = syscall(__NR_kill, pid, (long) 0xdefaced00000000ULL | SIGALRM);
-	printf("kill(%d, SIGALRM) = %ld\n", pid, rc);
+	pidns_printf("kill(%d%s, SIGALRM) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
 
 	const long big_pid = (long) 0xfacefeedbadc0dedULL;
 	const long big_sig = (long) 0xdeadbeefcafef00dULL;
 	rc = syscall(__NR_kill, big_pid, big_sig);
-	printf("kill(%d, %d) = %ld %s (%m)\n",
+	pidns_printf("kill(%d, %d) = %ld %s (%m)\n",
 	       (int) big_pid, (int) big_sig, rc, errno2name());
 
 	rc = syscall(__NR_kill, (long) 0xdefaced00000000ULL | pid, 0);
-	printf("kill(%d, 0) = %ld\n", pid, rc);
+	pidns_printf("kill(%d%s, 0) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
 
-	puts("+++ exited with 0 +++");
+	pidns_printf("+++ exited with 0 +++\n");
 	return 0;
 }
 

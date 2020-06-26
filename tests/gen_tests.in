@@ -279,6 +279,7 @@ keyctl-Xabbrev	-a31 -s10 -e trace=keyctl -Xabbrev
 keyctl-Xraw	-a13 -s10 -e trace=keyctl -Xraw
 keyctl-Xverbose	-a41 -s10 -e trace=keyctl -Xverbose
 kill	-a12 -esignal=none
+kill-Y	test_pidns -a12 -e trace=kill -esignal=none
 ksysent	../$NAME
 lchown	-a30
 lchown32	-a32
@@ -453,6 +454,7 @@ pidfd_open-P	-a17 -P /dev/full -e trace=pidfd_open
 pidfd_open-y	-a17 -y -e trace=pidfd_open
 pidfd_open-yy	-a17 -yy -e trace=pidfd_open
 pidfd_send_signal
+pidfd_send_signal-Y test_pidns -e trace=pidfd_send_signal
 pipe2	-a15
 pkey_alloc	-a17
 pkey_free	-a13
@@ -512,11 +514,13 @@ riscv_flush_icache	-a34
 rmdir	-a22
 rt_sigpending	-a20
 rt_sigprocmask
-rt_sigqueueinfo	-esignal=none
+rt_sigqueueinfo -esignal=none
+rt_sigqueueinfo-Y	test_pidns -esignal=none -e trace=rt_sigqueueinfo
 rt_sigreturn	-esignal='!USR1'
 rt_sigsuspend	-a20 -esignal=none
 rt_sigtimedwait	-a38
 rt_tgsigqueueinfo	-esignal=none
+rt_tgsigqueueinfo-Y	test_pidns -esignal=none -e trace=rt_tgsigqueueinfo
 s390_guarded_storage	-a32
 s390_guarded_storage-v	-e trace=s390_guarded_storage -a32 -v
 s390_pci_mmio_read_write	-e trace=s390_pci_mmio_read,s390_pci_mmio_write -a30
@@ -527,6 +531,7 @@ sched	test_trace_expr times -e/sched
 sched_get_priority_mxx	-a33 -e trace=sched_get_priority_min,sched_get_priority_max
 sched_rr_get_interval	-a31
 sched_xetaffinity	-a28 -e trace=sched_getaffinity,sched_setaffinity
+sched_xetaffinity-Y	test_pidns -a28 -e trace=sched_getaffinity,sched_setaffinity
 sched_xetattr	-a29 -e trace=sched_getattr,sched_setattr
 sched_xetparam	-a23 -e trace=sched_getparam,sched_setparam
 sched_xetscheduler	-a22 -e trace=sched_getscheduler,sched_setscheduler
@@ -714,7 +719,9 @@ waitpid	-a28
 xattr	-a22 -e trace=getxattr,fgetxattr,lgetxattr,setxattr,fsetxattr,lsetxattr,listxattr,flistxattr,llistxattr,removexattr,fremovexattr,lremovexattr
 xattr-strings	-a22 -s 4 -e trace=fsetxattr
 xet_robust_list	-a24 -e trace=get_robust_list,set_robust_list
+xet_robust_list-Y	test_pidns -a24 -e trace=get_robust_list,set_robust_list
 xetitimer	-a29 -e trace=setitimer,getitimer
 xetpgid	-a11 -e trace=getpgid,setpgid
 xetpriority	-a29 -e trace=getpriority,setpriority
+xetpriority-Y	test_pidns -a29 -e trace=getpriority,setpriority
 xettimeofday	-a20 -e trace=gettimeofday,settimeofday
