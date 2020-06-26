@@ -48,7 +48,7 @@ struct proc_data {
 	int ns_count;
 	uint64_t ns_hierarchy[MAX_NS_DEPTH]; /* from bottom to top of NS hierarchy */
 	int id_count[PT_COUNT];
-	int *id_hierarchy[PT_COUNT]; /* from top to bottom of NS hierarchy */
+	int id_hierarchy[PT_COUNT][MAX_NS_DEPTH]; /* from top to bottom of NS hierarchy */
 };
 
 static int
@@ -79,7 +79,7 @@ pidns_init(void)
 	for (int i = 0; i < PT_COUNT; i++)
 		ns_pid_to_proc_pid[i] = trie_create(6, 16, 16, 64, 0);
 
-	proc_data_cache = trie_create(6, 16, 16, ilog2_32(get_pid_max() - 1), 0);
+	proc_data_cache = trie_create(6, 16, 16, 64, 0);
 
 	inited = true;
 }
@@ -90,8 +90,8 @@ put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 	struct trie *b = (struct trie *) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
 		int pid_max = get_pid_max();
-		uint8_t pid_max_size = ilog2_32(pid_max - 1);
-		uint8_t pid_max_size_lg = ilog2_32(pid_max_size - 1);
+		uint8_t pid_max_size = ilog2_32(pid_max - 1) + 1;
+		uint8_t pid_max_size_lg = ilog2_32(pid_max_size - 1) + 1;
 		b = trie_create(pid_max_size_lg, 16, 16, pid_max_size, 0);
 
 		trie_set(ns_pid_to_proc_pid[type], ns, (uint64_t) b);
@@ -229,21 +229,21 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 {
 	const char *ns_str = id_strs[type].str;
 	size_t ns_str_size = id_strs[type].size;
-	char *buf;
+	char *buf = NULL;
 	size_t bufsize = 0;
 	char *p;
 	char *endp;
-	FILE *f;
+	FILE *f = NULL;
 	int idx = 0;
 	ssize_t ret;
 
 	ret = asprintf(&buf, "/proc/%s/status", pid_to_str(proc_pid));
 	if (ret < 0)
-		return 0;
+		goto get_id_list_exit;
 
 	f = fopen(buf, "r");
 	if (!f)
-		return 0;
+		goto get_id_list_exit;
 
 	free(buf);
 	buf = NULL;
@@ -369,12 +369,6 @@ update_proc_data(struct proc_data *pd, enum pid_type type)
 	if (!pd->ns_count)
 		goto fail;
 
-	if (!pd->id_hierarchy[type])
-		pd->id_hierarchy[type] = calloc(MAX_NS_DEPTH,
-			sizeof(pd->id_hierarchy[type][0]));
-	if (!pd->id_hierarchy[type])
-		goto fail;
-
 	pd->id_count[type] = get_id_list(pd->proc_pid,
 		pd->id_hierarchy[type], type);
 	if (!pd->id_count[type])
@@ -383,10 +377,8 @@ update_proc_data(struct proc_data *pd, enum pid_type type)
 	return true;
 
 fail:
-	if (pd)
-		free(pd);
-
 	trie_set(proc_data_cache, pd->proc_pid, (uint64_t) NULL);
+	free(pd);
 	return false;
 }
 
