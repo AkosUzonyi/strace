@@ -1,7 +1,14 @@
+/*
+ * Simple trie interface
+ *
+ * Copyright (c) 2020 Ákos Uzonyi <uzonyi.akos@gmail.com>
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ */
+
 #ifndef STRACE_TRIE_H
 #define STRACE_TRIE_H
-
-/* Simple trie interface */
 
 #define TRIE_SET   ((void *) ~(intptr_t) 0)
 #define TRIE_UNSET ((void *) NULL)

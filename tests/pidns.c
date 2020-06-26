@@ -1,3 +1,11 @@
+/*
+ * Test PID namespace translation
+ *
+ * Copyright (c) 2020 Ákos Uzonyi <uzonyi.akos@gmail.com>
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ */
 #include "tests.h"
 #include "scno.h"
 #include "limits.h"
