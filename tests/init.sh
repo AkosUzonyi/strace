@@ -387,7 +387,7 @@ test_prog_set()
 	test_pure_prog_set "$@" < "$srcdir/$NAME.in"
 }
 
-test_pidns()
+test_pidns_run_strace()
 {
 	local syscalls parent_pid log_filtered
 	log_filtered="log.filtered"
@@ -404,16 +404,16 @@ test_pidns()
 	parent_pid="$(head -n 1 $LOG | cut -d' ' -f1)"
 	grep -E -v "^$parent_pid " "$LOG" > "$log_filtered"
 	match_diff "$log_filtered" "$EXP"
+}
 
-#	TODO
-#	STRACE_CMD="run_strace_match_diff $args -a0 -Y -f"
-#	$STRACE_CMD
-#	export -f run_strace
-#	export LOG STRACE
-#	if [[ $(id -u) -e 0 ]]; then
-#		unshare -fp sh -c "$STRACE_CMD"
-#		skip_ "must be run as root"
-#	fi
+test_pidns()
+{
+	test_pidns_run_strace "$@"
+
+	if [[ $(id -u) -eq 0 ]]; then
+		STRACE="unshare -fp $STRACE"
+		test_pidns_run_strace "$@"
+	fi
 }
 
 check_prog cat
