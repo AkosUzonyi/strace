@@ -52,7 +52,7 @@ pidns_pid2str(enum pid_type type)
 }
 
 static void
-fill_ids(int *strace_ids_pipe)
+pidns_fill_ids(int *strace_ids_pipe)
 {
 	if (strace_ids_pipe) {
 		read(strace_ids_pipe[0], pidns_strace_ids, sizeof(pidns_strace_ids));
@@ -85,7 +85,7 @@ fill_ids(int *strace_ids_pipe)
 }
 
 static pid_t
-fork_child(int *strace_ids_pipe, pid_t pgid, bool new_sid)
+pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 {
 	if (strace_ids_pipe && pipe(strace_ids_pipe) < 0)
 		perror_msg_and_fail("pipe");
@@ -139,8 +139,8 @@ pidns_test_init(void)
 	/* Write our PID to log, to be able to filter out our syscalls */
 	getpid();
 
-	if (!fork_child(NULL, -1, false)) {
-		fill_ids(NULL);
+	if (!pidns_fork(NULL, -1, false)) {
+		pidns_fill_ids(NULL);
 		return;
 	}
 
@@ -160,20 +160,20 @@ pidns_test_init(void)
 
 	int strace_ids_pipe[2];
 
-	if (!fork_child(strace_ids_pipe, -1, false))
+	if (!pidns_fork(strace_ids_pipe, -1, false))
 		goto pidns_test_init_run_test;
 
-	if (!fork_child(strace_ids_pipe, -1, true))
+	if (!pidns_fork(strace_ids_pipe, -1, true))
 		goto pidns_test_init_run_test;
 
 	pid_t pgid;
-	if (!(pgid = fork_child(strace_ids_pipe, 0, false)))
+	if (!(pgid = pidns_fork(strace_ids_pipe, 0, false)))
 		goto pidns_test_init_run_test;
 
-	if (!fork_child(strace_ids_pipe, pgid, false))
+	if (!pidns_fork(strace_ids_pipe, pgid, false))
 		goto pidns_test_init_run_test;
 
-	if (!fork_child(strace_ids_pipe, pgid, true))
+	if (!pidns_fork(strace_ids_pipe, pgid, true))
 		goto pidns_test_init_run_test;
 
 	kill(pause_pid, SIGKILL);
@@ -184,5 +184,5 @@ pidns_test_init(void)
 	exit(0);
 
 pidns_test_init_run_test:
-	fill_ids(strace_ids_pipe);
+	pidns_fill_ids(strace_ids_pipe);
 }
