@@ -170,9 +170,6 @@ pidns_test_init(void)
 	if (!pidns_fork(strace_ids_pipe, pgid, false))
 		goto pidns_test_init_run_test;
 
-	if (!pidns_fork(strace_ids_pipe, pgid, true))
-		goto pidns_test_init_run_test;
-
 	kill(pause_pid, SIGKILL);
 	while (wait(NULL) > 0);
 	if (errno != ECHILD)
