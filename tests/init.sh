@@ -409,11 +409,8 @@ test_pidns_run_strace()
 test_pidns()
 {
 	test_pidns_run_strace "$@"
-
-	if [[ $(id -u) -eq 0 ]]; then
-		STRACE="unshare -fp $STRACE"
-		test_pidns_run_strace "$@"
-	fi
+	STRACE="unshare -Urpf $STRACE"
+	test_pidns_run_strace "$@"
 }
 
 check_prog cat

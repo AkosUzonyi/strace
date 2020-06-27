@@ -144,12 +144,9 @@ pidns_test_init(void)
 		return;
 	}
 
-	if (unshare(CLONE_NEWPID) < 0) {
-		if (errno != EPERM)
-			perror_msg_and_fail("unshare");
-
-		exit(0);
-	}
+	/* Unshare user namespace too, so we do not need to be root */
+	if (unshare(CLONE_NEWUSER | CLONE_NEWPID) < 0)
+		perror_msg_and_fail("unshare");
 
 	/* Create sleeping process to keep PID namespace alive */
 	pid_t pause_pid = fork();
