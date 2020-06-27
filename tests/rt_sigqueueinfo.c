@@ -6,6 +6,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef PIDNS_TEST_INIT
+# define PIDNS_TEST_INIT pidns_test_init();
+#endif
+
 #include "tests.h"
 #include "pidns.h"
 #include <assert.h>
@@ -16,7 +20,7 @@
 int
 main(void)
 {
-	pidns_test_init();
+	PIDNS_TEST_INIT;
 
 	struct sigaction sa = {
 		.sa_handler = SIG_IGN
@@ -24,17 +28,16 @@ main(void)
 	union sigval value = {
 		.sival_ptr = (void *) (unsigned long) 0xdeadbeefbadc0dedULL
 	};
-	pid_t pid = pidns_ids[PT_TGID];
+	pid_t pid = getpid();
 
 	assert(sigaction(SIGUSR1, &sa, NULL) == 0);
 	if (sigqueue(pid, SIGUSR1, value))
 		perror_msg_and_skip("sigqueue");
-	pidns_printf("getpid() = %s\n", pidns_pid2str(PT_TGID));
-	pidns_printf("rt_sigqueueinfo(%s, SIGUSR1, {si_signo=SIGUSR1, "
-		"si_code=SI_QUEUE, si_pid=%s, si_uid=%u, "
+	pidns_printf("rt_sigqueueinfo(%d%s, SIGUSR1, {si_signo=SIGUSR1, "
+		"si_code=SI_QUEUE, si_pid=%d%s, si_uid=%u, "
 		"si_value={int=%d, ptr=%p}}) = 0\n",
-		pidns_pid2str(PT_TGID), pidns_pid2str(PT_TGID), getuid(),
-		value.sival_int, value.sival_ptr);
+		pid, pidns_pid2str(PT_TGID), pid, pidns_pid2str(PT_TGID),
+		getuid(), value.sival_int, value.sival_ptr);
 	pidns_printf("+++ exited with 0 +++\n");
 
 	return 0;

@@ -8,11 +8,15 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef PIDNS_TEST_INIT
+# define PIDNS_TEST_INIT pidns_test_init();
+#endif
+
 #include "tests.h"
 #include "scno.h"
 #include "pidns.h"
 
-#ifdef __NR_rt_tgsigqueueinfo
+#if defined __NR_rt_tgsigqueueinfo && defined __NR_gettid
 
 # include <errno.h>
 # include <signal.h>
@@ -33,7 +37,7 @@ k_tgsigqueueinfo(const pid_t tgid, const int tid, const int sig, const void *con
 int
 main(void)
 {
-	pidns_test_init();
+	PIDNS_TEST_INIT;
 
 	const struct sigaction sa = {
 		.sa_handler = SIG_IGN
@@ -46,21 +50,24 @@ main(void)
 	info->si_signo = SIGUSR1;
 	info->si_errno = ENOENT;
 	info->si_code = SI_QUEUE;
-	info->si_pid = pidns_ids[PT_TGID];
+	info->si_pid = getpid();
 	info->si_uid = getuid();
 	info->si_value.sival_ptr =
 		(void *) (unsigned long) 0xdeadbeeffacefeedULL;
 
-	if (k_tgsigqueueinfo(pidns_ids[PT_TGID], pidns_ids[PT_TID], SIGUSR1, info))
+	if (k_tgsigqueueinfo(getpid(), syscall(__NR_gettid), SIGUSR1, info))
 		(errno == ENOSYS ? perror_msg_and_skip : perror_msg_and_fail)(
 			"rt_tgsigqueueinfo");
 
-	pidns_printf("rt_tgsigqueueinfo(%s, %s, %s, {si_signo=%s"
-		", si_code=SI_QUEUE, si_errno=ENOENT, si_pid=%s"
+	pidns_printf("rt_tgsigqueueinfo(%d%s, %d%s, %s, {si_signo=%s"
+		", si_code=SI_QUEUE, si_errno=ENOENT, si_pid=%d%s"
 		", si_uid=%u, si_value={int=%d, ptr=%p}}) = 0\n",
-		pidns_pid2str(PT_TGID), pidns_pid2str(PT_TID),
-		"SIGUSR1", "SIGUSR1", pidns_pid2str(PT_TGID), info->si_uid,
-		info->si_value.sival_int, info->si_value.sival_ptr);
+		info->si_pid, pidns_pid2str(PT_TGID),
+		info->si_pid, pidns_pid2str(PT_TID),
+		"SIGUSR1", "SIGUSR1",
+		info->si_pid, pidns_pid2str(PT_TGID),
+		info->si_uid, info->si_value.sival_int,
+		info->si_value.sival_ptr);
 
 	pidns_printf("+++ exited with 0 +++\n");
 	return 0;

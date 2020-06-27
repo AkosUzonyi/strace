@@ -6,6 +6,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef PIDNS_TEST_INIT
+# define PIDNS_TEST_INIT pidns_test_init();
+#endif
+
 #include "tests.h"
 #include "scno.h"
 #include "pidns.h"
@@ -31,17 +35,17 @@ sprintaddr(void *addr)
 int
 main(void)
 {
-	pidns_test_init();
+	PIDNS_TEST_INIT;
 
-	const pid_t pid = pidns_ids[PT_TGID];
+	const pid_t pid = getpid();
 	const long long_pid = (unsigned long) (0xdeadbeef00000000LL | pid);
 	TAIL_ALLOC_OBJECT_CONST_PTR(void *, p_head);
 	TAIL_ALLOC_OBJECT_CONST_PTR(size_t, p_len);
 
 	if (syscall(__NR_get_robust_list, long_pid, p_head, p_len))
 		perror_msg_and_skip("get_robust_list");
-	pidns_printf("get_robust_list(%s, [%s], [%lu]) = 0\n",
-	       pidns_pid2str(PT_TGID), sprintaddr(*p_head),
+	pidns_printf("get_robust_list(%d%s, [%s], [%lu]) = 0\n",
+	       pid, pidns_pid2str(PT_TGID), sprintaddr(*p_head),
 	       (unsigned long) *p_len);
 
 	void *head = tail_alloc(*p_len);
@@ -52,8 +56,8 @@ main(void)
 
 	if (syscall(__NR_get_robust_list, long_pid, p_head, p_len))
 		perror_msg_and_skip("get_robust_list");
-	pidns_printf("get_robust_list(%s, [%s], [%lu]) = 0\n",
-	       pidns_pid2str(PT_TGID), sprintaddr(*p_head),
+	pidns_printf("get_robust_list(%d%s, [%s], [%lu]) = 0\n",
+	       pid, pidns_pid2str(PT_TGID), sprintaddr(*p_head),
 	       (unsigned long) *p_len);
 
 	pidns_printf("+++ exited with 0 +++\n");

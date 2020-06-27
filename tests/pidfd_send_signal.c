@@ -7,6 +7,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef PIDNS_TEST_INIT
+# define PIDNS_TEST_INIT pidns_test_init();
+#endif
+
 #include "tests.h"
 #include <unistd.h>
 #include "scno.h"
@@ -37,7 +41,7 @@ sys_pidfd_send_signal(int pidfd, int sig, const void *info, int flags)
 int
 main(void)
 {
-	pidns_test_init();
+	PIDNS_TEST_INIT;
 
 	static const char null_path[] = "/dev/null";
 
@@ -54,13 +58,13 @@ main(void)
 
 	si->si_signo = SIGUSR1;
 	si->si_code = SI_QUEUE;
-	si->si_pid = pidns_ids[PT_TGID];
+	si->si_pid = getpid();
 
 	sys_pidfd_send_signal(fd, SIGUSR2, si, -1);
 	pidns_printf("pidfd_send_signal(%d, SIGUSR2, {si_signo=SIGUSR1"
-	       ", si_code=SI_QUEUE, si_errno=%u, si_pid=%s, si_uid=%u"
+	       ", si_code=SI_QUEUE, si_errno=%u, si_pid=%d%s, si_uid=%u"
 	       ", si_value={int=%d, ptr=%p}}, %#x) = %s\n",
-	       fd, si->si_errno, pidns_pid2str(PT_TGID), si->si_uid,
+	       fd, si->si_errno, si->si_pid, pidns_pid2str(PT_TGID), si->si_uid,
 	       si->si_int, si->si_ptr, -1, errstr);
 
 	pidns_printf("+++ exited with 0 +++\n");

@@ -151,6 +151,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	ioctl_v4l2-success-v-Xverbose \
 	is_linux_mips_n64 \
 	kill_child \
+	kill-Y \
 	ksysent \
 	list_sigaction_signum \
 	localtime \
@@ -172,6 +173,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	pc \
 	perf_event_open_nonverbose \
 	perf_event_open_unabbrev \
+	pidfd_send_signal-Y \
 	poll-P \
 	ppoll-P \
 	ppoll-v \
@@ -193,7 +195,10 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	quotactl-xfs-v \
 	redirect-fds \
 	restart_syscall \
+	rt_sigqueueinfo-Y \
+	rt_tgsigqueueinfo-Y \
 	run_expect_termsig \
+	sched_xetaffinity-Y \
 	scm_rights \
 	seccomp-filter-v \
 	seccomp-strict \
@@ -222,6 +227,8 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	vfork-f \
 	wait4-v \
 	waitid-v \
+	xetpriority-Y \
+	xet_robust_list-Y \
 	zeroargc \
 	# end of check_PROGRAMS
 

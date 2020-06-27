@@ -392,22 +392,18 @@ test_pidns_run_strace()
 	local syscalls parent_pid log_filtered
 	log_filtered="log.filtered"
 
-	require_min_kernel_version_or_skip 2.6.24
-	check_prog unshare
-
-	syscalls='gettid,getpid,getpgid,getpgrp,getsid,setsid'
-	set -- "$(echo "$*" | sed -E "/(-e trace|--trace)=/! s/^/-e trace=${NAME},${syscalls} /")"
-	set -- "$(echo "$*" | sed -E "s/(-e trace|--trace)=[^[:space:]]*/\0,${syscalls}/")"
-
 	run_prog > /dev/null
-	run_strace -Y -f -e signal=none $@ -a0 $args > "$EXP"
-	parent_pid="$(head -n 1 $LOG | cut -d' ' -f1)"
+	run_strace -Y -f -e signal=none $@ $args > "$EXP"
+	parent_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
 	grep -E -v "^$parent_pid " "$LOG" > "$log_filtered"
 	match_diff "$log_filtered" "$EXP"
 }
 
 test_pidns()
 {
+	require_min_kernel_version_or_skip 2.6.24
+	check_prog unshare
+
 	test_pidns_run_strace "$@"
 	STRACE="unshare -Urpf $STRACE"
 	test_pidns_run_strace "$@"

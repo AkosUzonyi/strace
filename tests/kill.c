@@ -9,6 +9,10 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#ifndef PIDNS_TEST_INIT
+# define PIDNS_TEST_INIT pidns_test_init();
+#endif
+
 #include "tests.h"
 #include "scno.h"
 #include "pidns.h"
@@ -27,7 +31,7 @@ handler(int sig)
 int
 main(void)
 {
-	pidns_test_init();
+	PIDNS_TEST_INIT;
 
 	const struct sigaction act = { .sa_handler = handler };
 	if (sigaction(SIGALRM, &act, NULL))
@@ -39,9 +43,9 @@ main(void)
 	if (sigprocmask(SIG_UNBLOCK, &mask, NULL))
 		perror_msg_and_fail("sigprocmask");
 
-	const int pid = pidns_ids[PT_TGID];
+	const int pid = getpid();
 	long rc = syscall(__NR_kill, pid, (long) 0xdefaced00000000ULL | SIGALRM);
-	pidns_printf("kill(%s, SIGALRM) = %ld\n", pidns_pid2str(PT_TGID), rc);
+	pidns_printf("kill(%d%s, SIGALRM) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
 
 	const long big_pid = (long) 0xfacefeedbadc0dedULL;
 	const long big_sig = (long) 0xdeadbeefcafef00dULL;
@@ -50,7 +54,7 @@ main(void)
 	       (int) big_pid, (int) big_sig, rc, errno2name());
 
 	rc = syscall(__NR_kill, (long) 0xdefaced00000000ULL | pid, 0);
-	pidns_printf("kill(%s, 0) = %ld\n", pidns_pid2str(PT_TGID), rc);
+	pidns_printf("kill(%d%s, 0) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
 
 	pidns_printf("+++ exited with 0 +++\n");
 	return 0;

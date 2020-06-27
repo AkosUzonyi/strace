@@ -26,13 +26,17 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-pid_t pidns_ids[PT_COUNT];
+bool pidns_translation = false;
+bool pidns_unshared = false;
+
+/* Our PIDs in strace's namespace */
 pid_t pidns_strace_ids[PT_COUNT];
 
 void
 pidns_printf(const char *format, ...)
 {
-	printf("%-5d ", pidns_strace_ids[PT_TID]);
+	if (pidns_translation)
+		printf("%-5d ", pidns_strace_ids[PT_TID]);
 
 	va_list args;
 	va_start(args, format);
@@ -43,11 +47,13 @@ pidns_printf(const char *format, ...)
 const char *
 pidns_pid2str(enum pid_type type)
 {
-	static char buf[sizeof(" /*  in strace's PID NS */") + sizeof(int) * 6];
-	int len = snprintf(buf, sizeof(buf), "%d", pidns_ids[type]);
-	if (pidns_ids[type] != pidns_strace_ids[type])
-		snprintf(buf + len, sizeof(buf) - len, " /* %d in strace's PID NS */", pidns_strace_ids[type]);
+	static const char format[] = " /* %d in strace's PID NS */";
+	static char buf[sizeof(format) + sizeof(int) * 3];
 
+	if (!pidns_unshared || !pidns_strace_ids[type])
+		return "";
+
+	snprintf(buf, sizeof(buf), format, pidns_strace_ids[type]);
 	return buf;
 }
 
@@ -59,29 +65,14 @@ pidns_fill_ids(int *strace_ids_pipe)
 		close(strace_ids_pipe[0]);
 		close(strace_ids_pipe[1]);
 
-		if (pidns_strace_ids[PT_SID]) {
-			pidns_ids[PT_SID] = setsid();
-			//TODO
-			pidns_printf("setsid() = %d\n", pidns_ids[PT_SID]);
-		}
+		if (pidns_strace_ids[PT_SID])
+			setsid();
+	} else {
+		pidns_strace_ids[PT_TID] = syscall(__NR_gettid);
+		pidns_strace_ids[PT_TGID] = getpid();
+		pidns_strace_ids[PT_PGID] = getpgid(0);
+		pidns_strace_ids[PT_SID] = getsid(0);
 	}
-
-	pidns_ids[PT_TID] = syscall(__NR_gettid);
-	pidns_ids[PT_TGID] = getpid();
-	pidns_ids[PT_PGID] = getpgid(0);
-	pidns_ids[PT_SID] = getsid(0);
-	getpgrp();
-
-	if (!strace_ids_pipe) {
-		for (int i = 0; i < PT_COUNT; i++)
-			pidns_strace_ids[i] = pidns_ids[i];
-	}
-
-	pidns_printf("gettid() = %s\n", pidns_pid2str(PT_TID));
-	pidns_printf("getpid() = %s\n", pidns_pid2str(PT_TGID));
-	pidns_printf("getpgid(0) = %s\n", pidns_pid2str(PT_PGID));
-	pidns_printf("getsid(0) = %s\n", pidns_pid2str(PT_SID));
-	pidns_printf("getpgrp() = %s\n", pidns_pid2str(PT_PGID));
 }
 
 static pid_t
@@ -136,8 +127,14 @@ pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 void
 pidns_test_init(void)
 {
-	/* Write our PID to log, to be able to filter out our syscalls */
-	getpid();
+	pidns_translation = false;
+	pidns_fill_ids(NULL);
+}
+
+void
+pidns_test_init_Y(void)
+{
+	pidns_translation = true;
 
 	if (!pidns_fork(NULL, -1, false)) {
 		pidns_fill_ids(NULL);
@@ -147,6 +144,8 @@ pidns_test_init(void)
 	/* Unshare user namespace too, so we do not need to be root */
 	if (unshare(CLONE_NEWUSER | CLONE_NEWPID) < 0)
 		perror_msg_and_fail("unshare");
+
+	pidns_unshared = true;
 
 	/* Create sleeping process to keep PID namespace alive */
 	pid_t pause_pid = fork();
