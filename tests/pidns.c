@@ -57,28 +57,10 @@ pidns_pid2str(enum pid_type type)
 	return buf;
 }
 
-static void
-pidns_fill_ids(int *strace_ids_pipe)
-{
-	if (strace_ids_pipe) {
-		read(strace_ids_pipe[0], pidns_strace_ids, sizeof(pidns_strace_ids));
-		close(strace_ids_pipe[0]);
-		close(strace_ids_pipe[1]);
-
-		if (pidns_strace_ids[PT_SID])
-			setsid();
-	} else {
-		pidns_strace_ids[PT_TID] = syscall(__NR_gettid);
-		pidns_strace_ids[PT_TGID] = getpid();
-		pidns_strace_ids[PT_PGID] = getpgid(0);
-		pidns_strace_ids[PT_SID] = getsid(0);
-	}
-}
-
 static pid_t
 pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 {
-	if (strace_ids_pipe && pipe(strace_ids_pipe) < 0)
+	if (pipe(strace_ids_pipe) < 0)
 		perror_msg_and_fail("pipe");
 
 	fflush(stdout);
@@ -108,11 +90,9 @@ pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 		pidns_strace_ids[PT_PGID] = pid;
 	}
 
-	if (strace_ids_pipe) {
-		write(strace_ids_pipe[1], pidns_strace_ids, sizeof(pidns_strace_ids));
-		close(strace_ids_pipe[0]);
-		close(strace_ids_pipe[1]);
-	}
+	write(strace_ids_pipe[1], pidns_strace_ids, sizeof(pidns_strace_ids));
+	close(strace_ids_pipe[0]);
+	close(strace_ids_pipe[1]);
 
 	/* WNOWAIT: leave the zombie, to be able to use it as a process group */
 	siginfo_t siginfo;
@@ -136,10 +116,10 @@ pidns_test_init_Y(void)
 {
 	pidns_translation = true;
 
-	if (!pidns_fork(NULL, -1, false)) {
-		pidns_fill_ids(NULL);
-		return;
-	}
+	int strace_ids_pipe[2];
+
+	if (!pidns_fork(strace_ids_pipe, -1, false))
+		goto pidns_test_init_run_test;
 
 	/* Unshare user namespace too, so we do not need to be root */
 	if (unshare(CLONE_NEWUSER | CLONE_NEWPID) < 0)
@@ -153,8 +133,6 @@ pidns_test_init_Y(void)
 		pause();
 		_exit(0);
 	}
-
-	int strace_ids_pipe[2];
 
 	if (!pidns_fork(strace_ids_pipe, -1, false))
 		goto pidns_test_init_run_test;
@@ -177,5 +155,10 @@ pidns_test_init_Y(void)
 	exit(0);
 
 pidns_test_init_run_test:
-	pidns_fill_ids(strace_ids_pipe);
+	read(strace_ids_pipe[0], pidns_strace_ids, sizeof(pidns_strace_ids));
+	close(strace_ids_pipe[0]);
+	close(strace_ids_pipe[1]);
+
+	if (pidns_strace_ids[PT_SID])
+		setsid();
 }
