@@ -142,7 +142,9 @@ getgroups	-a17
 getgroups32	-a19
 getpeername	-a27
 getpgrp	-a10
+getpgrp-Y	test_pidns -e trace=getpgrp -a10
 getpid	-a9
+getpid-Y	test_pidns -e trace=getpid -a9
 getppid	-a10
 getrandom	-a32 -s3
 getresgid	-a25
@@ -152,8 +154,10 @@ getresuid32	-a27
 getrlimit	-a27
 getrusage	-v
 getsid	-a10
+getsid-Y	test_pidns -e trace=getsid -a10
 getsockname	-a27
 gettid	-a9
+gettid-Y	test_pidns -e trace=gettid -a9
 getuid-creds	+getuid.test
 getuid32	+getuid.test
 getuid32-creds	+getuid.test

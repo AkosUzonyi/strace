@@ -114,9 +114,13 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	fork-f \
 	fsync-y \
 	get_process_reaper \
+	getpgrp-Y	\
 	getpid	\
+	getpid-Y	\
 	getppid	\
+	getsid-Y \
 	gettid \
+	gettid-Y \
 	inject-nf \
 	int_0x80 \
 	ioctl_dm-v \

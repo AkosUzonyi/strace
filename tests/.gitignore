@@ -161,7 +161,9 @@ getgroups
 getgroups32
 getpeername
 getpgrp
+getpgrp-Y
 getpid
+getpid-Y
 getppid
 getrandom
 getresgid
@@ -171,8 +173,10 @@ getresuid32
 getrlimit
 getrusage
 getsid
+getsid-Y
 getsockname
 gettid
+gettid-Y
 getuid
 getuid32
 getxgid
