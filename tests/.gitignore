@@ -646,6 +646,7 @@ setgroups
 setgroups32
 sethostname
 setns
+setpgrp-exec
 setregid
 setregid32
 setresgid
@@ -691,6 +692,7 @@ sockopt-sol_netlink
 sockopt-timestamp
 splice
 stack-fcall
+stack-fcall-attach
 stack-fcall-mangled
 stat
 stat64
