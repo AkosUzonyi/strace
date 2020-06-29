@@ -107,13 +107,6 @@ pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 void
 pidns_test_init(void)
 {
-	pidns_translation = false;
-	pidns_fill_ids(NULL);
-}
-
-void
-pidns_test_init_Y(void)
-{
 	pidns_translation = true;
 
 	int strace_ids_pipe[2];

@@ -29,16 +29,10 @@ void pidns_printf(const char *format, ...);
  */
 const char *pidns_pid2str(enum pid_type type);
 
-/*
- * Init pidns testing, when strace is run without the -Y flag
+/**
+ * Init pidns testing.
  * Should be called at the beginning of the test's main function
  */
 void pidns_test_init(void);
-
-/*
- * Init pidns testing, when strace is run with the -Y flag
- * Should be called at the beginning of the test's main function
- */
-void pidns_test_init_Y(void);
 
 #endif

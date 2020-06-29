@@ -1,2 +1,2 @@
-#define PIDNS_TEST_INIT pidns_test_init_Y();
+#define PIDNS_TEST_INIT pidns_test_init()
 #include "gettid.c"

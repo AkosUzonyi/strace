@@ -8,7 +8,7 @@
  */
 
 #ifndef PIDNS_TEST_INIT
-# define PIDNS_TEST_INIT pidns_test_init();
+# define PIDNS_TEST_INIT
 #endif
 
 #include "tests.h"
