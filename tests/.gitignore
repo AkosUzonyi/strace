@@ -548,6 +548,7 @@ printstrn-umoven
 printstrn-umoven-peekdata
 printstrn-umoven-undumpable
 prlimit64
+prlimit64-Y
 process_vm_readv
 process_vm_writev
 pselect6

@@ -183,6 +183,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	poll-P \
 	ppoll-P \
 	ppoll-v \
+	prlimit64-Y \
 	prctl-seccomp-filter-v \
 	prctl-seccomp-strict \
 	prctl-spec-inject \
