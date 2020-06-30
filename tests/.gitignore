@@ -507,6 +507,7 @@ pidfd_open--decode-fd-socket
 pidfd_open-P
 pidfd_open-y
 pidfd_open-yy
+pidfd_open-Y
 pidfd_send_signal
 pidfd_send_signal-Y
 pidns

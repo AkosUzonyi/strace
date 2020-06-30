@@ -459,6 +459,7 @@ pidfd_open--decode-fd-socket	-a17 -e decode-fd=socket -e trace=pidfd_open
 pidfd_open-P	-a17 -P /dev/full -e trace=pidfd_open
 pidfd_open-y	-a17 -y -e trace=pidfd_open
 pidfd_open-yy	-a17 -yy -e trace=pidfd_open
+pidfd_open-Y	test_pidns -a17 -e trace=pidfd_open
 pidfd_send_signal
 pidfd_send_signal-Y test_pidns -e trace=pidfd_send_signal
 pipe2	-a15

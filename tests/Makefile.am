@@ -179,6 +179,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	pc \
 	perf_event_open_nonverbose \
 	perf_event_open_unabbrev \
+	pidfd_open-Y \
 	pidfd_send_signal-Y \
 	poll-P \
 	ppoll-P \
