@@ -389,8 +389,12 @@ test_prog_set()
 
 test_pidns_run_strace()
 {
-	local syscalls parent_pid log_filtered
+	local parent_pid log_filtered
 	log_filtered="log.filtered"
+
+	check_prog tail
+	check_prog cut
+	check_prog grep
 
 	run_prog > /dev/null
 	run_strace -Y -f -e signal=none $@ $args > "$EXP"
