@@ -621,6 +621,7 @@ sched_xetaffinity-Y
 sched_xetattr
 sched_xetparam
 sched_xetscheduler
+sched_xetscheduler-Y
 sched_yield
 scm_rights
 scno.h

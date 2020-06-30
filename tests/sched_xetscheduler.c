@@ -7,6 +7,7 @@
 
 #include "tests.h"
 #include "scno.h"
+#include "pidns.h"
 
 #if defined __NR_sched_getscheduler && defined __NR_sched_setscheduler
 
@@ -17,8 +18,14 @@
 int
 main(void)
 {
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
+
 	TAIL_ALLOC_OBJECT_CONST_PTR(struct sched_param, param);
-	long rc = syscall(__NR_sched_getscheduler, 0);
+	const int pid = getpid();
+
+	long rc = syscall(__NR_sched_getscheduler, pid);
 	const char *scheduler;
 	switch (rc) {
 		case SCHED_FIFO:
@@ -50,34 +57,36 @@ main(void)
 		default:
 			scheduler = "SCHED_OTHER";
 	}
-	printf("sched_getscheduler(0) = %ld (%s)\n",
-	       rc, scheduler);
+	pidns_printf("sched_getscheduler(%d%s) = %ld (%s)\n",
+	       pid, pidns_pid2str(PT_TGID), rc, scheduler);
 
 	rc = syscall(__NR_sched_getscheduler, -1);
-	printf("sched_getscheduler(-1) = %s\n", sprintrc(rc));
+	pidns_printf("sched_getscheduler(-1) = %s\n", sprintrc(rc));
 
 	param->sched_priority = -1;
 
-	rc = syscall(__NR_sched_setscheduler, 0, SCHED_FIFO, NULL);
-	printf("sched_setscheduler(0, SCHED_FIFO, NULL) = %s\n", sprintrc(rc));
+	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, NULL);
+	pidns_printf("sched_setscheduler(%d%s, SCHED_FIFO, NULL) = %s\n",
+	       pid, pidns_pid2str(PT_TGID), sprintrc(rc));
 
-	rc = syscall(__NR_sched_setscheduler, 0, SCHED_FIFO, param + 1);
-	printf("sched_setscheduler(0, SCHED_FIFO, %p) = %s\n", param + 1,
-	       sprintrc(rc));
+	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, param + 1);
+	pidns_printf("sched_setscheduler(%d%s, SCHED_FIFO, %p) = %s\n",
+	       pid, pidns_pid2str(PT_TGID), param + 1, sprintrc(rc));
 
-	rc = syscall(__NR_sched_setscheduler, 0, 0xfaceda7a, param);
-	printf("sched_setscheduler(0, %#x /* SCHED_??? */, [%d]) = %s\n",
-	       0xfaceda7a, param->sched_priority, sprintrc(rc));
+	rc = syscall(__NR_sched_setscheduler, pid, 0xfaceda7a, param);
+	pidns_printf("sched_setscheduler(%d%s, %#x /* SCHED_??? */, [%d]) = %s\n",
+	       pid, pidns_pid2str(PT_TGID), 0xfaceda7a,
+	       param->sched_priority, sprintrc(rc));
 
 	rc = syscall(__NR_sched_setscheduler, -1, SCHED_FIFO, param);
-	printf("sched_setscheduler(-1, SCHED_FIFO, [%d]) = %s\n",
+	pidns_printf("sched_setscheduler(-1, SCHED_FIFO, [%d]) = %s\n",
 	       param->sched_priority, sprintrc(rc));
 
-	rc = syscall(__NR_sched_setscheduler, 0, SCHED_FIFO, param);
-	printf("sched_setscheduler(0, SCHED_FIFO, [%d]) = %s\n",
-	       param->sched_priority, sprintrc(rc));
+	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, param);
+	pidns_printf("sched_setscheduler(%d%s, SCHED_FIFO, [%d]) = %s\n",
+	       pid, pidns_pid2str(PT_TGID), param->sched_priority, sprintrc(rc));
 
-	puts("+++ exited with 0 +++");
+	pidns_printf("+++ exited with 0 +++\n");
 	return 0;
 }
 

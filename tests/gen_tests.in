@@ -543,6 +543,7 @@ sched_xetaffinity-Y	test_pidns -a28 -e trace=sched_getaffinity,sched_setaffinity
 sched_xetattr	-a29 -e trace=sched_getattr,sched_setattr
 sched_xetparam	-a23 -e trace=sched_getparam,sched_setparam
 sched_xetscheduler	-a22 -e trace=sched_getscheduler,sched_setscheduler
+sched_xetscheduler-Y	test_pidns -a22 -e trace=sched_getscheduler,sched_setscheduler
 sched_yield	-a14
 seccomp-filter	-e trace=seccomp
 seccomp-filter-v	-v -e trace=seccomp
