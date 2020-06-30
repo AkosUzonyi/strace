@@ -1196,7 +1196,7 @@ attach_tcb(struct tcb *const tcp)
 	unsigned int ntid = 0, nerr = 0;
 
 	if (followfork && tcp->pid != strace_child &&
-	    xsprintf(procdir, task_path, tcp->pid) > 0 &&
+	    xsprintf(procdir, task_path, get_proc_pid(tcp)) > 0 &&
 	    (dir = opendir(procdir)) != NULL) {
 		struct_dirent *de;
 
@@ -2289,7 +2289,6 @@ init(int argc, char *argv[])
 			break;
 		case 'Y':
 			perform_ns_resolution++;
-			pidns_init();
 			break;
 		case 'z':
 			clear_number_set_array(status_set, 1);
@@ -2678,6 +2677,8 @@ init(int argc, char *argv[])
 	 */
 	print_pid_pfx = outfname && !output_separately &&
 		((followfork && !output_separately) || nprocs > 1);
+
+	pidns_init();
 }
 
 static struct tcb *
