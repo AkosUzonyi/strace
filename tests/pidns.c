@@ -50,6 +50,9 @@ pidns_pid2str(enum pid_type type)
 	static const char format[] = " /* %d in strace's PID NS */";
 	static char buf[sizeof(format) + sizeof(int) * 3];
 
+	if (type < 0 || type >= PT_COUNT)
+		return "";
+
 	if (!pidns_unshared || !pidns_strace_ids[type])
 		return "";
 

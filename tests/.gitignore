@@ -109,7 +109,9 @@ fchown
 fchown32
 fchownat
 fcntl
+fcntl-Y
 fcntl64
+fcntl64-Y
 fdatasync
 fflush
 file_handle

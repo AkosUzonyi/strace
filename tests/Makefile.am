@@ -108,6 +108,8 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	delay \
 	execve-v \
 	execveat-v \
+	fcntl-Y \
+	fcntl64-Y \
 	filter_seccomp-flag \
 	filter_seccomp-perf \
 	filter-unavailable \
