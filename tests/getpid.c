@@ -5,10 +5,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifndef PIDNS_TEST_INIT
-# define PIDNS_TEST_INIT
-#endif
-
 #include "tests.h"
 #include "scno.h"
 #include "pidns.h"
@@ -21,7 +17,9 @@
 int
 main(void)
 {
-	PIDNS_TEST_INIT;
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
 
 	pidns_printf("getpid() = %d%s\n", syscall(__NR_getpid), pidns_pid2str(PT_TGID));
 	pidns_printf("+++ exited with 0 +++\n");

@@ -1,2 +1,2 @@
-#define PIDNS_TEST_INIT pidns_test_init()
+#define PIDNS_TRANSLATION
 #include "rt_tgsigqueueinfo.c"

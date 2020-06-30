@@ -9,10 +9,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifndef PIDNS_TEST_INIT
-# define PIDNS_TEST_INIT
-#endif
-
 #include "tests.h"
 #include "scno.h"
 #include "pidns.h"
@@ -31,7 +27,9 @@ handler(int sig)
 int
 main(void)
 {
-	PIDNS_TEST_INIT;
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
 
 	const struct sigaction act = { .sa_handler = handler };
 	if (sigaction(SIGALRM, &act, NULL))

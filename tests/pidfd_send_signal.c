@@ -7,10 +7,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifndef PIDNS_TEST_INIT
-# define PIDNS_TEST_INIT
-#endif
-
 #include "tests.h"
 #include <unistd.h>
 #include "scno.h"
@@ -41,7 +37,9 @@ sys_pidfd_send_signal(int pidfd, int sig, const void *info, int flags)
 int
 main(void)
 {
-	PIDNS_TEST_INIT;
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
 
 	static const char null_path[] = "/dev/null";
 

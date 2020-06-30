@@ -8,10 +8,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifndef PIDNS_TEST_INIT
-# define PIDNS_TEST_INIT
-#endif
-
 #include "tests.h"
 #include "scno.h"
 #include "pidns.h"
@@ -46,7 +42,9 @@ setaffinity(unsigned long pid, unsigned long size, void *set)
 int
 main(void)
 {
-	PIDNS_TEST_INIT;
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
 
 	unsigned int cpuset_size = 1;
 	const pid_t pid = getpid();

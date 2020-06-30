@@ -8,10 +8,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifndef PIDNS_TEST_INIT
-# define PIDNS_TEST_INIT
-#endif
-
 #include "tests.h"
 #include "scno.h"
 #include "pidns.h"
@@ -37,7 +33,9 @@ k_tgsigqueueinfo(const pid_t tgid, const int tid, const int sig, const void *con
 int
 main(void)
 {
-	PIDNS_TEST_INIT;
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
 
 	const struct sigaction sa = {
 		.sa_handler = SIG_IGN

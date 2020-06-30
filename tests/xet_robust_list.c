@@ -6,10 +6,6 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-#ifndef PIDNS_TEST_INIT
-# define PIDNS_TEST_INIT
-#endif
-
 #include "tests.h"
 #include "scno.h"
 #include "pidns.h"
@@ -35,7 +31,9 @@ sprintaddr(void *addr)
 int
 main(void)
 {
-	PIDNS_TEST_INIT;
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
 
 	const pid_t pid = getpid();
 	const long long_pid = (unsigned long) (0xdeadbeef00000000LL | pid);
