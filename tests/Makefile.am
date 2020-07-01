@@ -191,6 +191,8 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	prctl-spec-inject \
 	print_maxfd \
 	print_ppid_tracerpid \
+	process_vm_readv-Y \
+	process_vm_writev-Y \
 	qual_fault \
 	qual_inject-error-signal \
 	qual_inject-retval \

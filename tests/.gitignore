@@ -552,7 +552,9 @@ printstrn-umoven-undumpable
 prlimit64
 prlimit64-Y
 process_vm_readv
+process_vm_readv-Y
 process_vm_writev
+process_vm_writev-Y
 pselect6
 ptrace
 ptrace_syscall_info

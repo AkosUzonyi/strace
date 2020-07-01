@@ -487,7 +487,9 @@ printstrn-umoven-undumpable	-e signal=none -e trace=add_key
 prlimit64
 prlimit64-Y     test_pidns -e trace=prlimit64
 process_vm_readv	-s5 -a37
+process_vm_readv-Y	test_pidns -s5 -a37 -e trace=process_vm_readv
 process_vm_writev	-s5 -a38
+process_vm_writev-Y	test_pidns -s5 -a38 -e trace=process_vm_writev
 pselect6
 ptrace	-a23 -e signal=none
 ptrace_syscall_info	-a35 -e signal=none -e trace=ptrace
