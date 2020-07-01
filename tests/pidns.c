@@ -33,15 +33,10 @@ bool pidns_unshared = false;
 pid_t pidns_strace_ids[PT_COUNT];
 
 void
-pidns_printf(const char *format, ...)
+pidns_print_leader(void)
 {
 	if (pidns_translation)
 		printf("%-5d ", pidns_strace_ids[PT_TID]);
-
-	va_list args;
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
 }
 
 const char *

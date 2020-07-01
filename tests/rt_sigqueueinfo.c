@@ -31,12 +31,14 @@ main(void)
 	assert(sigaction(SIGUSR1, &sa, NULL) == 0);
 	if (sigqueue(pid, SIGUSR1, value))
 		perror_msg_and_skip("sigqueue");
-	pidns_printf("rt_sigqueueinfo(%d%s, SIGUSR1, {si_signo=SIGUSR1, "
+	pidns_print_leader();
+	printf("rt_sigqueueinfo(%d%s, SIGUSR1, {si_signo=SIGUSR1, "
 		"si_code=SI_QUEUE, si_pid=%d%s, si_uid=%u, "
 		"si_value={int=%d, ptr=%p}}) = 0\n",
 		pid, pidns_pid2str(PT_TGID), pid, pidns_pid2str(PT_TGID),
 		getuid(), value.sival_int, value.sival_ptr);
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 
 	return 0;
 }

@@ -59,14 +59,15 @@ main(void)
 
 		unsigned long res = 0xfacefeed00000000ULL | xlat->val;
 		long rc = syscall(__NR_prlimit64, pid, res, 0, rlimit);
+		pidns_print_leader();
 		if (rc)
-			pidns_printf("prlimit64(%d%s, %s, NULL, %p) ="
+			printf("prlimit64(%d%s, %s, NULL, %p) ="
 				     " %ld %s (%m)\n",
 			       (unsigned) pid, pidns_pid2str(PT_TGID),
 			       xlat->str, rlimit,
 			       rc, errno2name());
 		else
-			pidns_printf("prlimit64(%d%s, %s, NULL"
+			printf("prlimit64(%d%s, %s, NULL"
 			       ", {rlim_cur=%s, rlim_max=%s}) = 0\n",
 			       (unsigned) pid, pidns_pid2str(PT_TGID),
 			       xlat->str,
@@ -74,7 +75,8 @@ main(void)
 			       sprint_rlim(rlimit[1]));
 	}
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }
 

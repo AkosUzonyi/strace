@@ -57,7 +57,8 @@ main(void)
 		(errno == ENOSYS ? perror_msg_and_skip : perror_msg_and_fail)(
 			"rt_tgsigqueueinfo");
 
-	pidns_printf("rt_tgsigqueueinfo(%d%s, %d%s, %s, {si_signo=%s"
+	pidns_print_leader();
+	printf("rt_tgsigqueueinfo(%d%s, %d%s, %s, {si_signo=%s"
 		", si_code=SI_QUEUE, si_errno=ENOENT, si_pid=%d%s"
 		", si_uid=%u, si_value={int=%d, ptr=%p}}) = 0\n",
 		info->si_pid, pidns_pid2str(PT_TGID),
@@ -67,7 +68,8 @@ main(void)
 		info->si_uid, info->si_value.sival_int,
 		info->si_value.sival_ptr);
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }
 

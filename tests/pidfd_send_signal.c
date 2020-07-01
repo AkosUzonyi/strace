@@ -51,7 +51,8 @@ main(void)
 	const void *esi = (const void *) si + 1;
 
 	sys_pidfd_send_signal(fd, SIGUSR1, esi, 0);
-	pidns_printf("pidfd_send_signal(%d, SIGUSR1, %p, 0) = %s\n",
+	pidns_print_leader();
+	printf("pidfd_send_signal(%d, SIGUSR1, %p, 0) = %s\n",
 	       fd, esi, errstr);
 
 	si->si_signo = SIGUSR1;
@@ -59,13 +60,15 @@ main(void)
 	si->si_pid = getpid();
 
 	sys_pidfd_send_signal(fd, SIGUSR2, si, -1);
-	pidns_printf("pidfd_send_signal(%d, SIGUSR2, {si_signo=SIGUSR1"
+	pidns_print_leader();
+	printf("pidfd_send_signal(%d, SIGUSR2, {si_signo=SIGUSR1"
 	       ", si_code=SI_QUEUE, si_errno=%u, si_pid=%d%s, si_uid=%u"
 	       ", si_value={int=%d, ptr=%p}}, %#x) = %s\n",
 	       fd, si->si_errno, si->si_pid, pidns_pid2str(PT_TGID), si->si_uid,
 	       si->si_int, si->si_ptr, -1, errstr);
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }
 

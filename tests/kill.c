@@ -43,18 +43,22 @@ main(void)
 
 	const int pid = getpid();
 	long rc = syscall(__NR_kill, pid, (long) 0xdefaced00000000ULL | SIGALRM);
-	pidns_printf("kill(%d%s, SIGALRM) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
+	pidns_print_leader();
+	printf("kill(%d%s, SIGALRM) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
 
 	const long big_pid = (long) 0xfacefeedbadc0dedULL;
 	const long big_sig = (long) 0xdeadbeefcafef00dULL;
 	rc = syscall(__NR_kill, big_pid, big_sig);
-	pidns_printf("kill(%d, %d) = %ld %s (%m)\n",
+	pidns_print_leader();
+	printf("kill(%d, %d) = %ld %s (%m)\n",
 	       (int) big_pid, (int) big_sig, rc, errno2name());
 
 	rc = syscall(__NR_kill, (long) 0xdefaced00000000ULL | pid, 0);
-	pidns_printf("kill(%d%s, 0) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
+	pidns_print_leader();
+	printf("kill(%d%s, 0) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }
 

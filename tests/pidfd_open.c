@@ -55,17 +55,20 @@ main(void)
 
 	k_pidfd_open(0, 0);
 # ifndef PATH_TRACING
-	pidns_printf("pidfd_open(0, 0) = %s\n", errstr);
+	pidns_print_leader();
+	printf("pidfd_open(0, 0) = %s\n", errstr);
 # endif
 
 	k_pidfd_open(-1U, 0);
 # ifndef PATH_TRACING
-	pidns_printf("pidfd_open(-1, 0) = %s\n", errstr);
+	pidns_print_leader();
+	printf("pidfd_open(-1, 0) = %s\n", errstr);
 # endif
 
 	k_pidfd_open(0, -1U);
 # ifndef PATH_TRACING
-	pidns_printf("pidfd_open(0, %#x) = %s\n", -1U, errstr);
+	pidns_print_leader();
+	printf("pidfd_open(0, %#x) = %s\n", -1U, errstr);
 # endif
 
 	const unsigned int flags = 0xfacefeed;
@@ -73,7 +76,8 @@ main(void)
 
 	k_pidfd_open(pid, flags);
 # ifndef PATH_TRACING
-	pidns_printf("pidfd_open(%d%s, %#x) = %s\n",
+	pidns_print_leader();
+	printf("pidfd_open(%d%s, %#x) = %s\n",
 		pid, pidns_pid2str(PT_TGID), flags, errstr);
 # endif
 
@@ -86,7 +90,8 @@ main(void)
 # endif
 
 # ifndef PATH_TRACING
-	pidns_printf("pidfd_open(%d%s, 0) = "
+	pidns_print_leader();
+	printf("pidfd_open(%d%s, 0) = "
 #  if defined PRINT_PIDFD
 	       "%ld<pid:%d>\n", pid, pidns_pid2str(PT_TGID), rc, pid
 #  elif defined PRINT_PATHS
@@ -97,7 +102,8 @@ main(void)
 	       );
 # endif
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }
 

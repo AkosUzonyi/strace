@@ -101,7 +101,8 @@ do_kcmp(kernel_ulong_t pid1, kernel_ulong_t pid2, kernel_ulong_t type,
 	rc = syscall(__NR_kcmp, pid1, pid2, type, idx1, idx2);
 	errstr = sprintrc(rc);
 
-	pidns_printf("kcmp(%d%s, %d%s, ",
+	pidns_print_leader();
+	printf("kcmp(%d%s, %d%s, ",
 		(int) pid1, (int) pid1 == getpid() ? pidns_pid2str(PT_TGID) : "",
 		(int) pid2, (int) pid2 == getpid() ? pidns_pid2str(PT_TGID) : "");
 
@@ -227,7 +228,8 @@ main(void)
 			(uintptr_t) slot, 1);
 	}
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 
 	return 0;
 }

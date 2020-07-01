@@ -50,13 +50,15 @@ test_flock_einval(const int cmd, const char *name)
 	fl->l_len = (TYPEOF_FLOCK_OFF_T) 0xdefaced2cafef00dULL;
 
 	invoke_test_syscall(0, cmd, fl);
-	pidns_printf("%s(0, %s, {l_type=F_RDLCK, l_whence=SEEK_SET"
+	pidns_print_leader();
+	printf("%s(0, %s, {l_type=F_RDLCK, l_whence=SEEK_SET"
 	       ", l_start=%jd, l_len=%jd}) = %s\n", TEST_SYSCALL_STR, name,
 	       (intmax_t) fl->l_start, (intmax_t) fl->l_len, errstr);
 
 	void *const bad_addr = (void *) fl + 1;
 	invoke_test_syscall(0, cmd, bad_addr);
-	pidns_printf("%s(0, %s, %p) = %s\n",
+	pidns_print_leader();
+	printf("%s(0, %s, %p) = %s\n",
 	       TEST_SYSCALL_STR, name, bad_addr, errstr);
 }
 
@@ -74,13 +76,15 @@ test_flock64_einval(const int cmd, const char *name)
 	fl->l_len = (TYPEOF_FLOCK_OFF_T) 0xdefaced2cafef00dULL;
 
 	invoke_test_syscall(0, cmd, fl);
-	pidns_printf("%s(0, %s, {l_type=F_RDLCK, l_whence=SEEK_SET"
+	pidns_print_leader();
+	printf("%s(0, %s, {l_type=F_RDLCK, l_whence=SEEK_SET"
 	       ", l_start=%jd, l_len=%jd}) = %s\n", TEST_SYSCALL_STR, name,
 	       (intmax_t) fl->l_start, (intmax_t) fl->l_len, errstr);
 
 	void *const bad_addr = (void *) fl + 1;
 	invoke_test_syscall(0, cmd, bad_addr);
-	pidns_printf("%s(0, %s, %p) = %s\n",
+	pidns_print_leader();
+	printf("%s(0, %s, %p) = %s\n",
 	       TEST_SYSCALL_STR, name, bad_addr, errstr);
 }
 
@@ -96,19 +100,22 @@ test_flock(void)
 	fl->l_len = FILE_LEN;
 
 	long rc = invoke_test_syscall(0, F_SETLK, fl);
-	pidns_printf("%s(0, F_SETLK, {l_type=F_RDLCK, l_whence=SEEK_SET"
+	pidns_print_leader();
+	printf("%s(0, F_SETLK, {l_type=F_RDLCK, l_whence=SEEK_SET"
 	       ", l_start=0, l_len=%d}) = %s\n",
 	       TEST_SYSCALL_STR, FILE_LEN, errstr);
 	if (rc)
 		return;
 
 	invoke_test_syscall(0, F_GETLK, fl);
-	pidns_printf("%s(0, F_GETLK, {l_type=F_UNLCK, l_whence=SEEK_SET"
+	pidns_print_leader();
+	printf("%s(0, F_GETLK, {l_type=F_UNLCK, l_whence=SEEK_SET"
 	       ", l_start=0, l_len=%d, l_pid=0}) = 0\n",
 	       TEST_SYSCALL_STR, FILE_LEN);
 
 	invoke_test_syscall(0, F_SETLKW, fl);
-	pidns_printf("%s(0, F_SETLKW, {l_type=F_UNLCK, l_whence=SEEK_SET"
+	pidns_print_leader();
+	printf("%s(0, F_SETLKW, {l_type=F_UNLCK, l_whence=SEEK_SET"
 	       ", l_start=0, l_len=%d}) = 0\n",
 	       TEST_SYSCALL_STR, FILE_LEN);
 }
@@ -126,19 +133,22 @@ test_flock64_ofd(void)
 	fl->l_len = FILE_LEN;
 
 	long rc = invoke_test_syscall(0, F_OFD_SETLK, fl);
-	pidns_printf("%s(0, F_OFD_SETLK, {l_type=F_RDLCK, l_whence=SEEK_SET"
+	pidns_print_leader();
+	printf("%s(0, F_OFD_SETLK, {l_type=F_RDLCK, l_whence=SEEK_SET"
 	       ", l_start=0, l_len=%d}) = %s\n",
 	       TEST_SYSCALL_STR, FILE_LEN, errstr);
 	if (rc)
 		return;
 
 	invoke_test_syscall(0, F_OFD_GETLK, fl);
-	pidns_printf("%s(0, F_OFD_GETLK, {l_type=F_UNLCK, l_whence=SEEK_SET"
+	pidns_print_leader();
+	printf("%s(0, F_OFD_GETLK, {l_type=F_UNLCK, l_whence=SEEK_SET"
 	       ", l_start=0, l_len=%d, l_pid=0}) = 0\n",
 	       TEST_SYSCALL_STR, FILE_LEN);
 
 	invoke_test_syscall(0, F_OFD_SETLKW, fl);
-	pidns_printf("%s(0, F_OFD_SETLKW, {l_type=F_UNLCK, l_whence=SEEK_SET"
+	pidns_print_leader();
+	printf("%s(0, F_OFD_SETLKW, {l_type=F_UNLCK, l_whence=SEEK_SET"
 	       ", l_start=0, l_len=%d}) = 0\n",
 	       TEST_SYSCALL_STR, FILE_LEN);
 #endif /* F_OFD_GETLK && F_OFD_SETLK && F_OFD_SETLKW */
@@ -176,13 +186,15 @@ test_f_owner_ex_type_pid(const int cmd, const char *const cmd_name,
 	fo->type = type;
 	fo->pid = pid;
 	long rc = invoke_test_syscall(0, cmd, fo);
-	pidns_printf("%s(0, %s, {type=%s, pid=%d%s}) = %s\n",
+	pidns_print_leader();
+	printf("%s(0, %s, {type=%s, pid=%d%s}) = %s\n",
 	       TEST_SYSCALL_STR, cmd_name, type_name,
 	       fo->pid, pidns_pid2str(pid_type), errstr);
 
 	void *bad_addr = (void *) fo + 1;
 	invoke_test_syscall(0, cmd, bad_addr);
-	pidns_printf("%s(0, %s, %p) = %s\n",
+	pidns_print_leader();
+	printf("%s(0, %s, %p) = %s\n",
 	       TEST_SYSCALL_STR, cmd_name, bad_addr, errstr);
 
 	return rc;
@@ -254,13 +266,15 @@ static void
 test_other_set_cmd(const struct fcntl_cmd_check *check)
 {
 	invoke_test_syscall(check->fd, check->cmd, (void *) check->arg);
-	pidns_printf("%s(%d, %s, %s) = %s\n",
+	pidns_print_leader();
+	printf("%s(%d, %s, %s) = %s\n",
 	       TEST_SYSCALL_STR, check->fd,
 	       check->cmd_str, check->arg_str, errstr);
 
 	/* bad file fd */
 	invoke_test_syscall(-1, check->cmd, (void *) check->arg);
-	pidns_printf("%s(-1, %s, %s) = %s\n",
+	pidns_print_leader();
+	printf("%s(-1, %s, %s) = %s\n",
 	       TEST_SYSCALL_STR, check->cmd_str,
 	       check->arg_str, errstr);
 }
@@ -269,13 +283,15 @@ static void
 test_other_get_cmd(const struct fcntl_cmd_check *check)
 {
 	long rc = invoke_test_syscall(check->fd, check->cmd, NULL);
-	pidns_printf("%s(%d, %s) = ",
+	pidns_print_leader();
+	printf("%s(%d, %s) = ",
 	       TEST_SYSCALL_STR, check->fd, check->cmd_str);
 	print_retval_flags(check, rc);
 
 	/* bad file fd */
 	invoke_test_syscall(-1, check->cmd, NULL);
-	pidns_printf("%s(-1, %s) = %s\n",
+	pidns_print_leader();
+	printf("%s(-1, %s) = %s\n",
 	       TEST_SYSCALL_STR, check->cmd_str, errstr);
 }
 
@@ -383,6 +399,7 @@ main(void)
 #endif
 	test_fcntl_others();
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }

@@ -57,36 +57,44 @@ main(void)
 		default:
 			scheduler = "SCHED_OTHER";
 	}
-	pidns_printf("sched_getscheduler(%d%s) = %ld (%s)\n",
+	pidns_print_leader();
+	printf("sched_getscheduler(%d%s) = %ld (%s)\n",
 	       pid, pidns_pid2str(PT_TGID), rc, scheduler);
 
 	rc = syscall(__NR_sched_getscheduler, -1);
-	pidns_printf("sched_getscheduler(-1) = %s\n", sprintrc(rc));
+	pidns_print_leader();
+	printf("sched_getscheduler(-1) = %s\n", sprintrc(rc));
 
 	param->sched_priority = -1;
 
 	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, NULL);
-	pidns_printf("sched_setscheduler(%d%s, SCHED_FIFO, NULL) = %s\n",
+	pidns_print_leader();
+	printf("sched_setscheduler(%d%s, SCHED_FIFO, NULL) = %s\n",
 	       pid, pidns_pid2str(PT_TGID), sprintrc(rc));
 
 	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, param + 1);
-	pidns_printf("sched_setscheduler(%d%s, SCHED_FIFO, %p) = %s\n",
+	pidns_print_leader();
+	printf("sched_setscheduler(%d%s, SCHED_FIFO, %p) = %s\n",
 	       pid, pidns_pid2str(PT_TGID), param + 1, sprintrc(rc));
 
 	rc = syscall(__NR_sched_setscheduler, pid, 0xfaceda7a, param);
-	pidns_printf("sched_setscheduler(%d%s, %#x /* SCHED_??? */, [%d]) = %s\n",
+	pidns_print_leader();
+	printf("sched_setscheduler(%d%s, %#x /* SCHED_??? */, [%d]) = %s\n",
 	       pid, pidns_pid2str(PT_TGID), 0xfaceda7a,
 	       param->sched_priority, sprintrc(rc));
 
 	rc = syscall(__NR_sched_setscheduler, -1, SCHED_FIFO, param);
-	pidns_printf("sched_setscheduler(-1, SCHED_FIFO, [%d]) = %s\n",
+	pidns_print_leader();
+	printf("sched_setscheduler(-1, SCHED_FIFO, [%d]) = %s\n",
 	       param->sched_priority, sprintrc(rc));
 
 	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, param);
-	pidns_printf("sched_setscheduler(%d%s, SCHED_FIFO, [%d]) = %s\n",
+	pidns_print_leader();
+	printf("sched_setscheduler(%d%s, SCHED_FIFO, [%d]) = %s\n",
 	       pid, pidns_pid2str(PT_TGID), param->sched_priority, sprintrc(rc));
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }
 

@@ -18,7 +18,10 @@ main(void)
 	pidns_test_init();
 #endif
 
-	pidns_printf("gettid() = %d%s\n", syscall(__NR_gettid), pidns_pid2str(PT_TID));
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	printf("gettid() = %d%s\n", (int) syscall(__NR_gettid),
+		pidns_pid2str(PT_TID));
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }

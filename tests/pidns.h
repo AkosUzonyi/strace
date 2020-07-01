@@ -21,8 +21,8 @@ enum pid_type {
 	PT_NONE = -1
 };
 
-/* Prints leader (process tid) before printf */
-void pidns_printf(const char *format, ...);
+/* Prints leader (process tid) if pidns_test_init was called */
+void pidns_print_leader(void);
 
 /*
  * Returns a static buffer containing the translation of our PID

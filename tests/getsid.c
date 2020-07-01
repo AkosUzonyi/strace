@@ -19,9 +19,11 @@ main(void)
 #endif
 
 	pid_t pid = getpid();
-	pidns_printf("getsid(%d%s) = %d%s\n", pid, pidns_pid2str(PT_TGID),
+	pidns_print_leader();
+	printf("getsid(%d%s) = %d%s\n", pid, pidns_pid2str(PT_TGID),
 		getsid(pid), pidns_pid2str(PT_SID));
 
-	pidns_printf("+++ exited with 0 +++\n");
+	pidns_print_leader();
+	puts("+++ exited with 0 +++");
 	return 0;
 }
