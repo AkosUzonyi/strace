@@ -208,6 +208,8 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	rt_tgsigqueueinfo-Y \
 	run_expect_termsig \
 	sched_xetaffinity-Y \
+	sched_xetattr-Y \
+	sched_xetparam-Y \
 	sched_xetscheduler-Y \
 	scm_rights \
 	seccomp-filter-v \

@@ -620,7 +620,9 @@ sched_rr_get_interval
 sched_xetaffinity
 sched_xetaffinity-Y
 sched_xetattr
+sched_xetattr-Y
 sched_xetparam
+sched_xetparam-Y
 sched_xetscheduler
 sched_xetscheduler-Y
 sched_yield
