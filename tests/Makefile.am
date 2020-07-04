@@ -155,6 +155,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	ioctl_v4l2-success-v-Xabbrev \
 	ioctl_v4l2-success-v-Xraw \
 	ioctl_v4l2-success-v-Xverbose \
+	ioprio-Y \
 	is_linux_mips_n64 \
 	kcmp-yY \
 	kill_child \

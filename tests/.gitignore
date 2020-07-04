@@ -274,6 +274,7 @@ ioctl_watchdog
 ioperm
 iopl
 ioprio
+ioprio-Y
 ioprio-Xabbrev
 ioprio-Xraw
 ioprio-Xverbose
