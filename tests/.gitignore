@@ -199,6 +199,7 @@ io_uring_register
 io_uring_setup
 ioctl
 ioctl_block
+ioctl_block-Y
 ioctl_dm
 ioctl_dm-v
 ioctl_evdev

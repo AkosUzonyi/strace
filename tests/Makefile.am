@@ -125,6 +125,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	gettid-Y \
 	inject-nf \
 	int_0x80 \
+	ioctl_block-Y \
 	ioctl_dm-v \
 	ioctl_evdev-success \
 	ioctl_evdev-success-Xabbrev \
@@ -330,6 +331,7 @@ DECODER_TESTS = \
 	int_0x80.test \
 	inotify_init-y.test \
 	ioctl.test \
+	ioctl_block-Y.test \
 	ioctl_evdev-success.test \
 	ipc_msgbuf.test \
 	kern_features-fault.test \
