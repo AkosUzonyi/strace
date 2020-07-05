@@ -26,17 +26,18 @@ main(void)
 		tail_alloc(sizeof(struct sched_param));
 
 	const int pid = getpid();
+	const char *pid_str = pidns_pid2str(PT_TGID);
 
 	long rc = syscall(__NR_sched_getparam, pid, param);
 	pidns_print_leader();
 	printf("sched_getparam(%d%s, [%d]) = %ld\n",
-	       pid, pidns_pid2str(PT_TGID), param->sched_priority, rc);
+	       pid, pid_str, param->sched_priority, rc);
 
 	param->sched_priority = -1;
 	rc = syscall(__NR_sched_setparam, pid, param);
 	pidns_print_leader();
 	printf("sched_setparam(%d%s, [%d]) = %ld %s (%m)\n",
-	       pid, pidns_pid2str(PT_TGID),
+	       pid, pid_str,
 	       param->sched_priority, rc, errno2name());
 
 	pidns_print_leader();

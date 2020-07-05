@@ -101,10 +101,11 @@ do_kcmp(kernel_ulong_t pid1, kernel_ulong_t pid2, kernel_ulong_t type,
 	rc = syscall(__NR_kcmp, pid1, pid2, type, idx1, idx2);
 	errstr = sprintrc(rc);
 
+	const char *pid_str = pidns_pid2str(PT_TGID);
 	pidns_print_leader();
 	printf("kcmp(%d%s, %d%s, ",
-		(int) pid1, (int) pid1 == getpid() ? pidns_pid2str(PT_TGID) : "",
-		(int) pid2, (int) pid2 == getpid() ? pidns_pid2str(PT_TGID) : "");
+		(int) pid1, (int) pid1 == getpid() ? pid_str : "",
+		(int) pid2, (int) pid2 == getpid() ? pid_str : "");
 
 	if (type_str)
 		printf("%s", type_str);

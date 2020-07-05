@@ -76,9 +76,10 @@ main(void)
 
 	k_pidfd_open(pid, flags);
 # ifndef PATH_TRACING
+	const char *pid_str = pidns_pid2str(PT_TGID);
 	pidns_print_leader();
 	printf("pidfd_open(%d%s, %#x) = %s\n",
-		pid, pidns_pid2str(PT_TGID), flags, errstr);
+		pid, pid_str, flags, errstr);
 # endif
 
 # ifdef PRINT_PATHS
@@ -93,11 +94,11 @@ main(void)
 	pidns_print_leader();
 	printf("pidfd_open(%d%s, 0) = "
 #  if defined PRINT_PIDFD
-	       "%ld<pid:%d>\n", pid, pidns_pid2str(PT_TGID), rc, pid
+	       "%ld<pid:%d>\n", pid, pid_str, rc, pid
 #  elif defined PRINT_PATHS
-	       "%ld<anon_inode:[pidfd]>\n", pid, pidns_pid2str(PT_TGID), rc
+	       "%ld<anon_inode:[pidfd]>\n", pid, pid_str, rc
 #  else
-	       "%s\n", pid, pidns_pid2str(PT_TGID), errstr
+	       "%s\n", pid, pid_str, errstr
 #  endif
 	       );
 # endif

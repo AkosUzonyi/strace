@@ -54,6 +54,7 @@ main(void)
 		(kernel_ulong_t) 0xdefaceddeadc0deULL;
 
 	const int pid = getpid();
+	const char *pid_str = pidns_pid2str(PT_TGID);
 
 	TAIL_ALLOC_OBJECT_CONST_PTR(struct sched_attr, attr);
 	TAIL_ALLOC_OBJECT_CONST_PTR(unsigned int, psize);
@@ -62,7 +63,7 @@ main(void)
 	sys_sched_getattr(pid, 0, 0, 0);
 	pidns_print_leader();
 	printf("sched_getattr(%d%s, NULL, 0, 0) = %s\n",
-		pid, pidns_pid2str(PT_TGID), errstr);
+		pid, pid_str, errstr);
 
 	sys_sched_getattr(0, (unsigned long) attr, 0, 0);
 	pidns_print_leader();
@@ -173,7 +174,7 @@ main(void)
 		perror_msg_and_skip("sched_setattr");
 	pidns_print_leader();
 	printf("sched_setattr(%d%s, {size=%u, sched_policy=",
-		pid, pidns_pid2str(PT_TGID), attr->size);
+		pid, pid_str, attr->size);
 	printxval(schedulers, attr->sched_policy, NULL);
 	printf(", sched_flags=%s, sched_nice=%d, sched_priority=%u"
 	       ", sched_runtime=%" PRIu64 ", sched_deadline=%" PRIu64

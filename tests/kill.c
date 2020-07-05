@@ -42,9 +42,10 @@ main(void)
 		perror_msg_and_fail("sigprocmask");
 
 	const int pid = getpid();
+	const char *pid_str = pidns_pid2str(PT_TGID);
 	long rc = syscall(__NR_kill, pid, (long) 0xdefaced00000000ULL | SIGALRM);
 	pidns_print_leader();
-	printf("kill(%d%s, SIGALRM) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
+	printf("kill(%d%s, SIGALRM) = %ld\n", pid, pid_str, rc);
 
 	const long big_pid = (long) 0xfacefeedbadc0dedULL;
 	const long big_sig = (long) 0xdeadbeefcafef00dULL;
@@ -55,7 +56,7 @@ main(void)
 
 	rc = syscall(__NR_kill, (long) 0xdefaced00000000ULL | pid, 0);
 	pidns_print_leader();
-	printf("kill(%d%s, 0) = %ld\n", pid, pidns_pid2str(PT_TGID), rc);
+	printf("kill(%d%s, 0) = %ld\n", pid, pid_str, rc);
 
 	pidns_print_leader();
 	puts("+++ exited with 0 +++");

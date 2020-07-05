@@ -24,6 +24,7 @@ main(void)
 
 	TAIL_ALLOC_OBJECT_CONST_PTR(struct sched_param, param);
 	const int pid = getpid();
+	const char *pid_str = pidns_pid2str(PT_TGID);
 
 	long rc = syscall(__NR_sched_getscheduler, pid);
 	const char *scheduler;
@@ -59,7 +60,7 @@ main(void)
 	}
 	pidns_print_leader();
 	printf("sched_getscheduler(%d%s) = %ld (%s)\n",
-	       pid, pidns_pid2str(PT_TGID), rc, scheduler);
+	       pid, pid_str, rc, scheduler);
 
 	rc = syscall(__NR_sched_getscheduler, -1);
 	pidns_print_leader();
@@ -70,17 +71,17 @@ main(void)
 	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, NULL);
 	pidns_print_leader();
 	printf("sched_setscheduler(%d%s, SCHED_FIFO, NULL) = %s\n",
-	       pid, pidns_pid2str(PT_TGID), sprintrc(rc));
+	       pid, pid_str, sprintrc(rc));
 
 	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, param + 1);
 	pidns_print_leader();
 	printf("sched_setscheduler(%d%s, SCHED_FIFO, %p) = %s\n",
-	       pid, pidns_pid2str(PT_TGID), param + 1, sprintrc(rc));
+	       pid, pid_str, param + 1, sprintrc(rc));
 
 	rc = syscall(__NR_sched_setscheduler, pid, 0xfaceda7a, param);
 	pidns_print_leader();
 	printf("sched_setscheduler(%d%s, %#x /* SCHED_??? */, [%d]) = %s\n",
-	       pid, pidns_pid2str(PT_TGID), 0xfaceda7a,
+	       pid, pid_str, 0xfaceda7a,
 	       param->sched_priority, sprintrc(rc));
 
 	rc = syscall(__NR_sched_setscheduler, -1, SCHED_FIFO, param);
@@ -91,7 +92,7 @@ main(void)
 	rc = syscall(__NR_sched_setscheduler, pid, SCHED_FIFO, param);
 	pidns_print_leader();
 	printf("sched_setscheduler(%d%s, SCHED_FIFO, [%d]) = %s\n",
-	       pid, pidns_pid2str(PT_TGID), param->sched_priority, sprintrc(rc));
+	       pid, pid_str, param->sched_priority, sprintrc(rc));
 
 	pidns_print_leader();
 	puts("+++ exited with 0 +++");

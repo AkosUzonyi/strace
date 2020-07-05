@@ -49,6 +49,7 @@ main(void)
 
 	unsigned long pid =
 		(unsigned long) 0xdefaced00000000ULL | (unsigned) getpid();
+	const char *pid_str = pidns_pid2str(PT_TGID);
 	uint64_t *const rlimit = tail_alloc(sizeof(*rlimit) * 2);
 	const struct xlat_data *xlat;
 	size_t i = 0;
@@ -63,13 +64,13 @@ main(void)
 		if (rc)
 			printf("prlimit64(%d%s, %s, NULL, %p) ="
 				     " %ld %s (%m)\n",
-			       (unsigned) pid, pidns_pid2str(PT_TGID),
+			       (unsigned) pid, pid_str,
 			       xlat->str, rlimit,
 			       rc, errno2name());
 		else
 			printf("prlimit64(%d%s, %s, NULL"
 			       ", {rlim_cur=%s, rlim_max=%s}) = 0\n",
-			       (unsigned) pid, pidns_pid2str(PT_TGID),
+			       (unsigned) pid, pid_str,
 			       xlat->str,
 			       sprint_rlim(rlimit[0]),
 			       sprint_rlim(rlimit[1]));

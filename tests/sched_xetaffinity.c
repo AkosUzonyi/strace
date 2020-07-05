@@ -48,6 +48,7 @@ main(void)
 
 	unsigned int cpuset_size = 1;
 	const pid_t pid = getpid();
+	const char *pid_str = pidns_pid2str(PT_TGID);
 
 	while (cpuset_size) {
 		assert(getaffinity(pid, cpuset_size, NULL) == -1);
@@ -57,19 +58,19 @@ main(void)
 			perror_msg_and_skip("sched_getaffinity");
 		pidns_print_leader();
 		printf("sched_getaffinity(%d%s, %u, NULL) = %s\n",
-		       pid, pidns_pid2str(PT_TGID), cpuset_size, errstr);
+		       pid, pid_str, cpuset_size, errstr);
 		cpuset_size <<= 1;
 	}
 	assert(cpuset_size);
 	pidns_print_leader();
 	printf("sched_getaffinity(%d%s, %u, NULL) = %s\n",
-	       pid, pidns_pid2str(PT_TGID), cpuset_size, errstr);
+	       pid, pid_str, cpuset_size, errstr);
 
 	cpu_set_t *cpuset = tail_alloc(cpuset_size);
 	getaffinity(pid, cpuset_size, cpuset + 1);
 	pidns_print_leader();
 	printf("sched_getaffinity(%d%s, %u, %p) = %s\n",
-	       pid, pidns_pid2str(PT_TGID), cpuset_size, cpuset + 1, errstr);
+	       pid, pid_str, cpuset_size, cpuset + 1, errstr);
 
 	int ret_size = getaffinity(pid, cpuset_size, cpuset);
 	if (ret_size < 0)
@@ -78,7 +79,7 @@ main(void)
 	assert(ret_size <= (int) cpuset_size);
 
 	pidns_print_leader();
-	printf("sched_getaffinity(%d%s, %u, [", pid, pidns_pid2str(PT_TGID), cpuset_size);
+	printf("sched_getaffinity(%d%s, %u, [", pid, pid_str, cpuset_size);
 	const char *sep;
 	unsigned int i, cpu;
 	for (i = 0, cpu = 0, sep = ""; i < (unsigned) ret_size * 8; ++i) {
@@ -96,7 +97,7 @@ main(void)
 		perror_msg_and_skip("sched_setaffinity");
 	pidns_print_leader();
 	printf("sched_setaffinity(%d%s, %u, [%u]) = 0\n",
-	       pid, pidns_pid2str(PT_TGID), cpuset_size, cpu);
+	       pid, pid_str, cpuset_size, cpu);
 
 	const unsigned int big_size = cpuset_size < 128 ? 128 : cpuset_size * 2;
 	cpuset = tail_alloc(big_size);
@@ -106,7 +107,7 @@ main(void)
 				    pid, big_size, cpuset, errstr);
 	assert(ret_size <= (int) big_size);
 	pidns_print_leader();
-	printf("sched_getaffinity(%d%s, %u, [", pid, pidns_pid2str(PT_TGID), big_size);
+	printf("sched_getaffinity(%d%s, %u, [", pid, pid_str, big_size);
 	for (i = 0, sep = ""; i < (unsigned) ret_size * 8; ++i) {
 		if (CPU_ISSET_S(i, (unsigned) ret_size, cpuset)) {
 			printf("%s%u", sep, i);

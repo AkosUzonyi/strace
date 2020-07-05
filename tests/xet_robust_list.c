@@ -36,6 +36,7 @@ main(void)
 #endif
 
 	const pid_t pid = getpid();
+	const char *pid_str = pidns_pid2str(PT_TGID);
 	const long long_pid = (unsigned long) (0xdeadbeef00000000LL | pid);
 	TAIL_ALLOC_OBJECT_CONST_PTR(void *, p_head);
 	TAIL_ALLOC_OBJECT_CONST_PTR(size_t, p_len);
@@ -44,7 +45,7 @@ main(void)
 		perror_msg_and_skip("get_robust_list");
 	pidns_print_leader();
 	printf("get_robust_list(%d%s, [%s], [%lu]) = 0\n",
-	       pid, pidns_pid2str(PT_TGID), sprintaddr(*p_head),
+	       pid, pid_str, sprintaddr(*p_head),
 	       (unsigned long) *p_len);
 
 	void *head = tail_alloc(*p_len);
@@ -58,7 +59,7 @@ main(void)
 		perror_msg_and_skip("get_robust_list");
 	pidns_print_leader();
 	printf("get_robust_list(%d%s, [%s], [%lu]) = 0\n",
-	       pid, pidns_pid2str(PT_TGID), sprintaddr(*p_head),
+	       pid, pid_str, sprintaddr(*p_head),
 	       (unsigned long) *p_len);
 
 	pidns_print_leader();
