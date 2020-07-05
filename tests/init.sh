@@ -399,8 +399,8 @@ test_pidns_run_strace()
 	run_prog > /dev/null
 	run_strace -Y -f -e signal=none $@ $args > "$EXP"
 	parent_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
-	grep -E -v "^$parent_pid " "$LOG" > "$log_filtered"
-	match_diff "$log_filtered" "$EXP"
+	grep -E -v "^$parent_pid " "$LOG" > "$OUT"
+	match_diff "$OUT" "$EXP"
 }
 
 test_pidns()
