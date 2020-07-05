@@ -373,6 +373,7 @@ move_pages
 move_pages-Xabbrev
 move_pages-Xraw
 move_pages-Xverbose
+move_pages-Y
 mq
 mq_sendrecv
 mq_sendrecv-read

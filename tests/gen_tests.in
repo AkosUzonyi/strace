@@ -339,6 +339,7 @@ move_pages	-s3
 move_pages-Xabbrev	-s3 -e trace=move_pages -Xabbrev
 move_pages-Xraw	-s3 -a36 -e trace=move_pages -Xraw
 move_pages-Xverbose	-s3 -e trace=move_pages -Xverbose
+move_pages-Y	test_pidns -s3 -e trace=move_pages
 mq	-a32 -e trace=mq_getsetattr,mq_open,mq_unlink
 mq_sendrecv	-a14 -e trace=mq_open,mq_notify,mq_timedsend,mq_timedreceive,mq_unlink
 mq_sendrecv-read	-eread=0 -a14 -e trace=mq_open,mq_notify,mq_timedsend,mq_timedreceive,mq_unlink

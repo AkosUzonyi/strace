@@ -166,6 +166,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	looping_threads \
 	mmsg-silent \
 	mmsg_name-v \
+	move_pages-Y \
 	msg_control-v \
 	net-accept-connect \
 	net-tpacket_stats-success \

@@ -10,6 +10,7 @@
 
 #include "tests.h"
 #include "scno.h"
+#include "pidns.h"
 
 #ifdef __NR_move_pages
 
@@ -130,7 +131,9 @@ print_stat_pages(const unsigned long pid, const unsigned long count,
 	long rc = syscall(__NR_move_pages,
 			  pid, count, pages, NULL, status, flags);
 	const char *errstr = sprintrc(rc);
-	printf("move_pages(%d, %lu, ", (int) pid, count);
+	pidns_print_leader();
+	printf("move_pages(%d%s, %lu, ", (int) pid, pidns_pid2str(PT_TGID),
+		count);
 	print_page_array(pages, count, 0);
 	printf(", NULL, ");
 	if (rc) {
@@ -164,7 +167,9 @@ print_move_pages(const unsigned long pid,
 	long rc = syscall(__NR_move_pages,
 			  pid, count, pages, nodes, status, flags);
 	const char *errstr = sprintrc(rc);
-	printf("move_pages(%d, %lu, ", (int) pid, count);
+	pidns_print_leader();
+	printf("move_pages(%d%s, %lu, ", (int) pid, pidns_pid2str(PT_TGID),
+		count);
 	print_page_array(pages, count, offset);
 	printf(", ");
 	print_node_array(nodes, count, offset);
@@ -185,6 +190,10 @@ print_move_pages(const unsigned long pid,
 int
 main(void)
 {
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
+
 	const unsigned long pid =
 		(unsigned long) 0xfacefeed00000000ULL | getpid();
 	unsigned long count = 1;
@@ -229,6 +238,7 @@ main(void)
 	print_move_pages(pid, count, 0, pages, nodes, status);
 	print_move_pages(pid, count, 1, pages, nodes, status);
 
+	pidns_print_leader();
 	puts("+++ exited with 0 +++");
 	return 0;
 }
