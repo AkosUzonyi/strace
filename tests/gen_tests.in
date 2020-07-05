@@ -597,6 +597,7 @@ sigaction	-a31
 siginfo	-e trace=none
 signal	-a25 -e signal=none -e trace='/^signal$'
 signal_receive	-a16 -e trace=kill
+signal_receive-Y	test_pidns -a16 -e trace=kill
 signalfd4
 sigpending	-a15
 sigprocmask	-a34

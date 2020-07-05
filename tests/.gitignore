@@ -685,6 +685,7 @@ sigaltstack
 siginfo
 signal
 signal_receive
+signal_receive-Y
 signalfd4
 sigpending
 sigprocmask

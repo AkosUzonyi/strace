@@ -225,6 +225,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	set_sigign \
 	setpgrp-exec \
 	signal_receive \
+	signal_receive-Y \
 	sleep \
 	stack-fcall \
 	stack-fcall-attach \

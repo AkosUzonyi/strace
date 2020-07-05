@@ -397,7 +397,7 @@ test_pidns_run_strace()
 	check_prog grep
 
 	run_prog > /dev/null
-	run_strace -Y -f -e signal=none $@ $args > "$EXP"
+	run_strace -Y -f -e signal=!SIGKILL $@ $args > "$EXP"
 	parent_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
 	grep -E -v "^$parent_pid " "$LOG" > "$OUT"
 	match_diff "$OUT" "$EXP"
