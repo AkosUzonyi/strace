@@ -232,6 +232,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	stack-fcall-mangled \
 	status-none-threads \
 	status-unfinished-threads \
+	so_peercred-Y \
 	syslog-success \
 	threads-execve \
 	threads-execve--quiet-thread-execve \
