@@ -246,6 +246,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	vfork-f \
 	wait4-v \
 	waitid-v \
+	xetpgid-Y \
 	xetpriority-Y \
 	xet_robust_list-Y \
 	zeroargc \

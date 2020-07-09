@@ -740,6 +740,7 @@ xet_robust_list	-a24 -e trace=get_robust_list,set_robust_list
 xet_robust_list-Y	test_pidns -a24 -e trace=get_robust_list,set_robust_list
 xetitimer	-a29 -e trace=setitimer,getitimer
 xetpgid	-a11 -e trace=getpgid,setpgid
+xetpgid-Y	test_pidns -a11 -e trace=getpgid,setpgid
 xetpriority	-a29 -e trace=getpriority,setpriority
 xetpriority-Y	test_pidns -a29 -e trace=getpriority,setpriority
 xettimeofday	-a20 -e trace=gettimeofday,settimeofday

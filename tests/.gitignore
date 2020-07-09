@@ -803,6 +803,7 @@ xet_robust_list-Y
 xet_thread_area_x86
 xetitimer
 xetpgid
+xetpgid-Y
 xetpriority
 xetpriority-Y
 xettimeofday

@@ -43,7 +43,7 @@ const char *
 pidns_pid2str(enum pid_type type)
 {
 	static const char format[] = " /* %d in strace's PID NS */";
-	static char buf[sizeof(format) + sizeof(int) * 3];
+	static char buf[PT_COUNT][sizeof(format) + sizeof(int) * 3];
 
 	if (type < 0 || type >= PT_COUNT)
 		return "";
@@ -51,8 +51,8 @@ pidns_pid2str(enum pid_type type)
 	if (!pidns_unshared || !pidns_strace_ids[type])
 		return "";
 
-	snprintf(buf, sizeof(buf), format, pidns_strace_ids[type]);
-	return buf;
+	snprintf(buf[type], sizeof(buf[type]), format, pidns_strace_ids[type]);
+	return buf[type];
 }
 
 static pid_t
