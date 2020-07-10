@@ -114,6 +114,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	filter_seccomp-perf \
 	filter-unavailable \
 	fork-f \
+	fork-Y \
 	fsync-y \
 	get_process_reaper \
 	getpgrp-Y	\
@@ -408,6 +409,7 @@ MISC_TESTS = \
 	filtering_fd-syntax.test \
 	filtering_syscall-syntax.test \
 	first_exec_failure.test \
+	fork-Y.test \
 	get_regs.test \
 	inject-nf.test \
 	interactive_block.test \
