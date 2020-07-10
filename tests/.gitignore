@@ -396,6 +396,7 @@ net-packet_mreq-Xabbrev
 net-packet_mreq-Xraw
 net-packet_mreq-Xverbose
 net-sockaddr
+net-sockaddr-Y
 net-tpacket_req
 net-tpacket_stats
 net-tpacket_stats-success

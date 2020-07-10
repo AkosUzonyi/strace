@@ -171,6 +171,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	move_pages-Y \
 	msg_control-v \
 	net-accept-connect \
+	net-sockaddr-Y \
 	net-tpacket_stats-success \
 	nlattr_ifla_xdp-y \
 	netlink_inet_diag \
