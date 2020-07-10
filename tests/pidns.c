@@ -1,5 +1,5 @@
 /*
- * Test PID namespace translation
+ * Testing framework for PID namespace translation
  *
  * Copyright (c) 2020 Ákos Uzonyi <uzonyi.akos@gmail.com>
  * All rights reserved.
