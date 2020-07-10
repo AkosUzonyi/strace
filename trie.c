@@ -26,7 +26,8 @@ trie_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 		return false;
 	if (key_size < 1 || key_size > 64)
 		return false;
-	if (ptr_block_size_lg < ptr_sz_lg || ptr_block_size_lg > PTR_BLOCK_SIZE_LG_MAX)
+	if (ptr_block_size_lg < ptr_sz_lg ||
+	    ptr_block_size_lg > PTR_BLOCK_SIZE_LG_MAX)
 		return false;
 	if (data_block_size_lg > DATA_BLOCK_SIZE_LG_MAX ||
 	    data_block_size_lg < 6 ||
@@ -55,7 +56,8 @@ static uint8_t
 trie_get_depth(struct trie *t)
 {
 	return (t->key_size - (t->data_block_size_lg - t->item_size_lg) +
-		t->ptr_block_size_lg - ptr_sz_lg - 1) / (t->ptr_block_size_lg - ptr_sz_lg);
+		t->ptr_block_size_lg - ptr_sz_lg - 1) /
+		(t->ptr_block_size_lg - ptr_sz_lg);
 }
 
 /**
@@ -163,20 +165,29 @@ trie_get_block(struct trie *t, uint64_t key, bool auto_create)
 			if (!auto_create)
 				return (uint64_t *) (*cur_block);
 
-			*cur_block = xcalloc(1 << sz, 8);
+			*cur_block = xcalloc(1 << sz, 1);
 
 			if (old_val == TRIE_SET) {
-				uint64_t fill_value = cur_depth == max_depth ? t->set_value : (uintptr_t) TRIE_SET;
-				uint8_t fill_size = cur_depth == max_depth ? t->item_size_lg : ptr_sz_lg;
+				uint64_t fill_value = cur_depth == max_depth ?
+					t->set_value :
+					(uintptr_t) TRIE_SET;
 
-				for (i = 0; i < ((unsigned int)1 << (sz - 3)); i++)
-					((uint64_t *) *cur_block)[i] = trie_filler(fill_value, fill_size);
+				uint8_t fill_size = cur_depth == max_depth ?
+					t->item_size_lg :
+					ptr_sz_lg;
+
+				unsigned int n = ((unsigned int) 1 << (sz - 6));
+				for (i = 0; i < n; i++)
+					((uint64_t *) *cur_block)[i] =
+						trie_filler(fill_value,
+							fill_size);
 			}
 		}
 
 		if (cur_depth < max_depth) {
 			size_t pos = (key >> trie_get_block_bit_offs(t,
-				cur_depth, max_depth)) & ((1 << (sz - ptr_sz_lg)) - 1);
+				cur_depth, max_depth)) &
+				((1 << (sz - ptr_sz_lg)) - 1);
 
 			cur_block = (((void **) (*cur_block)) + pos);
 		}
@@ -198,8 +209,10 @@ trie_set(struct trie *t, uint64_t key, uint64_t val)
 	if (t->item_size_lg == 6) {
 		data[pos] = val;
 	} else {
-		size_t offs = (key & ((1 << (6 - t->item_size_lg)) - 1)) * (1 << t->item_size_lg);
-		uint64_t mask = (((uint64_t) 1 << (1 << t->item_size_lg)) - 1) << offs;
+		size_t offs = (key & ((1 << (6 - t->item_size_lg)) - 1)) *
+			(1 << t->item_size_lg);
+		uint64_t mask = (((uint64_t) 1 << (1 << t->item_size_lg)) - 1)
+			<< offs;
 
 		data[pos] &= ~mask;
 		data[pos] |= (val << offs) & mask;
@@ -252,9 +265,11 @@ trie_data_block_get(struct trie *t, uint64_t *data, uint64_t key)
 	if (t->item_size_lg == 6)
 		return data[pos];
 
-	offs = (key & ((1 << (6 - t->item_size_lg)) - 1)) * (1 << t->item_size_lg);
+	offs = (key & ((1 << (6 - t->item_size_lg)) - 1)) *
+		(1 << t->item_size_lg);
 
-	return (data[pos] >> offs) & (((uint64_t)1 << (1 << t->item_size_lg)) - 1);
+	return (data[pos] >> offs) &
+		(((uint64_t)1 << (1 << t->item_size_lg)) - 1);
 }
 
 uint64_t
@@ -278,13 +293,18 @@ trie_iterate_keys_block(struct trie *t, enum trie_iterate_flags flags,
 
 	if (block == TRIE_SET || block == TRIE_UNSET || depth == max_depth) {
 		for (uint64_t i = start; i <= end; i++)
-			fn(fn_data, i, trie_data_block_get(t, (uint64_t *) block, i));
+			fn(fn_data, i, trie_data_block_get(t,
+				(uint64_t *) block, i));
 
 		return end - start + 1; //TODO: overflow
 	}
 
-	uint8_t parent_block_bit_off = depth == 0 ? t->key_size : trie_get_block_bit_offs(t, depth - 1, max_depth);
-	uint64_t first_key_in_block = start & (uint64_t) -1 << parent_block_bit_off;
+	uint8_t parent_block_bit_off = depth == 0 ?
+		t->key_size :
+		trie_get_block_bit_offs(t, depth - 1, max_depth);
+
+	uint64_t first_key_in_block = start &
+		(uint64_t) -1 << parent_block_bit_off;
 
 	uint8_t block_bit_off = trie_get_block_bit_offs(t, depth, max_depth);
 	uint8_t block_key_bits = parent_block_bit_off - block_bit_off;
@@ -297,7 +317,8 @@ trie_iterate_keys_block(struct trie *t, enum trie_iterate_flags flags,
 
 	for (uint64_t i = start_index; i <= end_index; i++) {
 		uint64_t child_start = first_key_in_block + i * child_key_count;
-		uint64_t child_end = first_key_in_block + (i + 1) * child_key_count - 1;
+		uint64_t child_end = first_key_in_block +
+			(i + 1) * child_key_count - 1;
 
 		if (child_start < start)
 			child_start = start;
@@ -337,7 +358,8 @@ trie_free_block(struct trie *t, uint64_t **block, uint8_t depth,
 	sz = 1 << (trie_get_block_size(t, depth, max_depth) - ptr_sz_lg);
 
 	for (i = 0; i < sz; i++)
-		trie_free_block(t, (uint64_t **) (block[i]), depth + 1, max_depth);
+		trie_free_block(t, (uint64_t **) (block[i]),
+			depth + 1, max_depth);
 
 free_block:
 	free(block);

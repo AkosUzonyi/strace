@@ -53,9 +53,9 @@ static const struct {
 struct proc_data {
 	int proc_pid;
 	int ns_count;
-	uint64_t ns_hierarchy[MAX_NS_DEPTH]; /* from bottom to top of NS hierarchy */
+	uint64_t ns_hierarchy[MAX_NS_DEPTH];
 	int id_count[PT_COUNT];
-	int id_hierarchy[PT_COUNT][MAX_NS_DEPTH]; /* from top to bottom of NS hierarchy */
+	int id_hierarchy[PT_COUNT][MAX_NS_DEPTH];
 };
 
 static int
@@ -68,7 +68,7 @@ get_pid_max(void)
 
 		FILE *f = fopen("/proc/sys/kernel/pid_max", "r");
 		if (!f)
-			perror_msg("get_pid_max: opening /proc/sys/kernel/pid_max");
+			perror_msg("opening /proc/sys/kernel/pid_max");
 		else
 			fscanf(f, "%d", &pid_max);
 	}
@@ -350,7 +350,8 @@ get_our_ns(void)
 static struct proc_data *
 get_or_create_proc_data(int proc_pid)
 {
-	struct proc_data *pd = (struct proc_data *) trie_get(proc_data_cache, proc_pid);
+	struct proc_data *pd = (struct proc_data *)
+		trie_get(proc_data_cache, proc_pid);
 
 	if (!pd) {
 		pd = calloc(1, sizeof(*pd));
@@ -407,15 +408,19 @@ struct translate_id_params {
 };
 
 /**
- * Translates an id to our namespace, given the proc_pid of the process, by reading files in /proc.
+ * Translates an id to our namespace, given the proc_pid of the process,
+ * by reading files in /proc.
  *
  * @param tip      The parameters
- * @param proc_pid The proc pid of the process. If 0, use the cached values in tip->pd.
+ * @param proc_pid The proc pid of the process.
+ *                 If 0, use the cached values in tip->pd.
  */
 static void
 translate_id_proc_pid(struct translate_id_params *tip, int proc_pid)
 {
-	struct proc_data *pd = proc_pid ? get_or_create_proc_data(proc_pid) : tip->pd;
+	struct proc_data *pd = proc_pid ?
+		get_or_create_proc_data(proc_pid) :
+		tip->pd;
 
 	tip->result_id = 0;
 	tip->pd = NULL;
@@ -453,7 +458,8 @@ translate_id_proc_pid(struct translate_id_params *tip, int proc_pid)
  * @param read_task_dir  Whether recurse to "task" subdirectory.
  */
 static void
-translate_id_dir(struct translate_id_params *tip, const char *path, bool read_task_dir)
+translate_id_dir(struct translate_id_params *tip, const char *path,
+                 bool read_task_dir)
 {
 	DIR *dir = opendir(path);
 	if (!dir) {
@@ -483,7 +489,8 @@ translate_id_dir(struct translate_id_params *tip, const char *path, bool read_ta
 
 		if (read_task_dir) {
 			char task_dir_path[PATH_MAX + 1];
-			snprintf(task_dir_path, sizeof(task_dir_path), "/proc/%ld/task", proc_pid);
+			snprintf(task_dir_path, sizeof(task_dir_path),
+				"/proc/%ld/task", proc_pid);
 			translate_id_dir(tip, task_dir_path, false);
 		}
 
@@ -504,7 +511,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path, bool read_ta
 static void
 proc_data_cache_iterator_fn(void* fn_data, uint64_t key, uint64_t val)
 {
-	struct translate_id_params *tip = (struct translate_id_params *) fn_data;
+	struct translate_id_params *tip = (struct translate_id_params *)fn_data;
 	struct proc_data *pd = (struct proc_data *) val;
 
 	if (!pd)
@@ -518,22 +525,24 @@ proc_data_cache_iterator_fn(void* fn_data, uint64_t key, uint64_t val)
 	tip->pd = pd;
 	translate_id_proc_pid(tip, 0);
 	if (!tip->result_id)
-		return; /* According to cache, this is not what we are looking for, continue */
+		return;
 
-	/* Now translate it from actual data in /proc, to check cache validity */
+	/* Now translate from actual data in /proc, to check cache validity */
 	translate_id_proc_pid(tip, pd->proc_pid);
 }
 
 /**
  * Translates an ID from tcp's namespace to our namepace
  *
- * @param tcp             The tcb whose namepace from_id is in (NULL means strace's namespace)
+ * @param tcp             The tcb whose namepace from_id is in
+ *                        (NULL: strace's namespace)
  * @param from_id         The id to be translated
  * @param type            The type of ID
  * @param proc_pid_ptr    If not NULL, writes the proc PID to this location
  */
 int
-translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_ptr)
+translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
+              int *proc_pid_ptr)
 {
 	if ((from_id <= 0) || (type < 0) || (type >= PT_COUNT))
 		return 0;
@@ -558,7 +567,8 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_pt
 	}
 
 	/* Look for a cached proc_pid for this (from_ns, from_id) pair */
-	int cached_proc_pid = get_cached_proc_pid(tip.from_ns, tip.from_id, tip.type);
+	int cached_proc_pid = get_cached_proc_pid(tip.from_ns, tip.from_id,
+		tip.type);
 	if (cached_proc_pid) {
 		translate_id_proc_pid(&tip, cached_proc_pid);
 		if (tip.result_id)
@@ -566,7 +576,8 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_pt
 	}
 
 	/* Iterate through the cache, find potential proc_data */
-	trie_iterate_keys(proc_data_cache, 0, get_pid_max(), 0, proc_data_cache_iterator_fn, &tip);
+	trie_iterate_keys(proc_data_cache, 0, get_pid_max(), 0,
+		proc_data_cache_iterator_fn, &tip);
 	/* (proc_data_cache_iterator_fn takes care about updating proc_data) */
 	if (tip.result_id)
 		goto translate_pid_exit;
@@ -577,7 +588,8 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type, int *proc_pid_pt
 translate_pid_exit:
 	if (tip.pd) {
 		if (tip.pd->proc_pid)
-			put_proc_pid(tip.from_ns, tip.from_id, tip.type, tip.pd->proc_pid);
+			put_proc_pid(tip.from_ns, tip.from_id, tip.type,
+				tip.pd->proc_pid);
 
 		if (proc_pid_ptr)
 			*proc_pid_ptr = tip.pd->proc_pid;
