@@ -343,6 +343,7 @@ memfd_create-Xabbrev
 memfd_create-Xraw
 memfd_create-Xverbose
 migrate_pages
+migrate_pages-Y
 mincore
 mkdir
 mkdirat

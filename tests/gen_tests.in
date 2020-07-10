@@ -309,6 +309,7 @@ memfd_create-Xabbrev	-Xabbrev -e trace=memfd_create
 memfd_create-Xraw	-a30 -Xraw -e trace=memfd_create
 memfd_create-Xverbose	-Xverbose -e trace=memfd_create
 migrate_pages	-a33
+migrate_pages-Y	test_pidns -a33 -e trace=migrate_pages
 mincore	-a22
 mkdir	-a20
 mkdirat	-a28

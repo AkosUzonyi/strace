@@ -165,6 +165,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	list_sigaction_signum \
 	localtime \
 	looping_threads \
+	migrate_pages-Y \
 	mmsg-silent \
 	mmsg_name-v \
 	move_pages-Y \
