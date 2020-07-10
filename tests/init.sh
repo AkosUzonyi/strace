@@ -389,8 +389,7 @@ test_prog_set()
 
 test_pidns_run_strace()
 {
-	local parent_pid log_filtered
-	log_filtered="log.filtered"
+	local parent_pid
 
 	check_prog tail
 	check_prog cut
