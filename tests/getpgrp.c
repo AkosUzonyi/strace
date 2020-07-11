@@ -7,6 +7,7 @@
 
 #include "tests.h"
 #include "scno.h"
+#include "pidns.h"
 
 #ifdef __NR_getpgrp
 
@@ -16,8 +17,15 @@
 int
 main(void)
 {
-	printf("getpgrp() = %ld\n", syscall(__NR_getpgrp));
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
 
+	pidns_print_leader();
+	printf("getpgrp() = %d%s\n", (int) syscall(__NR_getpgrp),
+		pidns_pid2str(PT_PGID));
+
+	pidns_print_leader();
 	puts("+++ exited with 0 +++");
 	return 0;
 }
