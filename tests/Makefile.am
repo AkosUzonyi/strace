@@ -108,17 +108,25 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	delay \
 	execve-v \
 	execveat-v \
+	fcntl-Y \
+	fcntl64-Y \
 	filter_seccomp-flag \
 	filter_seccomp-perf \
 	filter-unavailable \
 	fork-f \
+	fork-Y \
 	fsync-y \
 	get_process_reaper \
+	getpgrp-Y	\
 	getpid	\
+	getpid-Y	\
 	getppid	\
+	getsid-Y \
 	gettid \
+	gettid-Y \
 	inject-nf \
 	int_0x80 \
+	ioctl_block-Y \
 	ioctl_dm-v \
 	ioctl_evdev-success \
 	ioctl_evdev-success-Xabbrev \
@@ -149,18 +157,25 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	ioctl_v4l2-success-v-Xabbrev \
 	ioctl_v4l2-success-v-Xraw \
 	ioctl_v4l2-success-v-Xverbose \
+	ioprio-Y \
 	is_linux_mips_n64 \
+	kcmp-yY \
 	kill_child \
+	kill-Y \
 	ksysent \
 	list_sigaction_signum \
 	localtime \
 	looping_threads \
+	migrate_pages-Y \
 	mmsg-silent \
 	mmsg_name-v \
+	move_pages-Y \
 	msg_control-v \
 	net-accept-connect \
+	net-sockaddr-Y \
 	net-tpacket_stats-success \
 	nlattr_ifla_xdp-y \
+	netlink_audit-Y \
 	netlink_inet_diag \
 	netlink_netlink_diag \
 	netlink_unix_diag \
@@ -172,14 +187,19 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	pc \
 	perf_event_open_nonverbose \
 	perf_event_open_unabbrev \
+	pidfd_open-Y \
+	pidfd_send_signal-Y \
 	poll-P \
 	ppoll-P \
 	ppoll-v \
+	prlimit64-Y \
 	prctl-seccomp-filter-v \
 	prctl-seccomp-strict \
 	prctl-spec-inject \
 	print_maxfd \
 	print_ppid_tracerpid \
+	process_vm_readv-Y \
+	process_vm_writev-Y \
 	qual_fault \
 	qual_inject-error-signal \
 	qual_inject-retval \
@@ -193,7 +213,13 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	quotactl-xfs-v \
 	redirect-fds \
 	restart_syscall \
+	rt_sigqueueinfo-Y \
+	rt_tgsigqueueinfo-Y \
 	run_expect_termsig \
+	sched_xetaffinity-Y \
+	sched_xetattr-Y \
+	sched_xetparam-Y \
+	sched_xetscheduler-Y \
 	scm_rights \
 	seccomp-filter-v \
 	seccomp-strict \
@@ -203,12 +229,14 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	set_sigign \
 	setpgrp-exec \
 	signal_receive \
+	signal_receive-Y \
 	sleep \
 	stack-fcall \
 	stack-fcall-attach \
 	stack-fcall-mangled \
 	status-none-threads \
 	status-unfinished-threads \
+	so_peercred-Y \
 	syslog-success \
 	threads-execve \
 	threads-execve--quiet-thread-execve \
@@ -222,6 +250,9 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	vfork-f \
 	wait4-v \
 	waitid-v \
+	xetpgid-Y \
+	xetpriority-Y \
+	xet_robust_list-Y \
 	zeroargc \
 	# end of check_PROGRAMS
 
@@ -309,6 +340,7 @@ DECODER_TESTS = \
 	int_0x80.test \
 	inotify_init-y.test \
 	ioctl.test \
+	ioctl_block-Y.test \
 	ioctl_evdev-success.test \
 	ipc_msgbuf.test \
 	kern_features-fault.test \
@@ -380,12 +412,14 @@ MISC_TESTS = \
 	filtering_fd-syntax.test \
 	filtering_syscall-syntax.test \
 	first_exec_failure.test \
+	fork-Y.test \
 	get_regs.test \
 	inject-nf.test \
 	interactive_block.test \
 	kill_child.test \
 	localtime.test \
 	looping_threads.test \
+	netlink_audit-Y.test \
 	opipe.test \
 	options-syntax.test \
 	pc.test \

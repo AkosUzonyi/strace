@@ -9,6 +9,7 @@
  */
 
 #include "tests.h"
+#include "pidns.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -53,6 +54,10 @@ so_str(void)
 int
 main(void)
 {
+#ifdef PIDNS_TRANSLATION
+	pidns_test_init();
+#endif
+
 	TAIL_ALLOC_OBJECT_CONST_PTR(struct ucred, peercred);
 	TAIL_ALLOC_OBJECT_CONST_PTR(socklen_t, len);
 
@@ -75,6 +80,8 @@ main(void)
 	struct ucred *const gid_truncated =
 		tail_alloc(sizeof_gid_truncated);
 
+	const char *pid_str = pidns_pid2str(PT_TGID);
+
 	int sv[2];
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv))
                 perror_msg_and_skip("socketpair AF_UNIX SOCK_STREAM");
@@ -82,8 +89,10 @@ main(void)
 	/* classic getsockopt */
 	*len = sizeof(*peercred);
 	get_peercred(sv[0], peercred, len);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s", sv[0], so_str());
 	PRINT_FIELD_D(", {", *peercred, pid);
+	printf("%s", pid_str);
 	PRINT_FIELD_UID(", ", *peercred, uid);
 	PRINT_FIELD_UID(", ", *peercred, gid);
 	printf("}, [%d]) = %s\n", *len, errstr);
@@ -91,14 +100,17 @@ main(void)
 	/* getsockopt with zero optlen */
 	*len = 0;
 	get_peercred(sv[0], peercred, len);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s, %p, [0]) = %s\n",
 	       sv[0], so_str(), peercred, errstr);
 
 	/* getsockopt with optlen larger than necessary - shortened */
 	*len = sizeof(*peercred) + 1;
 	get_peercred(sv[0], peercred, len);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s", sv[0], so_str());
 	PRINT_FIELD_D(", {", *peercred, pid);
+	printf("%s", pid_str);
 	PRINT_FIELD_UID(", ", *peercred, uid);
 	PRINT_FIELD_UID(", ", *peercred, gid);
 	printf("}, [%u->%d]) = %s\n",
@@ -110,6 +122,7 @@ main(void)
 	 */
 	*len = sizeof_pid_truncated;
 	get_peercred(sv[0], pid_truncated, len);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s, {pid=", sv[0], so_str());
 	print_quoted_hex(pid_truncated, *len);
 	printf("}, [%d]) = %s\n", *len, errstr);
@@ -120,8 +133,10 @@ main(void)
 	 */
 	*len = sizeof_pid;
 	get_peercred(sv[0], pid, len);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s", sv[0], so_str());
 	PRINT_FIELD_D(", {", *pid, pid);
+	printf("%s", pid_str);
 	printf("}, [%d]) = %s\n", *len, errstr);
 
 	/*
@@ -136,8 +151,10 @@ main(void)
 	 * to struct ucred.pid field.
 	 */
 	memcpy(uid, uid_truncated, sizeof_uid_truncated);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s", sv[0], so_str());
 	PRINT_FIELD_D(", {", *uid, pid);
+	printf("%s", pid_str);
 	printf(", uid=");
 	print_quoted_hex(&uid->uid, sizeof_uid_truncated -
 				    offsetof(struct ucred, uid));
@@ -149,8 +166,10 @@ main(void)
 	 */
 	*len = sizeof_uid;
 	get_peercred(sv[0], uid, len);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s", sv[0], so_str());
 	PRINT_FIELD_D(", {", *uid, pid);
+	printf("%s", pid_str);
 	PRINT_FIELD_UID(", ", *uid, uid);
 	printf("}, [%d]) = %s\n", *len, errstr);
 
@@ -166,8 +185,10 @@ main(void)
 	 * to struct ucred.pid and struct ucred.uid fields.
 	 */
 	memcpy(peercred, gid_truncated, sizeof_gid_truncated);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s", sv[0], so_str());
 	PRINT_FIELD_D(", {", *peercred, pid);
+	printf("%s", pid_str);
 	PRINT_FIELD_UID(", ", *peercred, uid);
 	printf(", gid=");
 	print_quoted_hex(&peercred->gid, sizeof_gid_truncated -
@@ -177,14 +198,17 @@ main(void)
 	/* getsockopt optval EFAULT */
 	*len = sizeof(*peercred);
 	get_peercred(sv[0], &peercred->uid, len);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s, %p, [%d]) = %s\n",
 	       sv[0], so_str(), &peercred->uid, *len, errstr);
 
 	/* getsockopt optlen EFAULT */
 	get_peercred(sv[0], peercred, len + 1);
+	pidns_print_leader();
 	printf("getsockopt(%d, %s, %p, %p) = %s\n",
 	       sv[0], so_str(), peercred, len + 1, errstr);
 
+	pidns_print_leader();
 	puts("+++ exited with 0 +++");
 	return 0;
 }
