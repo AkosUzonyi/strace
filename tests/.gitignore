@@ -407,6 +407,7 @@ net-yy-inet6
 net-yy-netlink
 net-yy-unix
 netlink_audit
+netlink_audit-Y
 netlink_crypto
 netlink_generic
 netlink_inet_diag

@@ -175,6 +175,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	net-sockaddr-Y \
 	net-tpacket_stats-success \
 	nlattr_ifla_xdp-y \
+	netlink_audit-Y \
 	netlink_inet_diag \
 	netlink_netlink_diag \
 	netlink_unix_diag \
@@ -416,6 +417,7 @@ MISC_TESTS = \
 	kill_child.test \
 	localtime.test \
 	looping_threads.test \
+	netlink_audit-Y.test \
 	opipe.test \
 	options-syntax.test \
 	pc.test \
