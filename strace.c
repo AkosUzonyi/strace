@@ -133,7 +133,7 @@ static unsigned int daemonized_tracer;
 static int post_attach_sigstop = TCB_IGNORE_ONE_SIGSTOP;
 #define use_seize (post_attach_sigstop == 0)
 
-unsigned int perform_ns_resolution;
+unsigned int pidns_translation;
 
 static bool detach_on_execve;
 
@@ -2288,7 +2288,7 @@ init(int argc, char *argv[])
 			yflag_short++;
 			break;
 		case 'Y':
-			perform_ns_resolution++;
+			pidns_translation++;
 			break;
 		case 'z':
 			clear_number_set_array(status_set, 1);

@@ -486,7 +486,7 @@ extern int Tflag_scale;
 extern int Tflag_width;
 extern bool iflag;
 extern bool count_wallclock;
-extern unsigned int perform_ns_resolution;
+extern unsigned int pidns_translation;
 /* are we filtering traces based on paths? */
 extern struct path_set {
 	const char **paths_selected;

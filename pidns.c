@@ -618,7 +618,7 @@ printpid_translation(struct tcb *tcp, int pid, enum pid_type type)
 {
 	int strace_pid;
 
-	if (perform_ns_resolution) {
+	if (pidns_translation) {
 		strace_pid = translate_pid(tcp, pid, type, NULL);
 
 		if ((strace_pid > 0) && (pid != strace_pid))
