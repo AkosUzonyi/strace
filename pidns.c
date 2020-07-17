@@ -133,7 +133,7 @@ pid_to_str(pid_t pid)
 	ret = snprintf(buf, sizeof(buf), "%d", pid);
 
 	if ((ret < 0) || ((size_t) ret >= sizeof(buf)))
-		perror_msg_and_die("pid_to_str: snprintf");
+		perror_func_msg_and_die("snprintf");
 
 	return buf;
 }
@@ -202,8 +202,7 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 					  "supported by the kernel");
 				break;
 			default:
-				perror_msg("get_ns_hierarchy: "
-					   "ioctl(NS_GET_PARENT)");
+				perror_func_msg("ioctl(NS_GET_PARENT)");
 				break;
 			}
 
@@ -270,7 +269,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 			int id = strtol(p, &endp, 10);
 
 			if (errno && (p[0] != '\t')) {
-				perror_msg("get_id_list: converting pid to int");
+				perror_func_msg("converting pid to int");
 				idx = 0;
 				goto get_id_list_exit;
 			}
@@ -464,7 +463,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path,
 {
 	DIR *dir = opendir(path);
 	if (!dir) {
-		perror_msg("translate_id_dir: opening dir: %s", path);
+		perror_func_msg("opening dir: %s", path);
 		return;
 	}
 
@@ -473,7 +472,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path,
 		struct dirent *entry = readdir(dir);
 		if (!entry) {
 			if (errno)
-				perror_msg("translate_id_dir: readdir");
+				perror_func_msg("readdir");
 
 			break;
 		}
