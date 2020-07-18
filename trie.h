@@ -13,8 +13,8 @@
 #define TRIE_SET   ((void *) ~(intptr_t) 0)
 #define TRIE_UNSET ((void *) NULL)
 
-#define PTR_BLOCK_SIZE_LG_MAX   24
-#define DATA_BLOCK_SIZE_LG_MAX  23
+#define PTR_BLOCK_KEY_BITS_MAX   24
+#define DATA_BLOCK_KEY_BITS_MAX  23
 
 enum trie_iterate_flags {
 	TRIE_ITERATE_KEYS_SET   = 1 << 0,
@@ -34,10 +34,10 @@ enum trie_iterate_flags {
  *
  * How bits of key are used for different block levels:
  *
- *     highest bits                                         lowest bits
- *     | ptr_block_size_lg | ... | < remainder > | data_block_size_lg |
- *     \______________________________________________________________/
- *                                 key_size
+ *  highest bits                                                             lowest bits
+ *  | ptr_block_key_bits | ptr_block_key_bits | ... | <remainder> | data_block_key_bits |
+ *  \___________________________________________________________________________________/
+ *                                        key_size
  *
  * So, the remainder is used on the lowest non-data node level.
  *
@@ -45,25 +45,43 @@ enum trie_iterate_flags {
  * size.  De-fragmentation is also unsupported currently.
  */
 struct trie {
-	uint64_t set_value;         /**< Default set value */
+	/** Default set value */
+	uint64_t set_value;
+
+	/** Pointer to root block */
 	void *data;
-	uint8_t item_size_lg;       /**< Item size log2, in bits, 0..6. */
-	/** Pointer block size log2, in bits. 14-20, usually. */
-	uint8_t ptr_block_size_lg;
-	/** Data block size log2, in bits. 11-17, usually. */
-	uint8_t data_block_size_lg;
-	uint8_t key_size;           /**< Key size, in bits, 1..64. */
+
+	/** Key size in bits (1..64). */
+	uint8_t key_size;
+
+	/**
+	 * Size of the stored values in log2 bits (0..6).
+	 * (6: 64 bit values, 5: 32 bit values, ...)
+	 */
+	uint8_t item_size_lg;
+
+	/**
+	 * Number of bits in key that makes a symbol for the intermediate nodes.
+	 * (equals to log2 of the child count of the node)
+	 */
+	uint8_t ptr_block_key_bits;
+
+	/**
+	 * Number of bits in key that make a symbol for the leaf (data) nodes.
+	 * (equals to log2 of the item count per data block)
+	 */
+	uint8_t data_block_key_bits;
 };
 
 typedef void (*trie_iterate_fn)(void *data, uint64_t key, uint64_t val);
 
-bool trie_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
-		 uint8_t data_block_size_lg, uint8_t key_size);
+bool trie_check(uint8_t item_size_lg, uint8_t ptr_block_key_bits,
+		 uint8_t data_block_key_bits, uint8_t key_size);
 void trie_init(struct trie *t, uint8_t item_size_lg,
-		uint8_t ptr_block_size_lg, uint8_t data_block_size_lg,
+		uint8_t ptr_block_key_bits, uint8_t data_block_key_bits,
 		uint8_t key_size, uint64_t set_value);
-struct trie * trie_create(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
-			    uint8_t data_block_size_lg, uint8_t key_size,
+struct trie * trie_create(uint8_t item_size_lg, uint8_t ptr_block_key_bits,
+			    uint8_t data_block_key_bits, uint8_t key_size,
 			    uint64_t set_value);
 
 bool trie_set(struct trie *t, uint64_t key, uint64_t val);

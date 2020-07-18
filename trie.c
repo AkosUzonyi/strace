@@ -19,45 +19,43 @@
 static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 6 : 5);
 
 bool
-trie_check(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
-	    uint8_t data_block_size_lg, uint8_t key_size)
+trie_check(uint8_t item_size_lg, uint8_t ptr_block_key_bits,
+	    uint8_t data_block_key_bits, uint8_t key_size)
 {
 	if (item_size_lg > 6)
 		return false;
 	if (key_size < 1 || key_size > 64)
 		return false;
-	if (ptr_block_size_lg < ptr_sz_lg ||
-	    ptr_block_size_lg > PTR_BLOCK_SIZE_LG_MAX)
+	if (ptr_block_key_bits < 1 ||
+	    ptr_block_key_bits > PTR_BLOCK_KEY_BITS_MAX)
 		return false;
-	if (data_block_size_lg > DATA_BLOCK_SIZE_LG_MAX ||
-	    data_block_size_lg < 6 ||
-	    item_size_lg > data_block_size_lg)
+	if (data_block_key_bits < 1 ||
+	    data_block_key_bits > DATA_BLOCK_KEY_BITS_MAX)
 		return false;
 
 	return true;
 }
 
 void
-trie_init(struct trie *t, uint8_t item_size_lg, uint8_t ptr_block_size_lg,
-	   uint8_t data_block_size_lg, uint8_t key_size, uint64_t set_value)
+trie_init(struct trie *t, uint8_t item_size_lg, uint8_t ptr_block_key_bits,
+	   uint8_t data_block_key_bits, uint8_t key_size, uint64_t set_value)
 {
-	assert(trie_check(item_size_lg, ptr_block_size_lg, data_block_size_lg,
+	assert(trie_check(item_size_lg, ptr_block_key_bits, data_block_key_bits,
 			   key_size));
 
 	t->set_value = set_value;
 	t->data = TRIE_UNSET;
 	t->item_size_lg = item_size_lg;
-	t->ptr_block_size_lg = ptr_block_size_lg;
-	t->data_block_size_lg = data_block_size_lg;
+	t->ptr_block_key_bits = ptr_block_key_bits;
+	t->data_block_key_bits = data_block_key_bits;
 	t->key_size = key_size;
 }
 
 static uint8_t
 trie_get_depth(struct trie *t)
 {
-	return (t->key_size - (t->data_block_size_lg - t->item_size_lg) +
-		t->ptr_block_size_lg - ptr_sz_lg - 1) /
-		(t->ptr_block_size_lg - ptr_sz_lg);
+	return (t->key_size - t->data_block_key_bits + t->ptr_block_key_bits - 1)
+		/ t->ptr_block_key_bits;
 }
 
 /**
@@ -72,14 +70,13 @@ trie_get_block_size(struct trie *t, uint8_t depth, int max_depth)
 
 	/* Last level contains data and we allow it having a different size */
 	if (depth == max_depth)
-		return t->data_block_size_lg;
+		return t->data_block_key_bits + t->item_size_lg;
 	/* Last level of the tree can be smaller */
 	if (depth == max_depth - 1)
-		return (t->key_size -
-			(t->data_block_size_lg - t->item_size_lg) - 1) %
-			(t->ptr_block_size_lg - ptr_sz_lg) + 1 + ptr_sz_lg;
+		return (t->key_size - t->data_block_key_bits - 1) %
+		t->ptr_block_key_bits + 1 + ptr_sz_lg;
 
-	return t->ptr_block_size_lg;
+	return t->ptr_block_key_bits + ptr_sz_lg;
 }
 
 #define round_down(a, b) (((a) / (b)) * (b))
@@ -99,25 +96,25 @@ trie_get_block_bit_offs(struct trie *t, uint8_t depth, int max_depth)
 	if (depth == max_depth)
 		return 0;
 
-	offs = t->data_block_size_lg - t->item_size_lg;
+	offs = t->data_block_key_bits;
 
 	if (depth == max_depth - 1)
 		return offs;
 
 	/* data_block_size + remainder */
 	offs += trie_get_block_size(t, max_depth - 1, max_depth) - ptr_sz_lg;
-	offs += (max_depth - depth - 2) * (t->ptr_block_size_lg - ptr_sz_lg);
+	offs += (max_depth - depth - 2) * t->ptr_block_key_bits;
 
 	return offs;
 }
 
 struct trie *
-trie_create(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
-	     uint8_t data_block_size_lg, uint8_t key_size, uint64_t set_value)
+trie_create(uint8_t item_size_lg, uint8_t ptr_block_key_bits,
+	     uint8_t data_block_key_bits, uint8_t key_size, uint64_t set_value)
 {
 	struct trie *t;
 
-	if (!trie_check(item_size_lg, ptr_block_size_lg, data_block_size_lg,
+	if (!trie_check(item_size_lg, ptr_block_key_bits, data_block_key_bits,
 	    key_size))
 		return NULL;
 
@@ -125,7 +122,7 @@ trie_create(uint8_t item_size_lg, uint8_t ptr_block_size_lg,
 	if (!t)
 		return NULL;
 
-	trie_init(t, item_size_lg, ptr_block_size_lg, data_block_size_lg,
+	trie_init(t, item_size_lg, ptr_block_key_bits, data_block_key_bits,
 		   key_size, set_value);
 
 	return t;
@@ -200,7 +197,7 @@ bool
 trie_set(struct trie *t, uint64_t key, uint64_t val)
 {
 	uint64_t *data = trie_get_block(t, key, true);
-	size_t mask = (1 << (t->data_block_size_lg - t->item_size_lg)) - 1;
+	size_t mask = (1 << t->data_block_key_bits) - 1;
 	size_t pos = (key & mask) >> (6 - t->item_size_lg);
 
 	if (!data)
@@ -259,7 +256,7 @@ trie_data_block_get(struct trie *t, uint64_t *data, uint64_t key)
 	if ((void *) data == (void *) TRIE_SET)
 		return t->set_value;
 
-	mask = (1 << (t->data_block_size_lg - t->item_size_lg)) - 1;
+	mask = (1 << t->data_block_key_bits) - 1;
 	pos = (key & mask) >> (6 - t->item_size_lg);
 
 	if (t->item_size_lg == 6)
