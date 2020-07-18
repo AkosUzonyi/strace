@@ -13,7 +13,7 @@
 #define TRIE_SET   ((void *) ~(intptr_t) 0)
 #define TRIE_UNSET ((void *) NULL)
 
-#define PTR_BLOCK_KEY_BITS_MAX   24
+#define PTR_NODE_KEY_BITS_MAX   24
 #define DATA_BLOCK_KEY_BITS_MAX  23
 
 enum trie_iterate_flags {
@@ -27,16 +27,16 @@ enum trie_iterate_flags {
  *  * It allows storing values of the same size, the size can vary from 1 bit to
  *    64 bit values (only power of 2 sizes are allowed).
  *  * The key can be up to 64 bits in size.
- *  * It has separate configuration for pointer block size and data block size.
+ *  * It has separate configuration for node size and data block size.
  *  * It can be used for mask storage - supports storing the flag that all keys
  *    are set/unset in the middle tree layers. See also trie_mask_set() and
  *    trie_mask_unset().
  *
- * How bits of key are used for different block levels:
+ * How bits of key are used for different node levels:
  *
- *  highest bits                                                             lowest bits
- *  | ptr_block_key_bits | ptr_block_key_bits | ... | <remainder> | data_block_key_bits |
- *  \___________________________________________________________________________________/
+ *   highest bits                                                  lowest bits
+ *  | node_key_bits | node_key_bits | ... | <remainder> | data_block_key_bits |
+ *  \_________________________________________________________________________/
  *                                        key_size
  *
  * So, the remainder is used on the lowest non-data node level.
@@ -48,7 +48,7 @@ struct trie {
 	/** Default set value */
 	uint64_t set_value;
 
-	/** Pointer to root block */
+	/** Pointer to root node */
 	void *data;
 
 	/** Key size in bits (1..64). */
@@ -61,26 +61,26 @@ struct trie {
 	uint8_t item_size_lg;
 
 	/**
-	 * Number of bits in key that makes a symbol for the intermediate nodes.
+	 * Number of bits in key that makes a symbol for a node.
 	 * (equals to log2 of the child count of the node)
 	 */
-	uint8_t ptr_block_key_bits;
+	uint8_t node_key_bits;
 
 	/**
-	 * Number of bits in key that make a symbol for the leaf (data) nodes.
-	 * (equals to log2 of the item count per data block)
+	 * Number of bits in key that make a symbol for the data block (leaf).
+	 * (equals to log2 of the item count per data node)
 	 */
 	uint8_t data_block_key_bits;
 };
 
 typedef void (*trie_iterate_fn)(void *data, uint64_t key, uint64_t val);
 
-bool trie_check(uint8_t item_size_lg, uint8_t ptr_block_key_bits,
+bool trie_check(uint8_t item_size_lg, uint8_t node_key_bits,
 		 uint8_t data_block_key_bits, uint8_t key_size);
 void trie_init(struct trie *t, uint8_t item_size_lg,
-		uint8_t ptr_block_key_bits, uint8_t data_block_key_bits,
+		uint8_t node_key_bits, uint8_t data_block_key_bits,
 		uint8_t key_size, uint64_t set_value);
-struct trie * trie_create(uint8_t item_size_lg, uint8_t ptr_block_key_bits,
+struct trie * trie_create(uint8_t item_size_lg, uint8_t node_key_bits,
 			    uint8_t data_block_key_bits, uint8_t key_size,
 			    uint64_t set_value);
 
@@ -108,7 +108,7 @@ uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
 
 uint64_t trie_get(struct trie *t, uint64_t key);
 
-void trie_free_block(struct trie *t, uint64_t **block, uint8_t depth,
+void trie_free_node(struct trie *t, uint64_t **node, uint8_t depth,
 		      int max_depth);
 void trie_free(struct trie *t);
 
