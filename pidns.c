@@ -24,6 +24,7 @@
 #include "trie.h"
 #include "nsfs.h"
 #include "xmalloc.h"
+#include "xstring.h"
 
 struct trie *ns_pid_to_proc_pid[PT_COUNT];
 struct trie *proc_data_cache;
@@ -124,17 +125,11 @@ get_cached_proc_pid(uint64_t ns, int ns_pid, enum pid_type type)
 static const char *
 pid_to_str(pid_t pid)
 {
-	static char buf[sizeof("-2147483648")];
-	ssize_t ret;
-
 	if (!pid)
 		return "self";
 
-	ret = snprintf(buf, sizeof(buf), "%d", pid);
-
-	if ((ret < 0) || ((size_t) ret >= sizeof(buf)))
-		perror_func_msg_and_die("snprintf");
-
+	static char buf[sizeof("-2147483648")];
+	xsprintf(buf, "%d", pid);
 	return buf;
 }
 
@@ -489,8 +484,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path,
 
 		if (read_task_dir) {
 			char task_dir_path[PATH_MAX + 1];
-			snprintf(task_dir_path, sizeof(task_dir_path),
-				"/proc/%ld/task", proc_pid);
+			xsprintf(task_dir_path, "/proc/%ld/task", proc_pid);
 			translate_id_dir(tip, task_dir_path, false);
 		}
 
