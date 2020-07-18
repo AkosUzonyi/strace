@@ -66,12 +66,8 @@ get_pid_max(void)
 
 	if (pid_max < 0) {
 		pid_max = INT_MAX;
-
-		FILE *f = fopen("/proc/sys/kernel/pid_max", "r");
-		if (!f)
-			perror_msg("opening /proc/sys/kernel/pid_max");
-		else
-			fscanf(f, "%d", &pid_max);
+		if (read_int_from_file("/proc/sys/kernel/pid_max", &pid_max) < 0)
+			perror_func_msg("reading int from /proc/sys/kernel/pid_max");
 	}
 
 	return pid_max;
@@ -138,64 +134,38 @@ pid_to_str(pid_t pid)
  *
  * @param proc_pid PID (as present in /proc) to get information for.
  * @param ns_buf   Pointer to buffer that is able to contain at least
- *                 MAX_NS_DEPTH items.
- * @param last     ID of NS on which ascencion can be interrupted.
- *                 0 for no interruption.
- * @return         Amount of NS in list. 0 indicates error, MAX_NS_DEPTH + 1
- *                 indicates that ascension limit hasn't been reached (only
- *                 MAX_NS_DEPTH values have been written to the array, however).
+ *                 ns_buf_size items.
+ * @return         Amount of NS in list. 0 indicates error.
  */
 static size_t
 get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 {
 	char path[PATH_MAX + 1];
-	struct stat st;
-	ssize_t ret;
-	size_t n = 0;
-	int fd;
-	int parent_fd;
+	xsprintf(path, "/proc/%s/ns/pid", pid_to_str(proc_pid));
 
-	ret = snprintf(path, sizeof(path), "/proc/%s/ns/pid",
-		       pid_to_str(proc_pid));
-
-	if ((ret < 0) || ((size_t) ret >= sizeof(path)))
-		return 0;
-
-	fd = open(path, O_RDONLY | O_NONBLOCK);
+	int fd = open(path, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 		return 0;
 
-	while (1) {
-		ret = fstat(fd, &st);
-		if (ret)
+	size_t n = 0;
+	while (n < ns_buf_size) {
+		struct stat st;
+		if (fstat(fd, &st))
 			break;
 
-		/* 32 is the hierarchy depth on modern Linux */
-		if ((n >= MAX_NS_DEPTH) || (n >= ns_buf_size)) {
-			n++;
-			break;
-		}
+		ns_buf[n++] = st.st_ino;
 
-		ns_buf[n] = st.st_ino;
-		if (debug_flag)
-			error_msg("Got NS: %" PRIu64, ns_buf[n]);
-
-		n++;
-
-		parent_fd = ioctl(fd, NS_GET_PARENT);
-		if (parent_fd == -1) {
+		int parent_fd = ioctl(fd, NS_GET_PARENT);
+		if (parent_fd < 0) {
 			switch (errno) {
 			case EPERM:
-				if (debug_flag)
-					error_msg("Terminating NS ascending "
-						  "after %zu levels on NS %"
-						  PRIu64, n, ns_buf[n - 1]);
 				break;
 
 			case ENOTTY:
 				error_msg("NS_* ioctl commands are not "
 					  "supported by the kernel");
 				break;
+
 			default:
 				perror_func_msg("ioctl(NS_GET_PARENT)");
 				break;
@@ -221,77 +191,52 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
  * @param id_buf      Pointer to buffer that is able to contain at least
  *                    MAX_NS_DEPTH items. Can be NULL.
  * @param type        Type of ID requested.
- * @return            Number of items stored in id_list. 0 indicates error,
- *                    MAX_NS_DEPTH + 1 indicates that status record contains
- *                    more that MAX_NS_DEPTH records and the id_buf provided
- *                    is unusable.
+ * @return            Number of items stored in id_list. 0 indicates error.
  */
 static size_t
 get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 {
 	const char *ns_str = id_strs[type].str;
 	size_t ns_str_size = id_strs[type].size;
-	char *buf = NULL;
-	size_t bufsize = 0;
-	char *p;
-	char *endp;
-	FILE *f = NULL;
-	int idx = 0;
-	ssize_t ret;
 
-	ret = asprintf(&buf, "/proc/%s/status", pid_to_str(proc_pid));
-	if (ret < 0)
-		goto get_id_list_exit;
+	size_t n = 0;
 
-	f = fopen(buf, "r");
+	char status_path[PATH_MAX + 1];
+	xsprintf(status_path, "/proc/%s/status", pid_to_str(proc_pid));
+	FILE *f = fopen(status_path, "r");
 	if (!f)
-		goto get_id_list_exit;
+		return 0;
 
-	free(buf);
-	buf = NULL;
+	char *line = NULL;
+	size_t linesize = 0;
+	char *p = NULL;
 
-	while (getline(&buf, &bufsize, f) > 0) {
-		if (strncmp(buf, ns_str, ns_str_size))
-			continue;
-
-		p = buf + ns_str_size;
-
-		for (idx = 0; idx < MAX_NS_DEPTH; idx++) {
-			if (!p)
-				break;
-
-			errno = 0;
-			int id = strtol(p, &endp, 10);
-
-			if (errno && (p[0] != '\t')) {
-				perror_func_msg("converting pid to int");
-				idx = 0;
-				goto get_id_list_exit;
-			}
-
-			if (debug_flag)
-				error_msg("PID %d: %s[%d]: %d",
-					  proc_pid, ns_str, idx, id);
-
-			if (id_buf)
-				id_buf[idx] = id;
-
-			strsep(&p, "\t");
+	while (getline(&line, &linesize, f) > 0) {
+		if (strncmp(line, ns_str, ns_str_size) == 0) {
+			p = line + ns_str_size;
+			break;
 		}
-
-		if (p)
-			idx++;
-
-		break;
 	}
 
-get_id_list_exit:
-	if (f)
-		fclose(f);
-	if (buf)
-		free(buf);
+	while (p) {
+		errno = 0;
+		long id = strtol(p, NULL, 10);
 
-	return idx;
+		if (errno || (id < 1) || (id > INT_MAX)) {
+			perror_func_msg("converting pid to int");
+			break;
+		}
+
+		if (id_buf)
+			id_buf[n++] = (int) id;
+
+		strsep(&p, "\t");
+	}
+
+	free(line);
+	fclose(f);
+
+	return n;
 }
 
 static bool
