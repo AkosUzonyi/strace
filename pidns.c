@@ -94,14 +94,14 @@ pidns_init(void)
 static void
 put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 {
-	struct trie *b = (struct trie *) trie_get(ns_pid_to_proc_pid[type], ns);
+	struct trie *b = (struct trie *) (uintptr_t) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
 		int pid_max = get_pid_max();
 		uint8_t pid_max_size = ilog2_32(pid_max - 1) + 1;
 		uint8_t pid_max_size_lg = ilog2_32(pid_max_size - 1) + 1;
 		b = trie_create(pid_max_size_lg, 16, 16, pid_max_size, 0);
 
-		trie_set(ns_pid_to_proc_pid[type], ns, (uint64_t) b);
+		trie_set(ns_pid_to_proc_pid[type], ns, (uint64_t) (uintptr_t) b);
 	}
 	trie_set(b, ns_pid, proc_pid);
 }
@@ -109,7 +109,8 @@ put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 static int
 get_cached_proc_pid(uint64_t ns, int ns_pid, enum pid_type type)
 {
-	struct trie *b = (struct trie *) trie_get(ns_pid_to_proc_pid[type], ns);
+	struct trie *b = (struct trie *) (uintptr_t)
+		trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b)
 		return 0;
 
@@ -350,7 +351,7 @@ get_our_ns(void)
 static struct proc_data *
 get_or_create_proc_data(int proc_pid)
 {
-	struct proc_data *pd = (struct proc_data *)
+	struct proc_data *pd = (struct proc_data *) (uintptr_t)
 		trie_get(proc_data_cache, proc_pid);
 
 	if (!pd) {
@@ -359,7 +360,7 @@ get_or_create_proc_data(int proc_pid)
 			return NULL;
 
 		pd->proc_pid = proc_pid;
-		trie_set(proc_data_cache, proc_pid, (uint64_t) pd);
+		trie_set(proc_data_cache, proc_pid, (uint64_t) (uintptr_t) pd);
 	}
 
 	return pd;
@@ -385,7 +386,7 @@ update_proc_data(struct proc_data *pd, enum pid_type type)
 	return true;
 
 fail:
-	trie_set(proc_data_cache, pd->proc_pid, (uint64_t) NULL);
+	trie_set(proc_data_cache, pd->proc_pid, (uint64_t) (uintptr_t) NULL);
 	free(pd);
 	return false;
 }
@@ -512,7 +513,7 @@ static void
 proc_data_cache_iterator_fn(void* fn_data, uint64_t key, uint64_t val)
 {
 	struct translate_id_params *tip = (struct translate_id_params *)fn_data;
-	struct proc_data *pd = (struct proc_data *) val;
+	struct proc_data *pd = (struct proc_data *) (uintptr_t) val;
 
 	if (!pd)
 		return;
