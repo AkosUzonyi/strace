@@ -2015,7 +2015,7 @@ init(int argc, char *argv[])
 	qualify_signals("all");
 
 	static const char optstring[] =
-		"+a:Ab:cCdDe:E:fFhiI:ko:O:p:P:qrs:S:tTu:U:vVwxX:yYzZ";
+		"+a:Ab:cCdDe:E:fFhiI:ko:O:p:P:qrs:S:tTu:U:vVwxX:yzZ";
 
 	enum {
 		GETOPT_SECCOMP = 0x100,
@@ -2024,6 +2024,7 @@ init(int argc, char *argv[])
 		GETOPT_FOLLOWFORKS,
 		GETOPT_OUTPUT_SEPARATELY,
 		GETOPT_TS,
+		GETOPT_PIDNS_TRANSLATION,
 
 		GETOPT_QUAL_TRACE,
 		GETOPT_QUAL_ABBREV,
@@ -2074,7 +2075,7 @@ init(int argc, char *argv[])
 		{ "summary-wall-clock", no_argument,	   0, 'w' },
 		{ "strings-in-hex",	optional_argument, 0, GETOPT_HEX_STR },
 		{ "const-print-style",	required_argument, 0, 'X' },
-		{ "pidns-translation",	no_argument      , 0, 'Y' },
+		{ "pidns-translation",	no_argument      , 0, GETOPT_PIDNS_TRANSLATION },
 		{ "successful-only",	no_argument,	   0, 'z' },
 		{ "failed-only",	no_argument,	   0, 'Z' },
 		{ "failing-only",	no_argument,	   0, 'Z' },
@@ -2288,7 +2289,7 @@ init(int argc, char *argv[])
 		case 'y':
 			yflag_short++;
 			break;
-		case 'Y':
+		case GETOPT_PIDNS_TRANSLATION:
 			pidns_translation++;
 			break;
 		case 'z':

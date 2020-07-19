@@ -396,7 +396,7 @@ test_pidns_run_strace()
 	check_prog grep
 
 	run_prog > /dev/null
-	run_strace -Y -f -e signal=!SIGKILL $@ $args > "$EXP"
+	run_strace --pidns-translation -f -e signal=!SIGKILL $@ $args > "$EXP"
 
 	#filter out logs made by the parent process of the pidns test
 	parent_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
