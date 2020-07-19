@@ -68,7 +68,6 @@ libstrace_a_SOURCES =	\
 	bpf_fprog.h	\
 	bpf_seccomp_filter.c \
 	bpf_sock_filter.c \
-	trie.c \
 	btrfs.c		\
 	cacheflush.c	\
 	capability.c	\
@@ -347,6 +346,8 @@ libstrace_a_SOURCES =	\
 	time.c		\
 	times.c		\
 	trace_event.h	\
+	trie.c 		\
+	trie.h 		\
 	truncate.c	\
 	ubi.c		\
 	ucopy.c		\
