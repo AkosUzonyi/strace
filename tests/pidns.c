@@ -82,7 +82,9 @@ pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 		pidns_strace_ids[PT_PGID] = pid;
 	}
 
-	write(strace_ids_pipe[1], pidns_strace_ids, sizeof(pidns_strace_ids));
+	if (write(strace_ids_pipe[1], pidns_strace_ids,
+	    sizeof(pidns_strace_ids)) < 0)
+		perror_msg_and_fail("write");
 	close(strace_ids_pipe[0]);
 	close(strace_ids_pipe[1]);
 
@@ -140,7 +142,9 @@ pidns_test_init(void)
 	exit(0);
 
 pidns_test_init_run_test:
-	read(strace_ids_pipe[0], pidns_strace_ids, sizeof(pidns_strace_ids));
+	if (read(strace_ids_pipe[0], pidns_strace_ids,
+	    sizeof(pidns_strace_ids)) < 0)
+		perror_msg_and_fail("read");
 	close(strace_ids_pipe[0]);
 	close(strace_ids_pipe[1]);
 
