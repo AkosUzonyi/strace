@@ -24,13 +24,11 @@ trie_check(uint8_t item_size_lg, uint8_t node_key_bits,
 {
 	if (item_size_lg > 6)
 		return false;
-	if (key_size < 1 || key_size > 64)
+	if (key_size > 64)
 		return false;
-	if (node_key_bits < 1 ||
-	    node_key_bits > PTR_NODE_KEY_BITS_MAX)
+	if (node_key_bits < 1)
 		return false;
-	if (data_block_key_bits < 1 ||
-	    data_block_key_bits > DATA_BLOCK_KEY_BITS_MAX)
+	if (data_block_key_bits < 1 || data_block_key_bits > key_size)
 		return false;
 
 	return true;
@@ -78,8 +76,6 @@ trie_get_node_size(struct trie *t, uint8_t depth, int max_depth)
 
 	return t->node_key_bits + ptr_sz_lg;
 }
-
-#define round_down(a, b) (((a) / (b)) * (b))
 
 /**
  * Provides starting offset of bits in key corresponding to the node index

@@ -13,11 +13,10 @@
 #define TRIE_SET   ((void *) ~(intptr_t) 0)
 #define TRIE_UNSET ((void *) NULL)
 
-#define PTR_NODE_KEY_BITS_MAX   24
-#define DATA_BLOCK_KEY_BITS_MAX  23
-
 enum trie_iterate_flags {
+	/** Iterate over TRIE_SET values also */
 	TRIE_ITERATE_KEYS_SET   = 1 << 0,
+	/** Iterate over TRIE_UNSET values also */
 	TRIE_ITERATE_KEYS_UNSET = 1 << 1,
 };
 
@@ -51,7 +50,7 @@ struct trie {
 	/** Pointer to root node */
 	void *data;
 
-	/** Key size in bits (1..64). */
+	/** Key size in bits (0..64). */
 	uint8_t key_size;
 
 	/**
@@ -68,7 +67,7 @@ struct trie {
 
 	/**
 	 * Number of bits in key that make a symbol for the data block (leaf).
-	 * (equals to log2 of the item count per data node)
+	 * (equals to log2 of the value count stored in a data block)
 	 */
 	uint8_t data_block_key_bits;
 };
@@ -102,6 +101,17 @@ int trie_interval_set(struct trie *t, uint64_t begin, uint64_t end,
 uint64_t trie_get_next_set_key(struct trie *t, uint64_t key);
 #endif
 
+/**
+ * Calls trie_iterate_fn for each key-value pair where
+ * key is inside the [start, end] interval (inclusive).
+ *
+ * @param t        The trie.
+ * @param start    The start of the key interval (inclusive).
+ * @param end      The end of the key interval (inclusive).
+ * @param flags    A bitwise combination of enum trie_iterate_flags values.
+ * @param fn       The function to be called.
+ * @param fn_data  The value to be passed to fn.
+ */
 uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
 			    enum trie_iterate_flags flags, trie_iterate_fn fn,
 			    void *fn_data);
