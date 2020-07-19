@@ -10,5 +10,5 @@
 . "${srcdir=.}/init.sh"
 
 run_prog
-run_strace -a6 -Y -f -e signal=none -e trace=fork $args
+run_strace -a6 --pidns-translation -f -e signal=none -e trace=fork $args
 match_awk
