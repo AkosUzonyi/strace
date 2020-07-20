@@ -252,6 +252,23 @@ struct fcntl_cmd_check {
 };
 
 static void
+test_xetown(void)
+{
+	const int pid = getpid();
+	const char *pid_str = pidns_pid2str(PT_TGID);
+
+	invoke_test_syscall(0, F_SETOWN, (void *) (intptr_t) pid);
+	pidns_print_leader();
+	printf("%s(0, F_SETOWN, %d%s) = %s\n",
+		TEST_SYSCALL_STR, pid, pid_str, errstr);
+
+	invoke_test_syscall(0, F_GETOWN, NULL);
+	pidns_print_leader();
+	printf("%s(0, F_GETOWN) = %d%s\n",
+		TEST_SYSCALL_STR, pid, pid_str);
+}
+
+static void
 print_retval_flags(const struct fcntl_cmd_check *check, long rc)
 {
 	if (check->print_flags) {
@@ -342,7 +359,6 @@ test_fcntl_others(void)
 {
 	static const struct fcntl_cmd_check set_checks[] = {
 		{ 0, ARG_STR(F_SETFD), ARG_STR(FD_CLOEXEC) },
-		{ 0, ARG_STR(F_SETOWN), ARG_STR(20) },
 #ifdef F_SETPIPE_SZ
 		{ 0, ARG_STR(F_SETPIPE_SZ), ARG_STR(4097) },
 #endif
@@ -363,7 +379,6 @@ test_fcntl_others(void)
 	static const struct fcntl_cmd_check get_checks[] = {
 		{ 0, ARG_STR(F_GETFD), .print_flags = print_flags_getfd },
 		{ 1, ARG_STR(F_GETFD), .print_flags = print_flags_getfd },
-		{ 0, ARG_STR(F_GETOWN) },
 #ifdef F_GETPIPE_SZ
 		{ 0, ARG_STR(F_GETPIPE_SZ) },
 #endif
@@ -398,6 +413,7 @@ main(void)
 	test_f_owner_ex();
 #endif
 	test_fcntl_others();
+	test_xetown();
 
 	pidns_print_leader();
 	puts("+++ exited with 0 +++");

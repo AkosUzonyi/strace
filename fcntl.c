@@ -93,6 +93,14 @@ print_fcntl(struct tcb *tcp)
 		printflags(fdflags, tcp->u_arg[2], "FD_???");
 		break;
 	case F_SETOWN:
+		tprintf(", ");
+		const int pid = tcp->u_arg[2];
+		tprintf("%d", pid);
+		if (pid < 0)
+			printpid_translation(tcp, -pid, PT_PGID);
+		else
+			printpid_translation(tcp,  pid, PT_TGID);
+		break;
 	case F_SETPIPE_SZ:
 		tprintf(", %" PRI_kld, tcp->u_arg[2]);
 		break;
@@ -135,6 +143,8 @@ print_fcntl(struct tcb *tcp)
 		printsignal(tcp->u_arg[2]);
 		break;
 	case F_GETOWN:
+		return RVAL_DECODED |
+		       ((int) tcp->u_rval < 0 ? RVAL_PGID : RVAL_TGID);
 	case F_GETPIPE_SZ:
 		break;
 	case F_GETFD:
