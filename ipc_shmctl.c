@@ -12,6 +12,7 @@
  */
 
 #include "defs.h"
+#include "print_fields.h"
 
 #include DEF_MPERS_TYPE(shmid_ds_t)
 
@@ -54,8 +55,8 @@ print_shmid_ds(struct tcb *const tcp, const kernel_ulong_t addr, int cmd)
 		printuid(", cgid=", shmid_ds.shm_perm.cgid);
 		tprints("}");
 		tprintf(", shm_segsz=%u", (unsigned) shmid_ds.shm_segsz);
-		tprintf(", shm_cpid=%u", (unsigned) shmid_ds.shm_cpid);
-		tprintf(", shm_lpid=%u", (unsigned) shmid_ds.shm_lpid);
+		PRINT_FIELD_TGID(", ", shmid_ds, shm_cpid, tcp);
+		PRINT_FIELD_TGID(", ", shmid_ds, shm_lpid, tcp);
 		tprintf(", shm_nattch=%u", (unsigned) shmid_ds.shm_nattch);
 		tprintf(", shm_atime=%u", (unsigned) shmid_ds.shm_atime);
 		tprintf(", shm_dtime=%u", (unsigned) shmid_ds.shm_dtime);
