@@ -501,6 +501,7 @@ EXTRA_DIST = \
 	filter_seccomp.in \
 	filter_seccomp.sh \
 	filter-unavailable.expected \
+	fork--pidns-translation.awk \
 	fstatat.c \
 	fstatx.c \
 	gen_pure_executables.sh \
