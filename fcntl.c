@@ -63,8 +63,22 @@ print_f_owner_ex(struct tcb *const tcp, const kernel_ulong_t addr)
 
 	tprints("{type=");
 	printxval(f_owner_types, owner.type, "F_OWNER_???");
+
+	enum pid_type pid_type = PT_NONE;
+	switch (owner.type)
+	{
+	case F_OWNER_TID:
+		pid_type = PT_TID;
+		break;
+	case F_OWNER_PID:
+		pid_type = PT_TGID;
+		break;
+	case F_OWNER_PGRP:
+		pid_type = PT_PGID;
+		break;
+	}
 	tprintf(", pid=");
-	printpid(tcp, owner.pid, PT_TGID);
+	printpid(tcp, owner.pid, pid_type);
 	tprintf("}");
 }
 
