@@ -77,6 +77,15 @@ pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 		pidns_strace_ids[PT_PGID] = pgid;
 	}
 
+	/* Reap group leader to test PGID decoding */
+	if (pgid > 0 && pgid != pid) {
+		int ret = waitpid(pgid, NULL, WNOHANG);
+		if (ret < 0)
+			perror_msg_and_fail("wait");
+		if (!ret)
+			error_msg_and_fail("could not reap group leader");
+	}
+
 	if (new_sid) {
 		pidns_strace_ids[PT_SID] = pid;
 		pidns_strace_ids[PT_PGID] = pid;
