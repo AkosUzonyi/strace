@@ -2000,6 +2000,8 @@ init(int argc, char *argv[])
 
 	os_release = get_os_release();
 
+	pidns_init();
+
 	shared_log = stderr;
 	set_sortby(DEFAULT_SORTBY);
 	set_personality(DEFAULT_PERSONALITY);
@@ -2679,8 +2681,6 @@ init(int argc, char *argv[])
 	 */
 	print_pid_pfx = outfname && !output_separately &&
 		((followfork && !output_separately) || nprocs > 1);
-
-	pidns_init();
 }
 
 static struct tcb *
