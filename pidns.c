@@ -30,6 +30,8 @@
 struct trie *ns_pid_to_proc_pid[PT_COUNT];
 struct trie *proc_data_cache;
 
+bool ns_get_parent_enotty = false;
+
 static const char tid_str[]  = "NSpid:\t";
 static const char tgid_str[] = "NStgid:\t";
 static const char pgid_str[] = "NSpgid:\t";
@@ -141,6 +143,9 @@ pid_to_str(pid_t pid)
 static size_t
 get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 {
+	if (ns_get_parent_enotty)
+		return 0;
+
 	char path[PATH_MAX + 1];
 	xsprintf(path, "/proc/%s/ns/pid", pid_to_str(proc_pid));
 
@@ -163,6 +168,7 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 				break;
 
 			case ENOTTY:
+				ns_get_parent_enotty = true;
 				error_msg("NS_* ioctl commands are not "
 					  "supported by the kernel");
 				break;
@@ -510,6 +516,9 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 		tip.result_id = tip.from_id;
 		goto translate_pid_exit;
 	}
+
+	if (ns_get_parent_enotty)
+		return 0;
 
 	/* Look for a cached proc_pid for this (from_ns, from_id) pair */
 	int cached_proc_pid = get_cached_proc_pid(tip.from_ns, tip.from_id,
