@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "largefile_wrappers.h"
 #include "trie.h"
 #include "nsfs.h"
 #include "xmalloc.h"
@@ -143,14 +144,14 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 	char path[PATH_MAX + 1];
 	xsprintf(path, "/proc/%s/ns/pid", pid_to_str(proc_pid));
 
-	int fd = open(path, O_RDONLY | O_NONBLOCK);
+	int fd = open_file(path, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 		return 0;
 
 	size_t n = 0;
 	while (n < ns_buf_size) {
 		struct stat st;
-		if (fstat(fd, &st))
+		if (fstat_fd(fd, &st))
 			break;
 
 		ns_buf[n++] = st.st_ino;
@@ -203,7 +204,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 
 	char status_path[PATH_MAX + 1];
 	xsprintf(status_path, "/proc/%s/status", pid_to_str(proc_pid));
-	FILE *f = fopen(status_path, "r");
+	FILE *f = fopen_stream(status_path, "r");
 	if (!f)
 		return 0;
 
@@ -409,7 +410,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path,
 
 	while (!tip->result_id) {
 		errno = 0;
-		struct dirent *entry = readdir(dir);
+		struct_dirent *entry = read_dir(dir);
 		if (!entry) {
 			if (errno)
 				perror_func_msg("readdir");

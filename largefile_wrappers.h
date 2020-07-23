@@ -29,6 +29,11 @@
 #  else
 #   define fcntl_fd fcntl
 #  endif
+#  ifdef HAVE_FSTAT64
+#   define fstat_fd fstat64
+#  else
+#   define fstat_fd fstat
+#  endif
 #  define strace_stat_t struct stat64
 #  define stat_file stat64
 #  define struct_dirent struct dirent64
@@ -39,6 +44,7 @@
 #  define open_file open
 #  define fopen_stream fopen
 #  define fcntl_fd fcntl
+#  define fstat_fd fstat
 #  define strace_stat_t struct stat
 #  define stat_file stat
 #  define struct_dirent struct dirent
