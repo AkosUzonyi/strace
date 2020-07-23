@@ -29,11 +29,7 @@
 #  else
 #   define fcntl_fd fcntl
 #  endif
-#  ifdef HAVE_FSTAT64
-#   define fstat_fd fstat64
-#  else
-#   define fstat_fd fstat
-#  endif
+#  define fstat_fd fstat64
 #  define strace_stat_t struct stat64
 #  define stat_file stat64
 #  define struct_dirent struct dirent64
