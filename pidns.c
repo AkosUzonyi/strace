@@ -488,6 +488,8 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 		return 0;
 
 	const uint64_t our_ns = get_our_ns();
+	if (!our_ns)
+		return 0;
 
 	struct translate_id_params tip = {
 		.result_id = 0,
@@ -496,6 +498,9 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 		.from_id = from_id,
 		.type = type,
 	};
+
+	if (!tip.from_ns)
+		return 0;
 
 	/* If translation is trivial */
 	if (tip.from_ns == our_ns && (is_proc_ours() || !proc_pid_ptr)) {
