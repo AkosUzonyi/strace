@@ -37,7 +37,7 @@ const char *
 pidns_pid2str(enum pid_type type)
 {
 	static const char format[] = " /* %d in strace's PID NS */";
-	static char buf[PT_COUNT][sizeof(format) + sizeof(int)];
+	static char buf[PT_COUNT][sizeof(format) + sizeof(int) * 3];
 
 	if (type < 0 || type >= PT_COUNT)
 		return "";
