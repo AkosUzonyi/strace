@@ -65,7 +65,7 @@ main(void)
 	       ", si_code=SI_QUEUE, si_errno=%u, si_pid=%d%s, si_uid=%d"
 	       ", si_value={int=%d, ptr=%p}}, %#x) = %s\n",
 	       fd, si->si_errno, si->si_pid, pidns_pid2str(PT_TGID), si->si_uid,
-	       si->si_int, si->si_ptr, -1, errstr);
+	       si->si_int, si->si_ptr, -1U, errstr);
 
 	pidns_print_leader();
 	puts("+++ exited with 0 +++");
