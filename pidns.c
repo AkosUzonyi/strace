@@ -157,6 +157,7 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 		ns_buf[n++] = st.st_ino;
 
 		int parent_fd = ioctl(fd, NS_GET_PARENT);
+		break;
 		if (parent_fd < 0) {
 			switch (errno) {
 			case EPERM:
