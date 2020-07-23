@@ -150,7 +150,7 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 
 	size_t n = 0;
 	while (n < ns_buf_size) {
-		struct_stat st;
+		strace_stat_t st;
 		if (fstat_fd(fd, &st))
 			break;
 
