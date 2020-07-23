@@ -34,6 +34,11 @@
 #  else
 #   define fstat_fd fstat
 #  endif
+#  ifdef HAVE_STRUCT_STAT64
+#   define struct_stat struct stat64
+#  else
+#   define struct_stat struct stat
+#  endif
 #  define strace_stat_t struct stat64
 #  define stat_file stat64
 #  define struct_dirent struct dirent64
@@ -48,6 +53,7 @@
 #  define strace_stat_t struct stat
 #  define stat_file stat
 #  define struct_dirent struct dirent
+#  define struct_stat struct stat
 #  define read_dir readdir
 #  define struct_rlimit struct rlimit
 #  define set_rlimit setrlimit
