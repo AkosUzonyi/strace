@@ -278,7 +278,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	fopen64
 	fork
 	fputs_unlocked
-	fstat64
 	fstatat
 	ftruncate
 	futimens
