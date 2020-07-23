@@ -279,7 +279,7 @@ ipc_shm-Xraw	+ipc.sh -Xraw -a19
 ipc_shm-Xverbose	+ipc.sh -Xverbose -a34
 kcmp	-a22
 kcmp-y	-a22 -y -e trace=kcmp
-kcmp-yY	test_pidns -a22 -y -e trace=kcmp
+kcmp-y--pidns-translation	test_pidns -a22 -y -e trace=kcmp
 kern_features -a16
 kernel_version	-a16 -v -e trace=bpf
 kernel_version-Xabbrev	-a16 -Xabbrev -v -e trace=bpf

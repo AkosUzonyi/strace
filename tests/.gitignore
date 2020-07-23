@@ -308,7 +308,7 @@ ipc_shm-Xverbose
 is_linux_mips_n64
 kcmp
 kcmp-y
-kcmp-yY
+kcmp-y--pidns-translation
 kern_features
 kernel_version
 kernel_version-Xabbrev

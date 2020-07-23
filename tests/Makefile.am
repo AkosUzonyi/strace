@@ -160,7 +160,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	ioctl_v4l2-success-v-Xverbose \
 	ioprio--pidns-translation \
 	is_linux_mips_n64 \
-	kcmp-yY \
+	kcmp-y--pidns-translation \
 	kill_child \
 	kill--pidns-translation \
 	ksysent \
