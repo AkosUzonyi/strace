@@ -118,8 +118,12 @@ pidns_test_init(void)
 		goto pidns_test_init_run_test;
 
 	/* Unshare user namespace too, so we do not need to be root */
-	if (unshare(CLONE_NEWUSER | CLONE_NEWPID) < 0)
+	if (unshare(CLONE_NEWUSER | CLONE_NEWPID) < 0) {
+		if (errno == EPERM)
+			perror_msg_and_skip("unshare");
+
 		perror_msg_and_fail("unshare");
+	}
 
 	pidns_unshared = true;
 
