@@ -18,5 +18,5 @@ check_prog grep
 run_prog > /dev/null
 run_strace --pidns-translation -f -e signal=none -a16 -e trace=ioctl $@ $args > "$EXP"
 parent_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
-grep -E -v "^$parent_pid |^ioctl\([012][,<]" "$LOG" > "$OUT"
+grep -E -v "^$parent_pid |ioctl\([012][,<]" "$LOG" > "$OUT"
 match_diff "$OUT" "$EXP"
