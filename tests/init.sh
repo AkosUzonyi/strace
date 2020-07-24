@@ -406,8 +406,8 @@ test_pidns_run_strace()
 
 test_pidns()
 {
-	#unshare requires root before 3.8 even with CLONE_NEWUSER
-	require_min_kernel_version_or_skip 3.8
+	#ioctl(NS_GET_PARENT) is added in Linux 4.9
+	require_min_kernel_version_or_skip 4.9
 	check_prog unshare
 
 	test_pidns_run_strace "$@"
