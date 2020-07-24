@@ -26,9 +26,15 @@ main(void)
 
 	const long pid = (long) 0xfacefeed00000000ULL | getpid();
 	long rc = syscall(__NR_migrate_pages, pid, 0, 0, 0);
+
 	pidns_print_leader();
-	printf("migrate_pages(%d%s, 0, NULL, NULL) = %ld %s (%m)\n",
-	       (int) pid, pidns_pid2str(PT_TGID), rc, errno2name());
+	printf("migrate_pages(%d%s, 0, NULL, NULL) = %ld",
+		(int) pid, pidns_pid2str(PT_TGID), rc);
+
+	if (rc < 0)
+		printf(" %s (%m)\n", errno2name());
+	else
+		printf("\n");
 
 	pidns_print_leader();
 	puts("+++ exited with 0 +++");
