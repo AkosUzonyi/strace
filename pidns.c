@@ -157,6 +157,8 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 			break;
 
 		ns_buf[n++] = st.st_ino;
+		if (n >= ns_buf_size)
+			break;
 
 		if (ns_get_parent_enotty)
 			break;
