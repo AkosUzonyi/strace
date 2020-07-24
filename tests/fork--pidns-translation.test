@@ -9,6 +9,8 @@
 
 . "${srcdir=.}/init.sh"
 
+require_min_kernel_version_or_skip 4.9
+
 run_prog
 run_strace -a6 --pidns-translation -f -e signal=none -e trace=fork $args
 match_awk
