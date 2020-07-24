@@ -9,6 +9,8 @@
 
 . "${srcdir=.}/init.sh"
 
+require_min_kernel_version_or_skip 4.9
+
 check_prog tail
 check_prog cut
 check_prog grep
