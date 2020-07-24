@@ -237,8 +237,9 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		}
 
 		if (id_buf)
-			id_buf[n++] = (int) id;
+			id_buf[n] = (int) id;
 
+		n++;
 		strsep(&p, "\t");
 	}
 
