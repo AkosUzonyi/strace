@@ -143,9 +143,6 @@ pid_to_str(pid_t pid)
 static size_t
 get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 {
-	if (ns_get_parent_enotty)
-		return 0;
-
 	char path[PATH_MAX + 1];
 	xsprintf(path, "/proc/%s/ns/pid", pid_to_str(proc_pid));
 
@@ -160,6 +157,9 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 			break;
 
 		ns_buf[n++] = st.st_ino;
+
+		if (ns_get_parent_enotty)
+			break;
 
 		int parent_fd = ioctl(fd, NS_GET_PARENT);
 		if (parent_fd < 0) {
