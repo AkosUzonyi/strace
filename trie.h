@@ -36,7 +36,7 @@ enum trie_iterate_flags {
  *   highest bits                                                  lowest bits
  *  | node_key_bits | node_key_bits | ... | <remainder> | data_block_key_bits |
  *  \_________________________________________________________________________/
- *                                        key_size
+ *                                 key_size
  *
  * So, the remainder is used on the lowest non-data node level.
  *
