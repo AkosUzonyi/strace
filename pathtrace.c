@@ -88,7 +88,7 @@ getfdpath_pid(pid_t pid, int fd, char *buf, unsigned bufsize)
 		return -1;
 
 	int proc_pid = 0;
-	translate_pid(NULL, pid, PT_TGID, &proc_pid);
+	translate_pid(NULL, pid, PT_TID, &proc_pid);
 
 	xsprintf(linkpath, "/proc/%u/fd/%u", proc_pid, fd);
 	n = readlink(linkpath, buf, bufsize - 1);
