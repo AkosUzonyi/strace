@@ -264,14 +264,15 @@ static uint64_t
 get_ns(struct tcb *tcp)
 {
 	if (!tcp->pid_ns_inited) {
-		int pid = tcp->pid;
+		int proc_pid = 0;
 
-		if (!is_proc_ours())
-			if (translate_pid(NULL, tcp->pid, PT_TID, &pid) < 1)
-				pid = -1;
+		if (is_proc_ours())
+			proc_pid = tcp->pid;
+		else
+			translate_pid(NULL, tcp->pid, PT_TID, &proc_pid);
 
-		if ((pid == -1) || !get_ns_hierarchy(pid, &tcp->pid_ns, 1))
-			tcp->pid_ns = 0;
+		if (proc_pid)
+			get_ns_hierarchy(proc_pid, &tcp->pid_ns, 1);
 
 		tcp->pid_ns_inited = true;
 	}
