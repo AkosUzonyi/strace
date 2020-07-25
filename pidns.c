@@ -146,7 +146,7 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 	char path[PATH_MAX + 1];
 	xsprintf(path, "/proc/%s/ns/pid", pid_to_str(proc_pid));
 
-	int fd = open_file(path, O_RDONLY | O_NONBLOCK);
+	int fd = open_file(path, O_RDONLY);
 	if (fd < 0)
 		return 0;
 
