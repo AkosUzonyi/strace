@@ -70,7 +70,7 @@ get_pid_max(void)
 	if (pid_max < 0) {
 		pid_max = INT_MAX;
 		if (read_int_from_file("/proc/sys/kernel/pid_max", &pid_max) < 0)
-			perror_func_msg("reading int from /proc/sys/kernel/pid_max");
+			debug_func_perror_msg("reading int from /proc/sys/kernel/pid_max");
 	}
 
 	return pid_max;
@@ -413,7 +413,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path,
 {
 	DIR *dir = opendir(path);
 	if (!dir) {
-		perror_func_msg("opening dir: %s", path);
+		debug_func_perror_msg("opening dir: %s", path);
 		return;
 	}
 
