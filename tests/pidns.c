@@ -8,6 +8,7 @@
  */
 #include "tests.h"
 #include "pidns.h"
+#include "nsfs.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -19,6 +20,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <linux/sched.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 
 bool pidns_translation = false;
 bool pidns_unshared = false;
@@ -107,6 +110,26 @@ pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 	return pid;
 }
 
+static void
+check_ns_get_parent(void)
+{
+	int fd = open("/proc/self/ns/pid_for_children", O_RDONLY);
+	if (fd < 0)
+		perror_msg_and_fail("opening /proc/self/ns/pid_for_children");
+
+	int parent_fd = ioctl(fd, NS_GET_PARENT);
+	if (parent_fd < 0) {
+		if (errno == ENOTTY)
+			error_msg_and_skip("ioctl(NS_GET_PARENT) is not "
+			                   "supported by the kernel");
+		else
+			perror_msg_and_fail("ioctl(NS_GET_PARENT)");
+	}
+
+	close(parent_fd);
+	close(fd);
+}
+
 void
 pidns_test_init(void)
 {
@@ -133,6 +156,8 @@ pidns_test_init(void)
 		pause();
 		_exit(0);
 	}
+
+	check_ns_get_parent();
 
 	if (!pidns_fork(strace_ids_pipe, -1, false))
 		goto pidns_test_init_run_test;

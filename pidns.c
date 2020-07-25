@@ -171,8 +171,8 @@ get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
 
 			case ENOTTY:
 				ns_get_parent_enotty = true;
-				error_msg("NS_* ioctl commands are not "
-					  "supported by the kernel");
+				error_msg("ioctl(NS_GET_PARENT) is not "
+				          "supported by the kernel");
 				break;
 
 			default:
