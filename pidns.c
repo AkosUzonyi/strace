@@ -517,7 +517,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 			*proc_pid_ptr = from_id;
 
 		tip.result_id = tip.from_id;
-		goto translate_pid_exit;
+		goto exit;
 	}
 
 	if (ns_get_parent_enotty)
@@ -529,7 +529,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 	if (cached_proc_pid) {
 		translate_id_proc_pid(&tip, cached_proc_pid);
 		if (tip.result_id)
-			goto translate_pid_exit;
+			goto exit;
 	}
 
 	/* Iterate through the cache, find potential proc_data */
@@ -537,12 +537,12 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 		proc_data_cache_iterator_fn, &tip);
 	/* (proc_data_cache_iterator_fn takes care about updating proc_data) */
 	if (tip.result_id)
-		goto translate_pid_exit;
+		goto exit;
 
 	/* No cache helped, read all entries in /proc */
 	translate_id_dir(&tip, "/proc", true);
 
-translate_pid_exit:
+exit:
 	if (tip.pd) {
 		if (tip.pd->proc_pid)
 			put_proc_pid(tip.from_ns, tip.from_id, tip.type,
