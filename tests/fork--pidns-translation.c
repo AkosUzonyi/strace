@@ -47,8 +47,12 @@ fork_chain(int depth)
 
 int main(void)
 {
-	if (unshare(CLONE_NEWPID | CLONE_NEWUSER) < 0)
+	if (unshare(CLONE_NEWPID | CLONE_NEWUSER) < 0) {
+		if (errno == EPERM)
+			perror_msg_and_skip("unshare");
+
 		perror_msg_and_fail("unshare");
+	}
 
 	errno = fork_chain(2);
 	if (errno)
