@@ -9,6 +9,12 @@
 #ifndef STRACE_PIDNS_H
 #define STRACE_PIDNS_H
 
+#ifdef PIDNS_TRANSLATION
+# define PIDNS_TEST_INIT pidns_test_init()
+#else
+# define PIDNS_TEST_INIT
+#endif
+
 #include <sys/types.h>
 
 enum pid_type {

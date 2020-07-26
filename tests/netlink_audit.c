@@ -18,9 +18,7 @@
 static void
 test_nlmsg_type(const int fd)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	long rc;
 	struct nlmsghdr nlh = {

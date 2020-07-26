@@ -768,9 +768,7 @@ check_raw(void)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	check_un();
 	check_in();

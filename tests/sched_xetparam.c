@@ -18,9 +18,7 @@
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	struct sched_param *const param =
 		tail_alloc(sizeof(struct sched_param));

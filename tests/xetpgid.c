@@ -20,9 +20,7 @@
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	const int pid = getpid();
 	long pgid = syscall(__NR_getpgid, F8ILL_KULONG_MASK | pid);

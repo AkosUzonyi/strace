@@ -38,9 +38,7 @@ k_pidfd_open(const unsigned int pid, const unsigned int flags)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 # if defined PATH_TRACING || defined PRINT_PATHS
 	skip_if_unavailable("/proc/self/fd/");

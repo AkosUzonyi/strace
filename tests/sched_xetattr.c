@@ -42,9 +42,7 @@ sys_sched_setattr(kernel_ulong_t pid, kernel_ulong_t attr, kernel_ulong_t flags)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	static const kernel_ulong_t bogus_pid =
 		(kernel_ulong_t) 0xdefacedfacefeedULL;

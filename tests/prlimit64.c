@@ -43,9 +43,7 @@ sprint_rlim(uint64_t lim)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	unsigned long pid =
 		(unsigned long) 0xdefaced00000000ULL | (unsigned) getpid();

@@ -194,9 +194,7 @@ print_move_pages(const unsigned long pid,
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	const unsigned long pid =
 		(unsigned long) 0xfacefeed00000000ULL | getpid();

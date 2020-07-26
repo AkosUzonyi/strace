@@ -17,9 +17,7 @@
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	pidns_print_leader();
 	printf("getpgrp() = %d%s\n", (int) syscall(__NR_getpgrp),

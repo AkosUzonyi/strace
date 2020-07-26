@@ -31,9 +31,7 @@ sprintaddr(void *addr)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	const pid_t pid = getpid();
 	const char *pid_str = pidns_pid2str(PT_TGID);

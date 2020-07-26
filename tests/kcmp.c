@@ -150,9 +150,7 @@ do_kcmp(kernel_ulong_t pid1, kernel_ulong_t pid2, kernel_ulong_t type,
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	static const kernel_ulong_t bogus_pid1 =
 		(kernel_ulong_t) 0xdeadca75face1057ULL;

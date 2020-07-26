@@ -166,9 +166,7 @@ ptr_cast(void *ptr)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	enum {
 		SIZE_11 = 2,

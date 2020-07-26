@@ -18,9 +18,7 @@
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	const int pid = getpid();
 	const int pgid = getpgid(0);

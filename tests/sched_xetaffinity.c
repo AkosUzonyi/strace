@@ -42,9 +42,7 @@ setaffinity(unsigned long pid, unsigned long size, void *set)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	unsigned int cpuset_size = 1;
 	const pid_t pid = getpid();

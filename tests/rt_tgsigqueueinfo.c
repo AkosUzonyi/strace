@@ -33,9 +33,7 @@ k_tgsigqueueinfo(const pid_t tgid, const int tid, const int sig, const void *con
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	const struct sigaction sa = {
 		.sa_handler = SIG_IGN

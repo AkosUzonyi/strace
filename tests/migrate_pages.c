@@ -20,9 +20,7 @@
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	const long pid = (long) 0xfacefeed00000000ULL | getpid();
 	long rc = syscall(__NR_migrate_pages, pid, 0, 0, 0);

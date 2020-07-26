@@ -30,9 +30,7 @@ enum {
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	static const kernel_ulong_t bogus_which =
 		(kernel_ulong_t) 0xdeadfacefa57beefULL;

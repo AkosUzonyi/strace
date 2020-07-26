@@ -37,9 +37,7 @@ sys_pidfd_send_signal(int pidfd, int sig, const void *info, int flags)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	static const char null_path[] = "/dev/null";
 

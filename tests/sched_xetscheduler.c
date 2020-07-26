@@ -18,9 +18,7 @@
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	TAIL_ALLOC_OBJECT_CONST_PTR(struct sched_param, param);
 	const int pid = getpid();

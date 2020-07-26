@@ -50,9 +50,7 @@ static struct xlat_data block_argless[] = {
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	TEST_NULL_ARG(BLKBSZGET);
 	TEST_NULL_ARG(BLKBSZSET);

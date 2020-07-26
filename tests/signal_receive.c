@@ -27,9 +27,7 @@ handler(int sig, siginfo_t *info, void *ucontext)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	static const char prefix[] = "KERNEL BUG";
 	int printed = 0;

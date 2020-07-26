@@ -27,9 +27,7 @@ handler(int sig)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	const struct sigaction act = { .sa_handler = handler };
 	if (sigaction(SIGALRM, &act, NULL))

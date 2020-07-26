@@ -14,9 +14,7 @@
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	pid_t pid = getpid();
 	pidns_print_leader();

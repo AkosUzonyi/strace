@@ -54,9 +54,7 @@ so_str(void)
 int
 main(void)
 {
-#ifdef PIDNS_TRANSLATION
-	pidns_test_init();
-#endif
+	PIDNS_TEST_INIT;
 
 	TAIL_ALLOC_OBJECT_CONST_PTR(struct ucred, peercred);
 	TAIL_ALLOC_OBJECT_CONST_PTR(socklen_t, len);
