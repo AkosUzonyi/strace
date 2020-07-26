@@ -396,11 +396,12 @@ test_pidns_run_strace()
 	check_prog grep
 
 	run_prog > /dev/null
-	run_strace --pidns-translation -f -e signal=!SIGKILL $@ $args > "$EXP"
+	run_strace --pidns-translation -f $@ $args > "$EXP"
 
-	#filter out logs made by the parent process of the pidns test
-	parent_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
-	grep -E -v "^$parent_pid " "$LOG" > "$OUT"
+	#filter out logs made by the parent or init process of the pidns test
+	parent_pid="$(tail -n 2 $LOG | head -n 1 | cut -d' ' -f1)"
+	init_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
+	grep -E -v "^($parent_pid|$init_pid) " "$LOG" > "$OUT"
 	match_diff "$OUT" "$EXP"
 }
 

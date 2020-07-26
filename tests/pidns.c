@@ -111,6 +111,26 @@ pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 }
 
 static void
+create_init_process(void)
+{
+	int child_pipe[2];
+	if (pipe(child_pipe) < 0)
+		perror_msg_and_fail("pipe");
+
+	pid_t pid = fork();
+	if (pid < 0)
+		perror_msg_and_fail("fork");
+
+	if (!pid) {
+		close(child_pipe[1]);
+		read(child_pipe[0], &child_pipe[1], 1);
+		_exit(0);
+	}
+
+	close(child_pipe[0]);
+}
+
+static void
 check_ns_get_parent(void)
 {
 	int fd = open("/proc/self/ns/pid_for_children", O_RDONLY);
@@ -150,13 +170,7 @@ pidns_test_init(void)
 
 	pidns_unshared = true;
 
-	/* Create sleeping process to keep PID namespace alive */
-	pid_t pause_pid = fork();
-	if (!pause_pid) {
-		pause();
-		_exit(0);
-	}
-
+	create_init_process();
 	check_ns_get_parent();
 
 	if (!pidns_fork(strace_ids_pipe, -1, false))
@@ -171,11 +185,6 @@ pidns_test_init(void)
 
 	if (!pidns_fork(strace_ids_pipe, pgid, false))
 		goto pidns_test_init_run_test;
-
-	kill(pause_pid, SIGKILL);
-	while (wait(NULL) > 0);
-	if (errno != ECHILD)
-		perror_msg_and_fail("wait");
 
 	exit(0);
 
