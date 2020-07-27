@@ -31,7 +31,7 @@ enum pid_type {
 void pidns_print_leader(void);
 
 /*
- * Returns a static buffer containing the translation of our PID.
+ * Returns a static buffer containing the translation string of our PID.
  */
 const char *pidns_pid2str(enum pid_type type);
 
@@ -45,7 +45,11 @@ void check_ns_ioctl(void);
  *
  * Should be called at the beginning of the test's main function
  *
- * This function returns from a of child process that is in a new PID namespace.
+ * This function calls fork a couple of times, and returns in the child
+ * processes. These child processes are in a new PID namespace with different
+ * PID configurations (group leader, session leader, ...). If any child
+ * terminates with nonzero exit status the test is failed. Otherwise the test is
+ * succesful, and the parent process exits with 0.
  */
 void pidns_test_init(void);
 
