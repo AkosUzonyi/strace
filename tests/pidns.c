@@ -158,7 +158,7 @@ pidns_test_init(void)
 	int strace_ids_pipe[2];
 
 	if (!pidns_fork(strace_ids_pipe, -1, false))
-		goto pidns_test_init_run_test;
+		goto run_test;
 
 	/* Unshare user namespace too, so we do not need to be root */
 	if (unshare(CLONE_NEWUSER | CLONE_NEWPID) < 0) {
@@ -174,21 +174,21 @@ pidns_test_init(void)
 	check_ns_get_parent();
 
 	if (!pidns_fork(strace_ids_pipe, -1, false))
-		goto pidns_test_init_run_test;
+		goto run_test;
 
 	if (!pidns_fork(strace_ids_pipe, -1, true))
-		goto pidns_test_init_run_test;
+		goto run_test;
 
 	pid_t pgid;
 	if (!(pgid = pidns_fork(strace_ids_pipe, 0, false)))
-		goto pidns_test_init_run_test;
+		goto run_test;
 
 	if (!pidns_fork(strace_ids_pipe, pgid, false))
-		goto pidns_test_init_run_test;
+		goto run_test;
 
 	exit(0);
 
-pidns_test_init_run_test:
+run_test:
 	if (read(strace_ids_pipe[0], pidns_strace_ids,
 	    sizeof(pidns_strace_ids)) < 0)
 		perror_msg_and_fail("read");
