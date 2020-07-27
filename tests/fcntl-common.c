@@ -228,11 +228,7 @@ test_f_owner_ex(void)
 		{ ARG_STR(F_OWNER_PGRP), PT_PGID, 0 },
 	};
 
-#ifdef __NR_gettid
 	a[3].pid = syscall(__NR_gettid);
-#else
-	a[3].pid_type = PT_NONE;
-#endif
 	a[4].pid = getpid();
 	a[5].pid = getpgid(0);
 
