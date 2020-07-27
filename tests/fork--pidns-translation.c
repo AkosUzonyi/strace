@@ -9,6 +9,7 @@
 
 #include "tests.h"
 #include "scno.h"
+#include "pidns.h"
 
 #ifdef __NR_fork
 
@@ -47,6 +48,8 @@ fork_chain(int depth)
 
 int main(void)
 {
+	check_ns_ioctl();
+
 	if (unshare(CLONE_NEWPID | CLONE_NEWUSER) < 0) {
 		if (errno == EPERM)
 			perror_msg_and_skip("unshare");

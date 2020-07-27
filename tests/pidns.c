@@ -129,7 +129,7 @@ create_init_process(void)
 	close(child_pipe[0]);
 }
 
-static void
+void
 check_ns_ioctl(void)
 {
 	int fd = open("/proc/self/ns/pid", O_RDONLY);

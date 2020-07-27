@@ -36,6 +36,11 @@ void pidns_print_leader(void);
 const char *pidns_pid2str(enum pid_type type);
 
 /**
+ * Skips the test if NS_* ioctl commands are not supported by the kernel.
+ */
+void check_ns_ioctl(void);
+
+/**
  * Init pidns testing.
  *
  * Should be called at the beginning of the test's main function
