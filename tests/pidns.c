@@ -130,22 +130,22 @@ create_init_process(void)
 }
 
 static void
-check_ns_get_parent(void)
+check_ns_ioctl(void)
 {
-	int fd = open("/proc/self/ns/pid_for_children", O_RDONLY);
+	int fd = open("/proc/self/ns/pid", O_RDONLY);
 	if (fd < 0)
-		perror_msg_and_fail("opening /proc/self/ns/pid_for_children");
+		perror_msg_and_fail("opening /proc/self/ns/pid");
 
-	int parent_fd = ioctl(fd, NS_GET_PARENT);
-	if (parent_fd < 0) {
+	int userns_fd = ioctl(fd, NS_GET_USERNS);
+	if (userns_fd < 0) {
 		if (errno == ENOTTY)
-			error_msg_and_skip("ioctl(NS_GET_PARENT) is not "
+			error_msg_and_skip("NS_* ioctl commands are not "
 			                   "supported by the kernel");
 		else
 			perror_msg_and_fail("ioctl(NS_GET_PARENT)");
 	}
 
-	close(parent_fd);
+	close(userns_fd);
 	close(fd);
 }
 
@@ -153,6 +153,8 @@ void
 pidns_test_init(void)
 {
 	pidns_translation = true;
+
+	check_ns_ioctl();
 
 	int strace_ids_pipe[2];
 
@@ -170,7 +172,6 @@ pidns_test_init(void)
 	pidns_unshared = true;
 
 	create_init_process();
-	check_ns_get_parent();
 
 	if (!pidns_fork(strace_ids_pipe, -1, false))
 		goto run_test;
