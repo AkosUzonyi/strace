@@ -123,8 +123,7 @@ create_init_process(void)
 
 	if (!pid) {
 		close(child_pipe[1]);
-		read(child_pipe[0], &child_pipe[1], 1);
-		_exit(0);
+		_exit(read(child_pipe[0], &child_pipe[1], sizeof(int)) == 0);
 	}
 
 	close(child_pipe[0]);
