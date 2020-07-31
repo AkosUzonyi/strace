@@ -570,14 +570,12 @@ get_proc_pid(struct tcb *tcp)
 void
 printpid_translation(struct tcb *tcp, int pid, enum pid_type type)
 {
-	int strace_pid;
+	if (!pidns_translation)
+		return;
 
-	if (pidns_translation) {
-		strace_pid = translate_pid(tcp, pid, type, NULL);
-
-		if ((strace_pid > 0) && (pid != strace_pid))
-			tprintf_comment("%d in strace's PID NS", strace_pid);
-	}
+	int strace_pid = translate_pid(tcp, pid, type, NULL);
+	if (strace_pid && strace_pid != pid)
+		tprintf_comment("%d in strace's PID NS", strace_pid);
 }
 
 void
