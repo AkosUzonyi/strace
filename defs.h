@@ -280,8 +280,12 @@ struct tcb {
 	struct timespec etime;	/* Syscall entry time (CLOCK_MONOTONIC) */
 	struct timespec delay_expiration_time; /* When does the delay end */
 
+	/*
+	 * The ID of the PID namespace of this process
+	 * (inode number of /proc/<pid>/ns/pid)
+	 * (0: not initialized; -1ULL: initializtaion failed)
+	 */
 	uint64_t pid_ns;
-	bool pid_ns_inited;
 
 	struct mmap_cache_t *mmap_cache;
 
