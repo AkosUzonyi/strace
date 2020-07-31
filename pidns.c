@@ -79,16 +79,13 @@ get_pid_max(void)
 void
 pidns_init(void)
 {
-	static bool inited = false;
-	if (inited)
+	if (proc_data_cache)
 		return;
 
 	for (int i = 0; i < PT_COUNT; i++)
 		ns_pid_to_proc_pid[i] = trie_create(6, 10, 10, 64, 0);
 
 	proc_data_cache = trie_create(6, 10, 10, 64, 0);
-
-	inited = true;
 }
 
 static void
