@@ -1076,9 +1076,7 @@ protocol-specific information associated with socket file descriptors,
 block/character device number associated with device file descriptors,
 and PIDs asociated with pidfd file descriptors.
 .TP
-.B \-Y
-.TQ
-.BR \-\-pidns\-translation
+.B \-\-pidns\-translation
 If strace and tracee are in different PID namespaces, print PIDs in
 strace's namespace also.
 .SS Statistics
