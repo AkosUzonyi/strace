@@ -23,11 +23,11 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-bool pidns_translation = false;
-bool pidns_unshared = false;
+static bool pidns_translation = false;
+static bool pidns_unshared = false;
 
 /* Our PIDs in strace's namespace */
-pid_t pidns_strace_ids[PT_COUNT];
+static pid_t pidns_strace_ids[PT_COUNT];
 
 void
 pidns_print_leader(void)
