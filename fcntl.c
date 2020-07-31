@@ -90,12 +90,7 @@ print_fcntl(struct tcb *tcp)
 		break;
 	case F_SETOWN:
 		tprintf(", ");
-		const int pid = tcp->u_arg[2];
-		tprintf("%d", pid);
-		if (pid < 0)
-			printpid_translation(tcp, -pid, PT_PGID);
-		else
-			printpid_translation(tcp,  pid, PT_TGID);
+		printpid_tgid_pgid(tcp, tcp->u_arg[2]);
 		break;
 	case F_SETPIPE_SZ:
 		tprintf(", %" PRI_kld, tcp->u_arg[2]);

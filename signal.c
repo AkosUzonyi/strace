@@ -439,14 +439,8 @@ SYS_FUNC(sigprocmask)
 SYS_FUNC(kill)
 {
 	/* pid */
-	int pid = (int) tcp->u_arg[0];
-	tprintf("%d", pid);
-	if (pid > 0)
-		printpid_translation(tcp, pid, PT_TGID);
-	else if (pid < -1)
-		printpid_translation(tcp, -pid, PT_PGID);
-
-	tprintf(", ");
+	printpid_tgid_pgid(tcp, tcp->u_arg[0]);
+	tprints(", ");
 	/* signal */
 	printsignal(tcp->u_arg[1]);
 

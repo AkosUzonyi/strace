@@ -80,18 +80,7 @@ printwaitn(struct tcb *const tcp,
 	   void (*const print_rusage)(struct tcb *, kernel_ulong_t))
 {
 	if (entering(tcp)) {
-		/* On Linux, kernel-side pid_t is typedef'ed to int
-		 * on all arches. Also, glibc-2.8 truncates wait3 and wait4
-		 * pid argument to int on 64bit arches, producing,
-		 * for example, wait4(4294967295, ...) instead of -1
-		 * in strace. We have to use int here, not long.
-		 */
-		int pid = (int) tcp->u_arg[0];
-		tprintf("%d", pid);
-		if (pid > 0)
-			printpid_translation(tcp, pid, PT_TGID);
-		else if (pid < -1)
-			printpid_translation(tcp, -pid, PT_PGID);
+		printpid_tgid_pgid(tcp, tcp->u_arg[0]);
 		tprintf(", ");
 	} else {
 		int status;
