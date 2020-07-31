@@ -135,7 +135,6 @@ libstrace_a_SOURCES =	\
 	getcpu.c	\
 	getcwd.c	\
 	getpagesize.c \
-	getpid.c	\
 	getrandom.c	\
 	hdio.c		\
 	hostname.c	\
