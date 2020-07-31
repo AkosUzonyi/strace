@@ -27,10 +27,10 @@
 #include "xmalloc.h"
 #include "xstring.h"
 
-struct trie *ns_pid_to_proc_pid[PT_COUNT];
-struct trie *proc_data_cache;
+static struct trie *ns_pid_to_proc_pid[PT_COUNT];
+static struct trie *proc_data_cache;
 
-bool ns_get_parent_enotty = false;
+static bool ns_get_parent_enotty = false;
 
 static const char tid_str[]  = "NSpid:\t";
 static const char tgid_str[] = "NStgid:\t";
