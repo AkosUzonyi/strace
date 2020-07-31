@@ -460,10 +460,10 @@ SYS_FUNC(tgkill)
 {
 	/* tgid */
 	printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
-	tprintf(", ");
+	tprints(", ");
 	/* tid */
 	printpid(tcp, (int) tcp->u_arg[1], PT_TID);
-	tprintf(", ");
+	tprints(", ");
 	/* signal */
 	printsignal(tcp->u_arg[2]);
 
