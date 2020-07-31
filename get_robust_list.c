@@ -11,7 +11,7 @@ SYS_FUNC(get_robust_list)
 {
 	if (entering(tcp)) {
 		printpid(tcp, (int) tcp->u_arg[0], PT_TID);
-		tprintf(", ");
+		tprints(", ");
 	} else {
 		printnum_ptr(tcp, tcp->u_arg[1]);
 		tprints(", ");

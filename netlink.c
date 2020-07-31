@@ -448,7 +448,7 @@ print_nlmsghdr(struct tcb *tcp,
 
 	tprintf(", seq=%u, pid=", nlmsghdr->nlmsg_seq);
 	printpid(tcp, nlmsghdr->nlmsg_pid, PT_TGID);
-	tprintf("}");
+	tprints("}");
 }
 
 static bool

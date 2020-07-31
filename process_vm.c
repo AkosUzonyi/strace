@@ -14,7 +14,7 @@ SYS_FUNC(process_vm_readv)
 	if (entering(tcp)) {
 		/* arg 1: pid */
 		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
-		tprintf(", ");
+		tprints(", ");
 	} else {
 		kernel_ulong_t local_iovcnt = tcp->u_arg[2];
 		kernel_ulong_t remote_iovcnt = tcp->u_arg[4];
@@ -44,7 +44,7 @@ SYS_FUNC(process_vm_writev)
 
 	/* arg 1: pid */
 	printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
-	tprintf(", ");
+	tprints(", ");
 	/* arg 2: local iov */
 	tprint_iov(tcp, local_iovcnt, tcp->u_arg[1], IOV_DECODE_STR);
 	/* arg 3: local iovcnt */

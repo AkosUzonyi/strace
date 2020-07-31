@@ -133,7 +133,7 @@ SYS_FUNC(waitid)
 
 	if (entering(tcp)) {
 		printxval(waitid_types, idtype, "P_???");
-		tprintf(", ");
+		tprints(", ");
 		switch (idtype)
 		{
 		case P_PID:
@@ -149,7 +149,7 @@ SYS_FUNC(waitid)
 			tprintf("%d", id);
 			break;
 		}
-		tprintf(", ");
+		tprints(", ");
 	} else {
 		/* siginfo */
 		printsiginfo_at(tcp, tcp->u_arg[2]);

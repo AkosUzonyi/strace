@@ -143,7 +143,7 @@ SYS_FUNC(prlimit64)
 {
 	if (entering(tcp)) {
 		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
-		tprintf(", ");
+		tprints(", ");
 		printxval(resources, tcp->u_arg[1], "RLIMIT_???");
 		tprints(", ");
 		print_rlimit64(tcp, tcp->u_arg[2]);
@@ -200,7 +200,7 @@ priority_print_who(struct tcb *tcp, int which, int who)
 SYS_FUNC(getpriority)
 {
 	printxval(priorities, tcp->u_arg[0], "PRIO_???");
-	tprintf(", ");
+	tprints(", ");
 	priority_print_who(tcp, tcp->u_arg[0], tcp->u_arg[1]);
 
 	return RVAL_DECODED;
@@ -209,7 +209,7 @@ SYS_FUNC(getpriority)
 SYS_FUNC(setpriority)
 {
 	printxval(priorities, tcp->u_arg[0], "PRIO_???");
-	tprintf(", ");
+	tprints(", ");
 	priority_print_who(tcp, tcp->u_arg[0], tcp->u_arg[1]);
 	tprintf(", %d", (int) tcp->u_arg[2]);
 

@@ -73,9 +73,9 @@ print_f_owner_ex(struct tcb *const tcp, const kernel_ulong_t addr)
 		pid_type = PT_PGID;
 		break;
 	}
-	tprintf(", pid=");
+	tprints(", pid=");
 	printpid(tcp, owner.pid, pid_type);
-	tprintf("}");
+	tprints("}");
 }
 
 static int
@@ -89,7 +89,7 @@ print_fcntl(struct tcb *tcp)
 		printflags(fdflags, tcp->u_arg[2], "FD_???");
 		break;
 	case F_SETOWN:
-		tprintf(", ");
+		tprints(", ");
 		printpid_tgid_pgid(tcp, tcp->u_arg[2]);
 		break;
 	case F_SETPIPE_SZ:

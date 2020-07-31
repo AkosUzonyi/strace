@@ -92,7 +92,7 @@ SYS_FUNC(ptrace)
 		}
 
 		/* pid */
-		tprintf(", ");
+		tprints(", ");
 		printpid(tcp, pid, PT_TGID);
 
 		/* addr */
