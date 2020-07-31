@@ -564,7 +564,7 @@ get_proc_pid(struct tcb *tcp)
 	return tcp->pid;
 }
 
-void
+static void
 printpid_translation(struct tcb *tcp, int pid, enum pid_type type)
 {
 	if (!pidns_translation)
