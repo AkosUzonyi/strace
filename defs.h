@@ -1006,8 +1006,8 @@ extern kernel_ulong_t *
 fetch_indirect_syscall_args(struct tcb *, kernel_ulong_t addr, unsigned int n_args);
 
 extern void pidns_init(void);
-extern int get_proc_pid(struct tcb *tcp);
-extern int translate_pid(struct tcb *tcp, int dest_id, enum pid_type type,
+extern int get_proc_pid(struct tcb *);
+extern int translate_pid(struct tcb *, int dest_id, enum pid_type type,
 		    int *proc_pid_ptr);
 
 extern void
@@ -1084,9 +1084,9 @@ printfd(struct tcb *tcp, int fd)
  * Print file descriptor fd owned by process with ID pid (from the PID NS
  * of the tracee the descriptor tcp).  This is a stub.
  */
-extern void printfd_pid_tracee_ns(struct tcb *tcp, pid_t pid, int fd);
-extern void printpid(struct tcb *tcp, int pid, enum pid_type type);
-extern void printpid_tgid_pgid(struct tcb *tcp, int pid);
+extern void printfd_pid_tracee_ns(struct tcb *, pid_t pid, int fd);
+extern void printpid(struct tcb *, int pid, enum pid_type type);
+extern void printpid_tgid_pgid(struct tcb *, int pid);
 extern void print_sockaddr(struct tcb *tcp, const void *sa, int len);
 extern bool
 print_inet_addr(int af, const void *addr, unsigned int len, const char *var_name);
