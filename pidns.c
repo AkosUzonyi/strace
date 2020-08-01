@@ -54,6 +54,11 @@ static const struct {
  */
 #define MAX_NS_DEPTH 32
 
+static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 6 : 5);
+
+static int pid_max;
+static uint8_t pid_max_size, pid_max_size_lg;
+
 struct proc_data {
 	int proc_pid;
 	int ns_count;
@@ -62,30 +67,22 @@ struct proc_data {
 	int id_hierarchy[PT_COUNT][MAX_NS_DEPTH];
 };
 
-static int
-get_pid_max(void)
-{
-	static int pid_max = -1;
-
-	if (pid_max < 0) {
-		pid_max = INT_MAX;
-		if (read_int_from_file("/proc/sys/kernel/pid_max", &pid_max) < 0)
-			debug_func_perror_msg("reading int from /proc/sys/kernel/pid_max");
-	}
-
-	return pid_max;
-}
-
 void
 pidns_init(void)
 {
 	if (proc_data_cache)
 		return;
 
-	for (int i = 0; i < PT_COUNT; i++)
-		ns_pid_to_proc_pid[i] = trie_create(6, 10, 10, 64, 0);
+	pid_max = INT_MAX;
+	if (read_int_from_file("/proc/sys/kernel/pid_max", &pid_max) < 0)
+		debug_func_perror_msg("reading /proc/sys/kernel/pid_max");
+	pid_max_size = ilog2_32(pid_max - 1) + 1;
+	pid_max_size_lg = ilog2_32(pid_max_size - 1) + 1;
 
-	proc_data_cache = trie_create(6, 10, 10, 64, 0);
+	for (int i = 0; i < PT_COUNT; i++)
+		ns_pid_to_proc_pid[i] = trie_create(ptr_sz_lg, 10, 10, 64, 0);
+
+	proc_data_cache = trie_create(ptr_sz_lg, 10, 10, pid_max_size, 0);
 }
 
 static void
@@ -93,11 +90,7 @@ put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 {
 	struct trie *b = (struct trie *) (uintptr_t) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
-		int pid_max = get_pid_max();
-		uint8_t pid_max_size = ilog2_32(pid_max - 1) + 1;
-		uint8_t pid_max_size_lg = ilog2_32(pid_max_size - 1) + 1;
 		b = trie_create(pid_max_size_lg, 10, 10, pid_max_size, 0);
-
 		trie_set(ns_pid_to_proc_pid[type], ns, (uint64_t) (uintptr_t) b);
 	}
 	trie_set(b, ns_pid, proc_pid);
@@ -530,7 +523,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 	}
 
 	/* Iterate through the cache, find potential proc_data */
-	trie_iterate_keys(proc_data_cache, 0, get_pid_max(), 0,
+	trie_iterate_keys(proc_data_cache, 0, pid_max, 0,
 		proc_data_cache_iterator_fn, &tip);
 	/* (proc_data_cache_iterator_fn takes care about updating proc_data) */
 	if (tip.result_id)
