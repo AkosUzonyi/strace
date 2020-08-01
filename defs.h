@@ -1082,7 +1082,7 @@ printfd(struct tcb *tcp, int fd)
 
 /**
  * Print file descriptor fd owned by process with ID pid (from the PID NS
- * of the tracee the descriptor tcp).  This is a stub.
+ * of the tracee).
  */
 extern void printfd_pid_tracee_ns(struct tcb *, pid_t pid, int fd);
 extern void printpid(struct tcb *, int pid, enum pid_type type);
