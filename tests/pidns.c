@@ -154,7 +154,7 @@ check_ns_ioctl(void)
 			error_msg_and_skip("NS_* ioctl commands are not "
 			                   "supported by the kernel");
 		else
-			perror_msg_and_fail("ioctl(NS_GET_PARENT)");
+			perror_msg_and_fail("ioctl(NS_GET_USERNS)");
 	}
 
 	close(userns_fd);
