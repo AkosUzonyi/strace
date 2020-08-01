@@ -53,8 +53,9 @@ pidns_pid2str(enum pid_type type)
 }
 
 static pid_t
-pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
+pidns_fork(pid_t pgid, bool new_sid)
 {
+	int strace_ids_pipe[2];
 	if (pipe(strace_ids_pipe) < 0)
 		perror_msg_and_fail("pipe");
 
@@ -62,8 +63,19 @@ pidns_fork(int *strace_ids_pipe, pid_t pgid, bool new_sid)
 	pid_t pid = fork();
 	if (pid < 0)
 		perror_msg_and_fail("fork");
-	if (!pid)
+
+	if (!pid) {
+		close(strace_ids_pipe[1]);
+		if (read(strace_ids_pipe[0], pidns_strace_ids,
+		    sizeof(pidns_strace_ids)) < 0)
+			perror_msg_and_fail("read");
+		close(strace_ids_pipe[0]);
+
+		if (pidns_strace_ids[PT_SID])
+			setsid();
+
 		return 0;
+	}
 
 	pidns_strace_ids[PT_TID] = pid;
 	pidns_strace_ids[PT_TGID] = pid;
@@ -156,10 +168,8 @@ pidns_test_init(void)
 
 	check_ns_ioctl();
 
-	int strace_ids_pipe[2];
-
-	if (!pidns_fork(strace_ids_pipe, -1, false))
-		goto run_test;
+	if (!pidns_fork(-1, false))
+		return;
 
 	/* Unshare user namespace too, so we do not need to be root */
 	if (unshare(CLONE_NEWUSER | CLONE_NEWPID) < 0) {
@@ -173,28 +183,18 @@ pidns_test_init(void)
 
 	create_init_process();
 
-	if (!pidns_fork(strace_ids_pipe, -1, false))
-		goto run_test;
+	if (!pidns_fork(-1, false))
+		return;
 
-	if (!pidns_fork(strace_ids_pipe, -1, true))
-		goto run_test;
+	if (!pidns_fork(-1, true))
+		return;
 
 	pid_t pgid;
-	if (!(pgid = pidns_fork(strace_ids_pipe, 0, false)))
-		goto run_test;
+	if (!(pgid = pidns_fork(0, false)))
+		return;
 
-	if (!pidns_fork(strace_ids_pipe, pgid, false))
-		goto run_test;
+	if (!pidns_fork(pgid, false))
+		return;
 
 	exit(0);
-
-run_test:
-	if (read(strace_ids_pipe[0], pidns_strace_ids,
-	    sizeof(pidns_strace_ids)) < 0)
-		perror_msg_and_fail("read");
-	close(strace_ids_pipe[0]);
-	close(strace_ids_pipe[1]);
-
-	if (pidns_strace_ids[PT_SID])
-		setsid();
 }
