@@ -129,17 +129,15 @@ static uint64_t *
 trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 {
 	void **cur_node = &(t->data);
-	uint8_t cur_depth;
-	uint8_t max_depth;
-	uint8_t sz;
 
 	if (t->key_size < 64 && key > (uint64_t) 1 << t->key_size)
 		return NULL;
 
-	max_depth = trie_get_depth(t);
+	const uint8_t max_depth = trie_get_depth(t);
 
-	for (cur_depth = 0; cur_depth <= max_depth; cur_depth++) {
-		sz = trie_get_node_size(t, cur_depth, max_depth);
+	for (uint8_t cur_depth = 0; cur_depth <= max_depth; cur_depth++) {
+		uint8_t offs = trie_get_node_bit_offs(t, cur_depth, max_depth);
+		uint8_t sz = trie_get_node_size(t, cur_depth, max_depth);
 
 		if (!*cur_node) {
 			if (!auto_create)
@@ -149,8 +147,7 @@ trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 		}
 
 		if (cur_depth < max_depth) {
-			size_t pos = (key >> trie_get_node_bit_offs(t,
-				cur_depth, max_depth)) &
+			size_t pos = (key >> offs) &
 				((1 << (sz - ptr_sz_lg)) - 1);
 
 			cur_node = (((void **) (*cur_node)) + pos);
