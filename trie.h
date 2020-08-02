@@ -10,16 +10,6 @@
 #ifndef STRACE_TRIE_H
 #define STRACE_TRIE_H
 
-#define TRIE_SET   ((void *) ~(intptr_t) 0)
-#define TRIE_UNSET ((void *) NULL)
-
-enum trie_iterate_flags {
-	/** Iterate over TRIE_SET values also */
-	TRIE_ITERATE_KEYS_SET   = 1 << 0,
-	/** Iterate over TRIE_UNSET values also */
-	TRIE_ITERATE_KEYS_UNSET = 1 << 1,
-};
-
 /**
  * Trie control structure.
  * Trie implemented here has the following properties:
@@ -27,9 +17,6 @@ enum trie_iterate_flags {
  *    64 bit values (only power of 2 sizes are allowed).
  *  * The key can be up to 64 bits in size.
  *  * It has separate configuration for node size and data block size.
- *  * It can be used for mask storage - supports storing the flag that all keys
- *    are set/unset in the middle tree layers. See also trie_mask_set() and
- *    trie_mask_unset().
  *
  * How bits of key are used for different node levels:
  *
@@ -44,8 +31,8 @@ enum trie_iterate_flags {
  * size.  De-fragmentation is also unsupported currently.
  */
 struct trie {
-	/** Default set value */
-	uint64_t set_value;
+	/** Return value of trie_get if key is not found */
+	uint64_t empty_value;
 
 	/** Pointer to root node */
 	void *data;
@@ -78,28 +65,12 @@ bool trie_check(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
 		uint8_t data_block_key_bits);
 void trie_init(struct trie *t, uint8_t key_size, uint8_t item_size_lg,
 		uint8_t node_key_bits, uint8_t data_block_key_bits,
-		uint64_t set_value);
+		uint64_t empty_value);
 struct trie * trie_create(uint8_t key_size, uint8_t item_size_lg,
 			uint8_t node_key_bits, uint8_t data_block_key_bits,
-			uint64_t set_value);
+			uint64_t empty_value);
 
 bool trie_set(struct trie *t, uint64_t key, uint64_t val);
-#if 0
-/**
- * Sets to the value b->set_value all keys with 0-ed bits of mask equivalent to
- * corresponding bits in key.
- */
-int trie_mask_set(struct trie *t, uint64_t key, uint8_t mask_bits);
-/**
- * Sets to 0 all keys with 0-ed bits of mask equivalent to corresponding bits in
- * key.
- */
-int trie_mask_unset(struct trie *t, uint64_t key, uint8_t mask_bits);
-int trie_interval_set(struct trie *t, uint64_t begin, uint64_t end,
-		       uint64_t val);
-
-uint64_t trie_get_next_set_key(struct trie *t, uint64_t key);
-#endif
 
 /**
  * Calls trie_iterate_fn for each key-value pair where
@@ -108,13 +79,11 @@ uint64_t trie_get_next_set_key(struct trie *t, uint64_t key);
  * @param t        The trie.
  * @param start    The start of the key interval (inclusive).
  * @param end      The end of the key interval (inclusive).
- * @param flags    A bitwise combination of enum trie_iterate_flags values.
  * @param fn       The function to be called.
  * @param fn_data  The value to be passed to fn.
  */
 uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
-			    enum trie_iterate_flags flags, trie_iterate_fn fn,
-			    void *fn_data);
+			    trie_iterate_fn fn, void *fn_data);
 
 uint64_t trie_get(struct trie *t, uint64_t key);
 

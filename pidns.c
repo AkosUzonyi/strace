@@ -523,7 +523,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 	}
 
 	/* Iterate through the cache, find potential proc_data */
-	trie_iterate_keys(proc_data_cache, 0, pid_max, 0,
+	trie_iterate_keys(proc_data_cache, 0, pid_max,
 		proc_data_cache_iterator_fn, &tip);
 	/* (proc_data_cache_iterator_fn takes care about updating proc_data) */
 	if (tip.result_id)

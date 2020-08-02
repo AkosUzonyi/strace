@@ -37,13 +37,13 @@ trie_check(uint8_t key_size, uint8_t item_size_lg,
 void
 trie_init(struct trie *t, uint8_t key_size, uint8_t item_size_lg,
           uint8_t node_key_bits, uint8_t data_block_key_bits,
-          uint64_t set_value)
+          uint64_t empty_value)
 {
 	assert(trie_check(key_size, item_size_lg, node_key_bits,
 		data_block_key_bits));
 
-	t->set_value = set_value;
-	t->data = TRIE_UNSET;
+	t->empty_value = empty_value;
+	t->data = NULL;
 	t->item_size_lg = item_size_lg;
 	t->node_key_bits = node_key_bits;
 	t->data_block_key_bits = data_block_key_bits;
@@ -107,7 +107,7 @@ trie_get_node_bit_offs(struct trie *t, uint8_t depth, int max_depth)
 
 struct trie *
 trie_create(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
-            uint8_t data_block_key_bits, uint64_t set_value)
+            uint8_t data_block_key_bits, uint64_t empty_value)
 {
 	struct trie *t;
 
@@ -120,27 +120,15 @@ trie_create(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
 		return NULL;
 
 	trie_init(t, key_size, item_size_lg, node_key_bits, data_block_key_bits,
-		   set_value);
+		   empty_value);
 
 	return t;
-}
-
-static uint64_t
-trie_filler(uint64_t val, uint8_t item_size)
-{
-	val &= (1 << (1 << item_size)) - 1;
-
-	for (; item_size < 6; item_size++)
-		val |= val << (1 << item_size);
-
-	return val;
 }
 
 static uint64_t *
 trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 {
 	void **cur_node = &(t->data);
-	unsigned i;
 	uint8_t cur_depth;
 	uint8_t max_depth;
 	uint8_t sz;
@@ -153,29 +141,11 @@ trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 	for (cur_depth = 0; cur_depth <= max_depth; cur_depth++) {
 		sz = trie_get_node_size(t, cur_depth, max_depth);
 
-		if (*cur_node == TRIE_SET || *cur_node == TRIE_UNSET) {
-			void *old_val = *cur_node;
-
+		if (!*cur_node) {
 			if (!auto_create)
-				return (uint64_t *) (*cur_node);
+				return NULL;
 
 			*cur_node = xcalloc(1 << sz, 1);
-
-			if (old_val == TRIE_SET) {
-				uint64_t fill_value = cur_depth == max_depth ?
-					t->set_value :
-					(uintptr_t) TRIE_SET;
-
-				uint8_t fill_size = cur_depth == max_depth ?
-					t->item_size_lg :
-					ptr_sz_lg;
-
-				unsigned int n = ((unsigned int) 1 << (sz - 6));
-				for (i = 0; i < n; i++)
-					((uint64_t *) *cur_node)[i] =
-						trie_filler(fill_value,
-							fill_size);
-			}
 		}
 
 		if (cur_depth < max_depth) {
@@ -215,32 +185,6 @@ trie_set(struct trie *t, uint64_t key, uint64_t val)
 	return true;
 }
 
-#if 0
-int
-trie_mask_set(struct trie *t, uint64_t key, uint8_t mask_bits)
-{
-}
-
-/**
- * Sets to 0 all keys with 0-ed bits of mask equivalent to corresponding bits in
- * key.
- */
-int
-trie_mask_unset(struct trie *t, uint64_t key, uint8_t mask_bits)
-{
-}
-
-int
-trie_interval_set(struct trie *t, uint64_t begin, uint64_t end, uint64_t val)
-{
-}
-
-uint64_t
-trie_get_next_set_key(struct trie *t, uint64_t key)
-{
-}
-#endif
-
 static uint64_t
 trie_data_block_get(struct trie *t, uint64_t *data, uint64_t key)
 {
@@ -249,9 +193,7 @@ trie_data_block_get(struct trie *t, uint64_t *data, uint64_t key)
 	size_t offs;
 
 	if (!data)
-		return 0;
-	if ((void *) data == (void *) TRIE_SET)
-		return t->set_value;
+		return t->empty_value;
 
 	mask = (1 << t->data_block_key_bits) - 1;
 	pos = (key & mask) >> (6 - t->item_size_lg);
@@ -273,19 +215,15 @@ trie_get(struct trie *b, uint64_t key)
 }
 
 static uint64_t
-trie_iterate_keys_node(struct trie *t, enum trie_iterate_flags flags,
-				trie_iterate_fn fn, void *fn_data,
-				void *node, uint64_t start, uint64_t end,
-				uint8_t depth, uint8_t max_depth)
+trie_iterate_keys_node(struct trie *t,
+                       trie_iterate_fn fn, void *fn_data,
+                       void *node, uint64_t start, uint64_t end,
+                       uint8_t depth, uint8_t max_depth)
 {
-	if (start > end)
+	if (start > end || !node)
 		return 0;
 
-	if ((node == TRIE_SET && !(flags & TRIE_ITERATE_KEYS_SET)) ||
-		(node == TRIE_UNSET && !(flags & TRIE_ITERATE_KEYS_UNSET)))
-		return 0;
-
-	if (node == TRIE_SET || node == TRIE_UNSET || depth == max_depth) {
+	if (depth == max_depth) {
 		for (uint64_t i = start; i <= end; i++)
 			fn(fn_data, i, trie_data_block_get(t,
 				(uint64_t *) node, i));
@@ -319,7 +257,7 @@ trie_iterate_keys_node(struct trie *t, enum trie_iterate_flags flags,
 		if (child_end > end)
 			child_end = end;
 
-		count += trie_iterate_keys_node(t, flags, fn, fn_data,
+		count += trie_iterate_keys_node(t, fn, fn_data,
 			((void **) node)[i], child_start, child_end,
 			depth + 1, max_depth);
 	}
@@ -328,10 +266,9 @@ trie_iterate_keys_node(struct trie *t, enum trie_iterate_flags flags,
 }
 
 uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
-			    enum trie_iterate_flags flags, trie_iterate_fn fn,
-			    void *fn_data)
+                           trie_iterate_fn fn, void *fn_data)
 {
-	return trie_iterate_keys_node(t, flags, fn, fn_data, t->data,
+	return trie_iterate_keys_node(t, fn, fn_data, t->data,
 		start, end, 0, trie_get_depth(t));
 }
 
@@ -342,7 +279,7 @@ trie_free_node(struct trie *t, uint64_t **node, uint8_t depth,
 	size_t sz;
 	size_t i;
 
-	if (node == TRIE_SET || node == TRIE_UNSET)
+	if (!node)
 		return;
 	if (max_depth < 0)
 		max_depth = trie_get_depth(t);
