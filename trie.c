@@ -19,8 +19,8 @@
 static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 6 : 5);
 
 bool
-trie_check(uint8_t item_size_lg, uint8_t node_key_bits,
-	    uint8_t data_block_key_bits, uint8_t key_size)
+trie_check(uint8_t key_size, uint8_t item_size_lg,
+           uint8_t node_key_bits, uint8_t data_block_key_bits)
 {
 	if (item_size_lg > 6)
 		return false;
@@ -35,11 +35,12 @@ trie_check(uint8_t item_size_lg, uint8_t node_key_bits,
 }
 
 void
-trie_init(struct trie *t, uint8_t item_size_lg, uint8_t node_key_bits,
-	   uint8_t data_block_key_bits, uint8_t key_size, uint64_t set_value)
+trie_init(struct trie *t, uint8_t key_size, uint8_t item_size_lg,
+          uint8_t node_key_bits, uint8_t data_block_key_bits,
+          uint64_t set_value)
 {
-	assert(trie_check(item_size_lg, node_key_bits, data_block_key_bits,
-			   key_size));
+	assert(trie_check(key_size, item_size_lg, node_key_bits,
+		data_block_key_bits));
 
 	t->set_value = set_value;
 	t->data = TRIE_UNSET;
@@ -105,21 +106,21 @@ trie_get_node_bit_offs(struct trie *t, uint8_t depth, int max_depth)
 }
 
 struct trie *
-trie_create(uint8_t item_size_lg, uint8_t node_key_bits,
-	     uint8_t data_block_key_bits, uint8_t key_size, uint64_t set_value)
+trie_create(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
+            uint8_t data_block_key_bits, uint64_t set_value)
 {
 	struct trie *t;
 
-	if (!trie_check(item_size_lg, node_key_bits, data_block_key_bits,
-	    key_size))
+	if (!trie_check(key_size, item_size_lg, node_key_bits,
+	    data_block_key_bits))
 		return NULL;
 
 	t = malloc(sizeof(*t));
 	if (!t)
 		return NULL;
 
-	trie_init(t, item_size_lg, node_key_bits, data_block_key_bits,
-		   key_size, set_value);
+	trie_init(t, key_size, item_size_lg, node_key_bits, data_block_key_bits,
+		   set_value);
 
 	return t;
 }

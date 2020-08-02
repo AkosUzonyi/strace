@@ -80,9 +80,9 @@ pidns_init(void)
 	pid_max_size_lg = ilog2_32(pid_max_size - 1) + 1;
 
 	for (int i = 0; i < PT_COUNT; i++)
-		ns_pid_to_proc_pid[i] = trie_create(ptr_sz_lg, 10, 10, 64, 0);
+		ns_pid_to_proc_pid[i] = trie_create(64, ptr_sz_lg, 10, 10, 0);
 
-	proc_data_cache = trie_create(ptr_sz_lg, 10, 10, pid_max_size, 0);
+	proc_data_cache = trie_create(pid_max_size, ptr_sz_lg, 10, 10, 0);
 }
 
 static void
@@ -90,7 +90,7 @@ put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 {
 	struct trie *b = (struct trie *) (uintptr_t) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
-		b = trie_create(pid_max_size_lg, 10, 10, pid_max_size, 0);
+		b = trie_create(pid_max_size, pid_max_size_lg, 10, 10, 0);
 		trie_set(ns_pid_to_proc_pid[type], ns, (uint64_t) (uintptr_t) b);
 	}
 	trie_set(b, ns_pid, proc_pid);
