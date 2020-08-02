@@ -1006,7 +1006,23 @@ extern kernel_ulong_t *
 fetch_indirect_syscall_args(struct tcb *, kernel_ulong_t addr, unsigned int n_args);
 
 extern void pidns_init(void);
+
+/**
+ * Returns the pid of the tracee as present in /proc (can be different from
+ * tcp->pid if /proc and the tracee process are in different PID namespaces).
+ */
 extern int get_proc_pid(struct tcb *);
+
+/**
+ * Translates a pid from tracee's namespace to our namepace.
+ *
+ * @param tcp             The tcb of the tracee
+ *                        (NULL: from_id is in strace's namespace. Useful for
+ *                         getting the proc PID of from_id)
+ * @param from_id         The id to be translated
+ * @param type            The PID type of from_id
+ * @param proc_pid_ptr    If not NULL, writes the proc PID to this location
+ */
 extern int translate_pid(struct tcb *, int dest_id, enum pid_type type,
 		    int *proc_pid_ptr);
 
@@ -1085,8 +1101,15 @@ printfd(struct tcb *tcp, int fd)
  * of the tracee).
  */
 extern void printfd_pid_tracee_ns(struct tcb *, pid_t pid, int fd);
+
 extern void printpid(struct tcb *, int pid, enum pid_type type);
+
+/**
+ * Prints pid as a TGID if positive, and PGID if negative
+ * (like the first argument of kill).
+ */
 extern void printpid_tgid_pgid(struct tcb *, int pid);
+
 extern void print_sockaddr(struct tcb *tcp, const void *sa, int len);
 extern bool
 print_inet_addr(int af, const void *addr, unsigned int len, const char *var_name);

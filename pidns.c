@@ -27,7 +27,18 @@
 #include "xmalloc.h"
 #include "xstring.h"
 
+/**
+ * Key:   PID NS ID
+ * Value: a btree:
+ *           Key:   a process PID in NS
+ *           Value: the process's PID as present in /proc
+ */
 static struct trie *ns_pid_to_proc_pid[PT_COUNT];
+
+/**
+ * Key:   Proc PID
+ * Value: stuct proc_data
+ */
 static struct trie *proc_data_cache;
 
 static bool ns_get_parent_enotty = false;
@@ -239,6 +250,9 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 	return n;
 }
 
+/**
+ * Returns whether the /proc filesystem's PID namespace is same as strace's.
+ */
 static bool
 is_proc_ours(void)
 {
@@ -250,6 +264,9 @@ is_proc_ours(void)
 	return cached_val;
 }
 
+/**
+ * Returns the PID namespace of the tracee
+ */
 static uint64_t
 get_ns(struct tcb *tcp)
 {
@@ -269,6 +286,9 @@ get_ns(struct tcb *tcp)
 	return tcp->pid_ns;
 }
 
+/**
+ * Returns the PID namespace of strace
+ */
 static uint64_t
 get_our_ns(void)
 {
@@ -470,15 +490,6 @@ proc_data_cache_iterator_fn(void* fn_data, uint64_t key, uint64_t val)
 	translate_id_proc_pid(tip, pd->proc_pid);
 }
 
-/**
- * Translates an ID from tcp's namespace to our namepace
- *
- * @param tcp             The tcb whose namepace from_id is in
- *                        (NULL: strace's namespace)
- * @param from_id         The id to be translated
- * @param type            The type of ID
- * @param proc_pid_ptr    If not NULL, writes the proc PID to this location
- */
 int
 translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
               int *proc_pid_ptr)
