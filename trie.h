@@ -87,8 +87,7 @@ uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
 
 uint64_t trie_get(struct trie *t, uint64_t key);
 
-void trie_free_node(struct trie *t, uint64_t **node, uint8_t depth,
-		      int max_depth);
+void trie_free_node(struct trie *t, void *node, uint8_t depth, int max_depth);
 void trie_free(struct trie *t);
 
 #endif /* !STRACE_TRIE_H */

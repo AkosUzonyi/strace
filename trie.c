@@ -270,24 +270,20 @@ uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
 }
 
 void
-trie_free_node(struct trie *t, uint64_t **node, uint8_t depth,
-		 int max_depth)
+trie_free_node(struct trie *t, void *node, uint8_t depth, int max_depth)
 {
-	size_t sz;
-	size_t i;
-
 	if (!node)
 		return;
+
 	if (max_depth < 0)
 		max_depth = trie_get_depth(t);
+
 	if (depth >= max_depth)
 		goto free_node;
 
-	sz = 1 << (trie_get_node_size(t, depth, max_depth) - ptr_sz_lg);
-
-	for (i = 0; i < sz; i++)
-		trie_free_node(t, (uint64_t **) (node[i]),
-			depth + 1, max_depth);
+	size_t sz = 1 << (trie_get_node_size(t, depth, max_depth) - ptr_sz_lg);
+	for (size_t i = 0; i < sz; i++)
+		trie_free_node(t, ((void **) node)[i], depth + 1, max_depth);
 
 free_node:
 	free(node);
