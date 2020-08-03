@@ -118,27 +118,33 @@ trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 	return (uint64_t *) (*cur_node);
 }
 
+static void
+trie_data_block_calc_pos(struct trie *t, uint64_t key,
+                         uint64_t *pos, uint64_t *mask, uint64_t *offs)
+{
+	uint64_t key_mask;
+
+	key_mask = (1 << t->data_block_key_bits) - 1;
+	*pos = (key & key_mask) >> (6 - t->item_size_lg);
+
+	key_mask = (1 << (6 - t->item_size_lg)) - 1;
+	*offs = (key & key_mask) * (1 << t->item_size_lg);
+
+	*mask = (((uint64_t) 1 << (1 << t->item_size_lg)) - 1) << *offs;
+}
+
 bool
 trie_set(struct trie *t, uint64_t key, uint64_t val)
 {
 	uint64_t *data = trie_get_node(t, key, true);
-	size_t mask = (1 << t->data_block_key_bits) - 1;
-	size_t pos = (key & mask) >> (6 - t->item_size_lg);
-
 	if (!data)
 		return false;
 
-	if (t->item_size_lg == 6) {
-		data[pos] = val;
-	} else {
-		size_t offs = (key & ((1 << (6 - t->item_size_lg)) - 1)) *
-			(1 << t->item_size_lg);
-		uint64_t mask = (((uint64_t) 1 << (1 << t->item_size_lg)) - 1)
-			<< offs;
+	uint64_t pos, mask, offs;
+	trie_data_block_calc_pos(t, key, &pos, &mask, &offs);
 
-		data[pos] &= ~mask;
-		data[pos] |= (val << offs) & mask;
-	}
+	data[pos] &= ~mask;
+	data[pos] |= (val << offs) & mask;
 
 	return true;
 }
@@ -146,24 +152,13 @@ trie_set(struct trie *t, uint64_t key, uint64_t val)
 static uint64_t
 trie_data_block_get(struct trie *t, uint64_t *data, uint64_t key)
 {
-	size_t mask;
-	size_t pos;
-	size_t offs;
-
 	if (!data)
 		return t->empty_value;
 
-	mask = (1 << t->data_block_key_bits) - 1;
-	pos = (key & mask) >> (6 - t->item_size_lg);
+	uint64_t pos, mask, offs;
+	trie_data_block_calc_pos(t, key, &pos, &mask, &offs);
 
-	if (t->item_size_lg == 6)
-		return data[pos];
-
-	offs = (key & ((1 << (6 - t->item_size_lg)) - 1)) *
-		(1 << t->item_size_lg);
-
-	return (data[pos] >> offs) &
-		(((uint64_t)1 << (1 << t->item_size_lg)) - 1);
+	return (data[pos] & mask) >> offs;
 }
 
 uint64_t
