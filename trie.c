@@ -244,7 +244,7 @@ uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
 		start, end, 0, trie_get_depth(t));
 }
 
-void
+static void
 trie_free_node(struct trie *t, void *node, uint8_t depth, int max_depth)
 {
 	if (!node)
