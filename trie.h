@@ -61,12 +61,7 @@ struct trie {
 
 typedef void (*trie_iterate_fn)(void *data, uint64_t key, uint64_t val);
 
-bool trie_check(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
-		uint8_t data_block_key_bits);
-void trie_init(struct trie *t, uint8_t key_size, uint8_t item_size_lg,
-		uint8_t node_key_bits, uint8_t data_block_key_bits,
-		uint64_t empty_value);
-struct trie * trie_create(uint8_t key_size, uint8_t item_size_lg,
+struct trie* trie_create(uint8_t key_size, uint8_t item_size_lg,
 			uint8_t node_key_bits, uint8_t data_block_key_bits,
 			uint64_t empty_value);
 

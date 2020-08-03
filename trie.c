@@ -18,38 +18,6 @@
 
 static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 6 : 5);
 
-bool
-trie_check(uint8_t key_size, uint8_t item_size_lg,
-           uint8_t node_key_bits, uint8_t data_block_key_bits)
-{
-	if (item_size_lg > 6)
-		return false;
-	if (key_size > 64)
-		return false;
-	if (node_key_bits < 1)
-		return false;
-	if (data_block_key_bits < 1 || data_block_key_bits > key_size)
-		return false;
-
-	return true;
-}
-
-void
-trie_init(struct trie *t, uint8_t key_size, uint8_t item_size_lg,
-          uint8_t node_key_bits, uint8_t data_block_key_bits,
-          uint64_t empty_value)
-{
-	assert(trie_check(key_size, item_size_lg, node_key_bits,
-		data_block_key_bits));
-
-	t->empty_value = empty_value;
-	t->data = NULL;
-	t->item_size_lg = item_size_lg;
-	t->node_key_bits = node_key_bits;
-	t->data_block_key_bits = data_block_key_bits;
-	t->key_size = key_size;
-}
-
 static uint8_t
 trie_get_depth(struct trie *t)
 {
@@ -109,18 +77,25 @@ struct trie *
 trie_create(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
             uint8_t data_block_key_bits, uint64_t empty_value)
 {
-	struct trie *t;
-
-	if (!trie_check(key_size, item_size_lg, node_key_bits,
-	    data_block_key_bits))
+	if (item_size_lg > 6)
+		return NULL;
+	if (key_size > 64)
+		return NULL;
+	if (node_key_bits < 1)
+		return NULL;
+	if (data_block_key_bits < 1 || data_block_key_bits > key_size)
 		return NULL;
 
-	t = malloc(sizeof(*t));
+	struct trie *t = malloc(sizeof(*t));
 	if (!t)
 		return NULL;
 
-	trie_init(t, key_size, item_size_lg, node_key_bits, data_block_key_bits,
-		   empty_value);
+	t->empty_value = empty_value;
+	t->data = NULL;
+	t->item_size_lg = item_size_lg;
+	t->node_key_bits = node_key_bits;
+	t->data_block_key_bits = data_block_key_bits;
+	t->key_size = key_size;
 
 	return t;
 }
