@@ -121,12 +121,11 @@ trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 			*cur_node = xcalloc(1 << sz, 1);
 		}
 
-		if (cur_depth < max_depth) {
-			size_t pos = (key >> offs) &
-				((1 << (sz - ptr_sz_lg)) - 1);
+		if (cur_depth >= max_depth)
+			break;
 
-			cur_node = (((void **) (*cur_node)) + pos);
-		}
+		size_t pos = (key >> offs) & ((1 << (sz - ptr_sz_lg)) - 1);
+		cur_node = (((void **) (*cur_node)) + pos);
 	}
 
 	return (uint64_t *) (*cur_node);
