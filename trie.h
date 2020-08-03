@@ -62,13 +62,14 @@ struct trie {
 	uint8_t max_depth;
 };
 
-typedef void (*trie_iterate_fn)(void *data, uint64_t key, uint64_t val);
-
 struct trie* trie_create(uint8_t key_size, uint8_t item_size_lg,
 			uint8_t node_key_bits, uint8_t data_block_key_bits,
 			uint64_t empty_value);
 
 bool trie_set(struct trie *t, uint64_t key, uint64_t val);
+uint64_t trie_get(struct trie *t, uint64_t key);
+
+typedef void (*trie_iterate_fn)(void *data, uint64_t key, uint64_t val);
 
 /**
  * Calls trie_iterate_fn for each key-value pair where
@@ -82,8 +83,6 @@ bool trie_set(struct trie *t, uint64_t key, uint64_t val);
  */
 uint64_t trie_iterate_keys(struct trie *t, uint64_t start, uint64_t end,
 			    trie_iterate_fn fn, void *fn_data);
-
-uint64_t trie_get(struct trie *t, uint64_t key);
 
 void trie_free(struct trie *t);
 
