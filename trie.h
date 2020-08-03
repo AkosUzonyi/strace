@@ -57,6 +57,9 @@ struct trie {
 	 * (equals to log2 of the value count stored in a data block)
 	 */
 	uint8_t data_block_key_bits;
+
+	/** The depth of the data block. Caluclated from the values above */
+	uint8_t max_depth;
 };
 
 typedef void (*trie_iterate_fn)(void *data, uint64_t key, uint64_t val);
