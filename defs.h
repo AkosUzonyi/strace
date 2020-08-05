@@ -285,7 +285,7 @@ struct tcb {
 	 * (inode number of /proc/<pid>/ns/pid)
 	 * (0: not initialized)
 	 */
-	uint64_t pid_ns;
+	unsigned int pid_ns;
 
 	struct mmap_cache_t *mmap_cache;
 

@@ -73,7 +73,7 @@ static uint8_t pid_max_size, pid_max_size_lg;
 struct proc_data {
 	int proc_pid;
 	int ns_count;
-	uint64_t ns_hierarchy[MAX_NS_DEPTH];
+	unsigned int ns_hierarchy[MAX_NS_DEPTH];
 	int id_count[PT_COUNT];
 	int id_hierarchy[PT_COUNT][MAX_NS_DEPTH];
 };
@@ -97,7 +97,7 @@ pidns_init(void)
 }
 
 static void
-put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
+put_proc_pid(unsigned int ns, int ns_pid, enum pid_type type, int proc_pid)
 {
 	struct trie *b = (struct trie *) (uintptr_t) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
@@ -108,7 +108,7 @@ put_proc_pid(uint64_t ns, int ns_pid, enum pid_type type, int proc_pid)
 }
 
 static int
-get_cached_proc_pid(uint64_t ns, int ns_pid, enum pid_type type)
+get_cached_proc_pid(unsigned int ns, int ns_pid, enum pid_type type)
 {
 	struct trie *b = (struct trie *) (uintptr_t)
 		trie_get(ns_pid_to_proc_pid[type], ns);
@@ -142,7 +142,7 @@ pid_to_str(pid_t pid)
  * @return         Amount of NS in list. 0 indicates error.
  */
 static size_t
-get_ns_hierarchy(int proc_pid, uint64_t *ns_buf, size_t ns_buf_size)
+get_ns_hierarchy(int proc_pid, unsigned int *ns_buf, size_t ns_buf_size)
 {
 	char path[PATH_MAX + 1];
 	xsprintf(path, "/proc/%s/ns/pid", pid_to_str(proc_pid));
@@ -267,7 +267,7 @@ is_proc_ours(void)
 /**
  * Returns the PID namespace of the tracee
  */
-static uint64_t
+static unsigned int
 get_ns(struct tcb *tcp)
 {
 	if (!tcp->pid_ns) {
@@ -284,10 +284,10 @@ get_ns(struct tcb *tcp)
 /**
  * Returns the PID namespace of strace
  */
-static uint64_t
+static unsigned int
 get_our_ns(void)
 {
-	static uint64_t our_ns = 0;
+	static unsigned int our_ns = 0;
 	static bool our_ns_initialised = false;
 
 	if (!our_ns_initialised) {
@@ -355,7 +355,7 @@ struct translate_id_params {
 	struct proc_data *pd;
 
 	/* The namespace to be translated from */
-	uint64_t from_ns;
+	unsigned int from_ns;
 	/* The id to be translated */
 	int from_id;
 	/* The type of the id */
@@ -492,7 +492,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 	if ((from_id <= 0) || (type < 0) || (type >= PT_COUNT))
 		return 0;
 
-	const uint64_t our_ns = get_our_ns();
+	const unsigned int our_ns = get_our_ns();
 	if (!our_ns)
 		return 0;
 
