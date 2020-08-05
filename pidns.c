@@ -79,6 +79,16 @@ struct proc_data {
 	int id_hierarchy[PT_COUNT][MAX_NS_DEPTH];
 };
 
+static struct trie *
+create_trie_4(uint8_t key_size, uint8_t item_size_lg, uint64_t empty_value)
+{
+	struct trie *t = trie_create(key_size, item_size_lg, 4, 4, empty_value);
+	if (!t)
+		error_func_msg("creating trie failed");
+
+	return t;
+}
+
 void
 pidns_init(void)
 {
@@ -92,9 +102,9 @@ pidns_init(void)
 	pid_max_size_lg = ilog2_32(pid_max_size - 1) + 1;
 
 	for (int i = 0; i < PT_COUNT; i++)
-		ns_pid_to_proc_pid[i] = trie_create(ns_id_size, ptr_sz_lg, 10, 10, 0);
+		ns_pid_to_proc_pid[i] = create_trie_4(ns_id_size, ptr_sz_lg, 0);
 
-	proc_data_cache = trie_create(pid_max_size, ptr_sz_lg, 10, 10, 0);
+	proc_data_cache = create_trie_4(pid_max_size, ptr_sz_lg, 0);
 }
 
 static void
@@ -102,7 +112,7 @@ put_proc_pid(unsigned int ns, int ns_pid, enum pid_type type, int proc_pid)
 {
 	struct trie *b = (struct trie *) (uintptr_t) trie_get(ns_pid_to_proc_pid[type], ns);
 	if (!b) {
-		b = trie_create(pid_max_size, pid_max_size_lg, 10, 10, 0);
+		b = create_trie_4(pid_max_size, pid_max_size_lg, 0);
 		trie_set(ns_pid_to_proc_pid[type], ns, (uint64_t) (uintptr_t) b);
 	}
 	trie_set(b, ns_pid, proc_pid);
