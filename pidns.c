@@ -65,7 +65,8 @@ static const struct {
  */
 #define MAX_NS_DEPTH 32
 
-static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 6 : 5);
+static const size_t ns_id_size = sizeof(unsigned int);
+static const uint8_t ptr_sz_lg = (sizeof(void *) == 8 ? 6 : 5);
 
 static int pid_max;
 static uint8_t pid_max_size, pid_max_size_lg;
@@ -91,7 +92,7 @@ pidns_init(void)
 	pid_max_size_lg = ilog2_32(pid_max_size - 1) + 1;
 
 	for (int i = 0; i < PT_COUNT; i++)
-		ns_pid_to_proc_pid[i] = trie_create(64, ptr_sz_lg, 10, 10, 0);
+		ns_pid_to_proc_pid[i] = trie_create(ns_id_size, ptr_sz_lg, 10, 10, 0);
 
 	proc_data_cache = trie_create(pid_max_size, ptr_sz_lg, 10, 10, 0);
 }
