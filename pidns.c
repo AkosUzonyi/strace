@@ -270,18 +270,13 @@ is_proc_ours(void)
 static uint64_t
 get_ns(struct tcb *tcp)
 {
-	if (tcp->pid_ns == -1ULL)
-		return 0;
+	if (!tcp->pid_ns) {
+		int proc_pid = 0;
+		translate_pid(NULL, tcp->pid, PT_TID, &proc_pid);
 
-	if (tcp->pid_ns)
-		return tcp->pid_ns;
-
-	int proc_pid = 0;
-	translate_pid(NULL, tcp->pid, PT_TID, &proc_pid);
-
-	tcp->pid_ns = -1ULL;
-	if (proc_pid)
-		get_ns_hierarchy(proc_pid, &tcp->pid_ns, 1);
+		if (proc_pid)
+			get_ns_hierarchy(proc_pid, &tcp->pid_ns, 1);
+	}
 
 	return tcp->pid_ns;
 }

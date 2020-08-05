@@ -283,7 +283,7 @@ struct tcb {
 	/*
 	 * The ID of the PID namespace of this process
 	 * (inode number of /proc/<pid>/ns/pid)
-	 * (0: not initialized; -1ULL: initializtaion failed)
+	 * (0: not initialized)
 	 */
 	uint64_t pid_ns;
 
