@@ -84,7 +84,7 @@ create_trie_4(uint8_t key_size, uint8_t item_size_lg, uint64_t empty_value)
 {
 	struct trie *t = trie_create(key_size, item_size_lg, 4, 4, empty_value);
 	if (!t)
-		error_func_msg("creating trie failed");
+		error_msg_and_die("creating trie failed");
 
 	return t;
 }
