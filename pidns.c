@@ -79,6 +79,15 @@ struct proc_data {
 	int id_hierarchy[PT_COUNT][MAX_NS_DEPTH];
 };
 
+/**
+ * Helper function for creating a trie.
+ *
+ * For node_key_bits and data_block_key_bits 4 is used (so trie height is 32 / 4
+ * = 8, and node sizes are 8 byte * 2^4 = 128 bytes), which seems to be a good
+ * tradeoff between between memory usage and lookup time. It should not be too
+ * large, since there can be large holes between PIDs, and it would be just a
+ * waste of memory having large nodes with lot of NULL pointers in them.
+ */
 static struct trie *
 create_trie_4(uint8_t key_size, uint8_t item_size_lg, uint64_t empty_value)
 {
