@@ -565,13 +565,14 @@ exit:
 int
 get_proc_pid(struct tcb *tcp)
 {
-	if (!is_proc_ours()) {
-		int ret = 0;
-		translate_pid(NULL, tcp->pid, PT_TID, &ret);
-		return ret;
-	}
+	int ret = 0;
 
-	return tcp->pid;
+	if (is_proc_ours())
+		ret = tcp->pid;
+	else
+		translate_pid(NULL, tcp->pid, PT_TID, &ret);
+
+	return ret;
 }
 
 static void
