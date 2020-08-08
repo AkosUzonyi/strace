@@ -18,8 +18,7 @@
 static const uint8_t ptr_sz_lg = (sizeof(void *) == 8 ? 6 : 5);
 
 /**
- * Returns lg2 of node size for the specific level of the trie. If max_depth
- * provided is less than zero, it is calculated via trie_get_depth call.
+ * Returns lg2 of node size in bits for the specific level of the trie.
  */
 static uint8_t
 trie_get_node_size(struct trie *t, uint8_t depth)
