@@ -47,7 +47,7 @@ struct trie {
 	uint8_t item_size_lg;
 
 	/**
-	 * Number of bits in key that makes a symbol for a node.
+	 * Number of bits in key that make a symbol for a node.
 	 * (equals to log2 of the child count of the node)
 	 */
 	uint8_t node_key_bits;
@@ -58,7 +58,7 @@ struct trie {
 	 */
 	uint8_t data_block_key_bits;
 
-	/** The depth of the data block. Caluclated from the values above */
+	/** The depth of the data block. Calculated from the values above */
 	uint8_t max_depth;
 };
 

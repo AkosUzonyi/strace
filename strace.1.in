@@ -1078,7 +1078,7 @@ and PIDs asociated with pidfd file descriptors.
 .TP
 .B \-\-pidns\-translation
 If strace and tracee are in different PID namespaces, print PIDs in
-strace's namespace also.
+strace's namespace, too.
 .SS Statistics
 .TP 12
 .B \-c

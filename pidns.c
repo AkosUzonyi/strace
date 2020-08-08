@@ -37,7 +37,7 @@ static struct trie *ns_pid_to_proc_pid[PT_COUNT];
 
 /**
  * Key:   Proc PID
- * Value: stuct proc_data
+ * Value: struct proc_data
  */
 static struct trie *proc_data_cache;
 
@@ -84,9 +84,9 @@ struct proc_data {
  *
  * For node_key_bits and data_block_key_bits 4 is used (so trie height is 32 / 4
  * = 8, and node sizes are 8 byte * 2^4 = 128 bytes), which seems to be a good
- * tradeoff between between memory usage and lookup time. It should not be too
- * large, since there can be large holes between PIDs, and it would be just a
- * waste of memory having large nodes with lot of NULL pointers in them.
+ * tradeoff between memory usage and lookup time. It should not be too large,
+ * since there can be large holes between PIDs, and it would be just a waste of
+ * memory having large nodes with lot of NULL pointers in them.
  */
 static struct trie *
 create_trie_4(uint8_t key_size, uint8_t item_size_lg, uint64_t empty_value)
@@ -253,7 +253,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		long id = strtol(p, NULL, 10);
 
 		if (errno || id < 1 || id > INT_MAX) {
-			perror_func_msg("converting pid to int");
+			perror_func_msg("converting pid (%ld) to int", id);
 			break;
 		}
 
@@ -271,7 +271,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 }
 
 /**
- * Returns whether the /proc filesystem's PID namespace is same as strace's.
+ * Returns whether the /proc filesystem's PID namespace is the same as strace's.
  */
 static bool
 is_proc_ours(void)
