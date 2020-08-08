@@ -15,7 +15,7 @@
 
 #include "trie.h"
 
-static const uint8_t ptr_sz_lg = (sizeof(uint64_t *) == 8 ? 6 : 5);
+static const uint8_t ptr_sz_lg = (sizeof(void *) == 8 ? 6 : 5);
 
 /**
  * Returns lg2 of node size for the specific level of the trie. If max_depth
