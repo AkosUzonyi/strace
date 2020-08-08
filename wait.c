@@ -129,7 +129,7 @@ SYS_FUNC(osf_wait4)
 SYS_FUNC(waitid)
 {
 	unsigned int idtype = (unsigned int) tcp->u_arg[0];
-	int id = (int) tcp->u_arg[1];
+	int id = tcp->u_arg[1];
 
 	if (entering(tcp)) {
 		printxval(waitid_types, idtype, "P_???");

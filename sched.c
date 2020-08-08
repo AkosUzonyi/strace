@@ -21,7 +21,7 @@
 SYS_FUNC(sched_getscheduler)
 {
 	if (entering(tcp)) {
-		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+		printpid(tcp, tcp->u_arg[0], PT_TGID);
 	} else if (!syserror(tcp)) {
 		tcp->auxstr = xlookup(schedulers, (kernel_ulong_t) tcp->u_rval);
 		return RVAL_STR;
@@ -31,7 +31,7 @@ SYS_FUNC(sched_getscheduler)
 
 SYS_FUNC(sched_setscheduler)
 {
-	printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+	printpid(tcp, tcp->u_arg[0], PT_TGID);
 	tprints(", ");
 	printxval(schedulers, tcp->u_arg[1], "SCHED_???");
 	tprints(", ");
@@ -43,7 +43,7 @@ SYS_FUNC(sched_setscheduler)
 SYS_FUNC(sched_getparam)
 {
 	if (entering(tcp)) {
-		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+		printpid(tcp, tcp->u_arg[0], PT_TGID);
 		tprints(", ");
 	} else {
 		printnum_int(tcp, tcp->u_arg[1], "%d");
@@ -53,7 +53,7 @@ SYS_FUNC(sched_getparam)
 
 SYS_FUNC(sched_setparam)
 {
-	printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+	printpid(tcp, tcp->u_arg[0], PT_TGID);
 	tprints(", ");
 	printnum_int(tcp, tcp->u_arg[1], "%d");
 
@@ -72,7 +72,7 @@ do_sched_rr_get_interval(struct tcb *const tcp,
 			 const print_obj_by_addr_fn print_ts)
 {
 	if (entering(tcp)) {
-		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+		printpid(tcp, tcp->u_arg[0], PT_TGID);
 		tprints(", ");
 	} else {
 		if (syserror(tcp))
@@ -165,7 +165,7 @@ end:
 SYS_FUNC(sched_setattr)
 {
 	if (entering(tcp)) {
-		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+		printpid(tcp, tcp->u_arg[0], PT_TGID);
 		tprints(", ");
 		print_sched_attr(tcp, tcp->u_arg[1], 0);
 	} else {
@@ -185,7 +185,7 @@ SYS_FUNC(sched_setattr)
 SYS_FUNC(sched_getattr)
 {
 	if (entering(tcp)) {
-		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+		printpid(tcp, tcp->u_arg[0], PT_TGID);
 		tprints(", ");
 	} else {
 		const unsigned int size = tcp->u_arg[2];

@@ -13,7 +13,7 @@ SYS_FUNC(process_vm_readv)
 {
 	if (entering(tcp)) {
 		/* arg 1: pid */
-		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+		printpid(tcp, tcp->u_arg[0], PT_TGID);
 		tprints(", ");
 	} else {
 		kernel_ulong_t local_iovcnt = tcp->u_arg[2];
@@ -43,7 +43,7 @@ SYS_FUNC(process_vm_writev)
 	kernel_ulong_t flags = tcp->u_arg[5];
 
 	/* arg 1: pid */
-	printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+	printpid(tcp, tcp->u_arg[0], PT_TGID);
 	tprints(", ");
 	/* arg 2: local iov */
 	tprint_iov(tcp, local_iovcnt, tcp->u_arg[1], IOV_DECODE_STR);

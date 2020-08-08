@@ -44,7 +44,7 @@ print_nodemask(struct tcb *const tcp, const kernel_ulong_t addr,
 
 SYS_FUNC(migrate_pages)
 {
-	printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+	printpid(tcp, tcp->u_arg[0], PT_TGID);
 	tprintf(", %" PRI_klu ", ", tcp->u_arg[1]);
 	print_nodemask(tcp, tcp->u_arg[2], tcp->u_arg[1]);
 	tprints(", ");
@@ -171,7 +171,7 @@ SYS_FUNC(move_pages)
 	kernel_ulong_t buf;
 
 	if (entering(tcp)) {
-		printpid(tcp, (int) tcp->u_arg[0], PT_TGID);
+		printpid(tcp, tcp->u_arg[0], PT_TGID);
 		tprintf(", %" PRI_klu ", ", npages);
 		print_array(tcp, tcp->u_arg[2], npages, &buf, current_wordsize,
 			    tfetch_mem, print_addr, 0);
