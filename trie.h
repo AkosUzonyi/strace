@@ -47,13 +47,13 @@ struct trie {
 	uint8_t item_size_lg;
 
 	/**
-	 * Number of bits in key that make a symbol for a node.
+	 * Number of bits in the key that make a symbol for a node.
 	 * (equals to log2 of the child count of the node)
 	 */
 	uint8_t node_key_bits;
 
 	/**
-	 * Number of bits in key that make a symbol for the data block (leaf).
+	 * Number of bits in the key that make a symbol for the data block (leaf).
 	 * (equals to log2 of the value count stored in a data block)
 	 */
 	uint8_t data_block_key_bits;
