@@ -512,29 +512,25 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 	if ((from_id <= 0) || (type < 0) || (type >= PT_COUNT))
 		return 0;
 
-	const unsigned int our_ns = get_our_ns();
-	if (!our_ns)
-		return 0;
+	/* If translation is trivial */
+	if ((!tcp || get_ns(tcp) == get_our_ns()) &&
+	    (is_proc_ours() || !proc_pid_ptr)) {
+		if (proc_pid_ptr)
+			*proc_pid_ptr = from_id;
+
+		return from_id;
+	}
 
 	struct translate_id_params tip = {
 		.result_id = 0,
 		.pd = NULL,
-		.from_ns = tcp ? get_ns(tcp) : our_ns,
+		.from_ns = tcp ? get_ns(tcp) : get_our_ns(),
 		.from_id = from_id,
 		.type = type,
 	};
 
 	if (!tip.from_ns)
 		return 0;
-
-	/* If translation is trivial */
-	if (tip.from_ns == our_ns && (is_proc_ours() || !proc_pid_ptr)) {
-		if (proc_pid_ptr)
-			*proc_pid_ptr = from_id;
-
-		tip.result_id = tip.from_id;
-		goto exit;
-	}
 
 	if (ns_get_parent_enotty)
 		return 0;
