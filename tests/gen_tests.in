@@ -164,7 +164,6 @@ getsid	-a10
 getsid--pidns-translation	test_pidns -e trace=getsid -a10
 getsockname	-a27
 gettid	-a9
-gettid--pidns-translation	test_pidns -e trace=gettid -a9
 getuid-creds	+getuid.test
 getuid32	+getuid.test
 getuid32-creds	+getuid.test

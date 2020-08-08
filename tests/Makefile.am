@@ -415,6 +415,7 @@ MISC_TESTS = \
 	first_exec_failure.test \
 	fork--pidns-translation.test \
 	get_regs.test \
+	gettid--pidns-translation.test \
 	inject-nf.test \
 	interactive_block.test \
 	kill_child.test \
