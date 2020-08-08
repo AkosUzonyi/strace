@@ -12,7 +12,6 @@
  */
 
 #include "defs.h"
-#include "print_fields.h"
 
 #include DEF_MPERS_TYPE(shmid_ds_t)
 
