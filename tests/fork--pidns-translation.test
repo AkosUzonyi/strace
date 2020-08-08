@@ -12,5 +12,5 @@
 require_min_kernel_version_or_skip 4.9
 
 run_prog
-run_strace -a6 --pidns-translation -f -e trace=fork $args
+run_strace -a6 --pidns-translation -f -e trace=fork,gettid $args
 match_awk
