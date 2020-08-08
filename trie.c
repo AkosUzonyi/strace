@@ -179,7 +179,7 @@ trie_iterate_keys_node(struct trie *t,
 			fn(fn_data, i, trie_data_block_get(t,
 				(uint64_t *) node, i));
 
-		return end - start + 1; //TODO: overflow
+		return end - start + 1;
 	}
 
 	uint8_t parent_node_bit_off = depth == 0 ?
