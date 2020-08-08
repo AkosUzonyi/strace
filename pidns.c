@@ -252,7 +252,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		errno = 0;
 		long id = strtol(p, NULL, 10);
 
-		if (errno || (id < 1) || (id > INT_MAX)) {
+		if (errno || id < 1 || id > INT_MAX) {
 			perror_func_msg("converting pid to int");
 			break;
 		}
@@ -406,7 +406,7 @@ translate_id_proc_pid(struct translate_id_params *tip, int proc_pid)
 	if (proc_pid && !update_proc_data(pd, tip->type))
 		return;
 
-	if (!pd->ns_count || (pd->id_count[tip->type] < pd->ns_count))
+	if (!pd->ns_count || pd->id_count[tip->type] < pd->ns_count)
 		return;
 
 	int our_ns_id_idx = pd->id_count[tip->type] - pd->ns_count;
@@ -459,7 +459,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path,
 		long proc_pid = strtol(entry->d_name, NULL, 10);
 		if (errno)
 			continue;
-		if ((proc_pid < 1) || (proc_pid > INT_MAX))
+		if (proc_pid < 1 || proc_pid > INT_MAX)
 			continue;
 
 		if (read_task_dir) {
@@ -509,7 +509,7 @@ int
 translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
               int *proc_pid_ptr)
 {
-	if ((from_id <= 0) || (type < 0) || (type >= PT_COUNT))
+	if (from_id <= 0 || type < 0 || type >= PT_COUNT)
 		return 0;
 
 	/* If translation is trivial */
