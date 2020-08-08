@@ -1103,6 +1103,7 @@ printfd(struct tcb *tcp, int fd)
  */
 extern void printfd_pid_tracee_ns(struct tcb *tcp, pid_t pid, int fd);
 
+/** Prints a PID in the tracee's PID namespace */
 extern void printpid(struct tcb *, int pid, enum pid_type type);
 
 /**
