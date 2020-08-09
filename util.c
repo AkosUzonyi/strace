@@ -633,7 +633,7 @@ void
 printfd_pid(struct tcb *tcp, pid_t pid, int fd)
 {
 	char path[PATH_MAX + 1];
-	if (!number_set_array_is_empty(decode_fd_set, 0)
+	if (pid > 0 && !number_set_array_is_empty(decode_fd_set, 0)
 	    && getfdpath_pid(pid, fd, path, sizeof(path)) >= 0) {
 		tprintf("%d<", (int) fd);
 		if (is_number_in_set(DECODE_FD_SOCKET, decode_fd_set) &&
