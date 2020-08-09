@@ -514,7 +514,7 @@ translate_pid(struct tcb *tcp, int from_id, enum pid_type type,
 
 	/* If translation is trivial */
 	if ((!tcp || get_ns(tcp) == get_our_ns()) &&
-	    (is_proc_ours() || !proc_pid_ptr)) {
+	    (!proc_pid_ptr || is_proc_ours())) {
 		if (proc_pid_ptr)
 			*proc_pid_ptr = from_id;
 
