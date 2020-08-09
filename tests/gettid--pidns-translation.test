@@ -15,5 +15,6 @@ run_prog > /dev/null
 run_strace -a9 --pidns-translation -f -e trace=gettid $args > "$EXP"
 parent_pid="$(tail -n 2 $LOG | head -n 1 | cut -d' ' -f1)"
 init_pid="$(tail -n 1 $LOG | cut -d' ' -f1)"
+# uniq: filter out extra gettid calls made by musl libc
 grep -E -v "^($parent_pid|$init_pid) " "$LOG" | uniq > "$OUT"
 match_diff "$OUT" "$EXP"
