@@ -584,6 +584,8 @@ pidfd_get_pid(pid_t pid_of_fd, int fd)
 {
 	int proc_pid = 0;
 	translate_pid(NULL, pid_of_fd, PT_TID, &proc_pid);
+	if (!proc_pid)
+		return -1;
 
 	char fdi_path[sizeof("/proc/%u/fdinfo/%u") + 2 * sizeof(int) * 3];
 	xsprintf(fdi_path, "/proc/%u/fdinfo/%u", proc_pid, fd);
