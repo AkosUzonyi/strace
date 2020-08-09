@@ -1023,6 +1023,7 @@ extern int get_proc_pid(struct tcb *);
  * @param from_id         The id to be translated
  * @param type            The PID type of from_id
  * @param proc_pid_ptr    If not NULL, writes the proc PID to this location
+ * @return                The translated id, or 0 if translation fails.
  */
 extern int translate_pid(struct tcb *, int dest_id, enum pid_type type,
 		    int *proc_pid_ptr);
