@@ -715,6 +715,7 @@ trace_stat	test_trace_expr '' -e%stat -v -P stat.sample -P /dev/full
 trace_stat_like	test_trace_expr '' -e%%stat -v -P stat.sample -P /dev/full
 trace_statfs	test_trace_expr '' -e%statfs
 trace_statfs_like	test_trace_expr '' -e%%statfs
+trie    run_prog
 truncate
 truncate64
 ugetrlimit	-a28
