@@ -125,6 +125,12 @@ trie_data_block_calc_pos(struct trie *t, uint64_t key,
 	key_mask = (1 << t->data_block_key_bits) - 1;
 	*pos = (key & key_mask) >> (6 - t->item_size_lg);
 
+	if (t->item_size_lg == 6) {
+		*offs = 0;
+		*mask = -1;
+		return;
+	}
+
 	key_mask = (1 << (6 - t->item_size_lg)) - 1;
 	*offs = (key & key_mask) * (1 << t->item_size_lg);
 
