@@ -772,6 +772,7 @@ times
 times-fail
 tkill
 tracer_ppid_pgid_sid
+trie
 truncate
 truncate64
 ugetrlimit

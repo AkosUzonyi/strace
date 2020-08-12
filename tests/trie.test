@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# Test trie.
+#
+# Copyright (c) 2020 The strace developers.
+# All rights reserved.
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+. "${srcdir=.}/init.sh"
+
+run_prog

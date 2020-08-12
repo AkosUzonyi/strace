@@ -29,6 +29,7 @@ AM_CPPFLAGS = $(ARCH_MFLAGS) \
 AM_LDFLAGS = $(ARCH_MFLAGS)
 
 libtests_a_SOURCES = \
+	../trie.c ../trie.h \
 	create_nl_socket.c \
 	create_tmpfile.c \
 	errno2name.c \
@@ -246,6 +247,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	threads-execve-qq \
 	threads-execve-qqq \
 	tracer_ppid_pgid_sid \
+	trie \
 	unblock_reset_raise \
 	unix-pair-send-recv \
 	unix-pair-sendto-recvfrom \
@@ -467,6 +469,7 @@ MISC_TESTS = \
 	strace-tt.test \
 	strace-ttt.test \
 	termsig.test \
+	trie.test \
 	threads-execve.test \
 	umovestr_cached.test \
 	# end of MISC_TESTS

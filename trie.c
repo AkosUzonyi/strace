@@ -7,8 +7,6 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#include "defs.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -103,7 +101,7 @@ trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 			if (!auto_create)
 				return NULL;
 
-			*cur_node = xcalloc(1 << sz, 1);
+			*cur_node = calloc(1 << sz, 1);
 		}
 
 		if (cur_depth >= t->max_depth)
