@@ -190,6 +190,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	perf_event_open_unabbrev \
 	pidfd_open--pidns-translation \
 	pidfd_send_signal--pidns-translation \
+	pidns-cache \
 	poll-P \
 	ppoll-P \
 	ppoll-v \
@@ -425,6 +426,7 @@ MISC_TESTS = \
 	opipe.test \
 	options-syntax.test \
 	pc.test \
+	pidns-cache.test \
 	printpath-umovestr-legacy.test \
 	printstrn-umoven-legacy.test \
 	qual_fault-syntax.test \
