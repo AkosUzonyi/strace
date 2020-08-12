@@ -65,7 +65,7 @@ static const struct {
  */
 #define MAX_NS_DEPTH 32
 
-static const size_t ns_id_size = sizeof(unsigned int);
+static const size_t ns_id_size = sizeof(unsigned int) * 8;
 static const uint8_t ptr_sz_lg = (sizeof(void *) == 8 ? 6 : 5);
 
 static int pid_max;
