@@ -525,6 +525,7 @@ pidfd_open-yy
 pidfd_open--pidns-translation
 pidfd_send_signal
 pidfd_send_signal--pidns-translation
+pidns-performance
 pipe
 pipe2
 pkey_alloc
