@@ -389,7 +389,7 @@ test_prog_set()
 
 test_pidns_run_strace()
 {
-	local parent_pid
+	local parent_pid init_pid
 
 	check_prog tail
 	check_prog cut
