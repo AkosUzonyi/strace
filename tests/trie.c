@@ -16,6 +16,10 @@ assert_equals(const char *msg, uint64_t expected, uint64_t actual) {
 		error_msg_and_fail("%s: expected: %ld, actual: %ld", msg, expected, actual);
 }
 
+struct key_value_pair {
+	uint64_t key, value;
+};
+
 int
 main(void)
 {
@@ -26,11 +30,23 @@ main(void)
 		uint8_t data_block_key_bits;
 		uint64_t empty_value;
 
-		struct {
-			uint64_t key, value, expected_value;
-		} key_value_pairs[3];
+		struct key_value_pair set_values[3], get_values[3];
 	} params[] = {
-		{64, 6, 10, 10, 0, {{2, 42, 42}, {0, 1, 1}, {2, 43, 43}}},
+		{64, 6, 10, 10, 0,
+			{{300, 1}, {0xfacefeed, 0xabcdef123456}, {-1ULL, -1ULL}},
+			{{301, 0}, {0xfacefeed, 0xabcdef123456}, {-1ULL, -1ULL}}},
+		{8, 2, 4, 4, 10,
+			{{0xab, 0xcd}, {0xface, 2}, {0, 3}},
+			{{0xab, 0xd}, {0xface, 10}, {0, 3}}},
+		{30, 0, 6, 3, -1,
+			{{0xaaaa, 127}, {0xface, 0}, {0, 0}},
+			{{0xaaaa, 1}, {0xface, 0}, {1, 1}}},
+		{16, 4, 5, 11, 0xffffff,
+			{{0xabcdef, 42}, {0xabcd, 42}, {0xffff, 0}},
+			{{0xabcdef, 0xffff}, {0xabcd, 42}, {0xffff, 0}}},
+		{41, 5, 1, 1, -1,
+			{{0xabcdef01, 0x22222222}, {-1, 0x33333333}, {10, 10}},
+			{{0xabcdef01, 0x22222222}, {-1, 0xffffffff}, {10, 10}}},
 	};
 
 	for (size_t i = 0; i < ARRAY_SIZE(params); i++) {
@@ -40,14 +56,16 @@ main(void)
 					     params[i].data_block_key_bits,
 					     params[i].empty_value);
 
-		for (size_t j = 0; j < ARRAY_SIZE(params[i].key_value_pairs); j++) {
-			uint64_t key, value, expected;
-			key = params[i].key_value_pairs[j].key;
-			value = params[i].key_value_pairs[j].value;
-			expected = params[i].key_value_pairs[j].expected_value;
+		if (!t)
+			error_msg_and_fail("trie creation failed");
 
-			trie_set(t, key, value);
-			assert_equals("trie_get", expected, trie_get(t, key));
+		for (size_t j = 0; j < ARRAY_SIZE(params[i].set_values); j++) {
+			struct key_value_pair kv = params[i].set_values[j];
+			trie_set(t, kv.key, kv.value);
+		}
+		for (size_t j = 0; j < ARRAY_SIZE(params[i].get_values); j++) {
+			struct key_value_pair kv = params[i].get_values[j];
+			assert_equals("trie_get", kv.value, trie_get(t, kv.key));
 		}
 
 		trie_free(t);
