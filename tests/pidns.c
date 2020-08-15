@@ -159,8 +159,12 @@ void
 check_ns_ioctl(void)
 {
 	int fd = open("/proc/self/ns/pid", O_RDONLY);
-	if (fd < 0)
-		perror_msg_and_fail("opening /proc/self/ns/pid");
+	if (fd < 0) {
+		if (errno == ENOENT)
+			perror_msg_and_skip("opening /proc/self/ns/pid");
+		else
+			perror_msg_and_fail("opening /proc/self/ns/pid");
+	}
 
 	int userns_fd = ioctl(fd, NS_GET_USERNS);
 	if (userns_fd < 0) {
