@@ -9,11 +9,13 @@
 #include "trie.h"
 
 #include <stdio.h>
+#include <inttypes.h>
 
 static void
 assert_equals(const char *msg, uint64_t expected, uint64_t actual) {
 	if (actual != expected)
-		error_msg_and_fail("%s: expected: %ld, actual: %ld", msg, expected, actual);
+		error_msg_and_fail("%s: expected: %" PRIu64
+		                   ", actual: %" PRIu64, msg, expected, actual);
 }
 
 struct key_value_pair {
