@@ -9,8 +9,6 @@
 
 . "${srcdir=.}/init.sh"
 
-require_min_kernel_version_or_skip 4.9
-
 run_prog > /dev/null
 run_strace -a9 --pidns-translation -f -e trace=gettid $args > "$EXP"
 parent_pid="$(tail -n 2 $LOG | head -n 1 | cut -d' ' -f1)"

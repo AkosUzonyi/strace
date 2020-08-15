@@ -407,8 +407,6 @@ test_pidns_run_strace()
 
 test_pidns()
 {
-	# ioctl(NS_GET_PARENT) is added in Linux 4.9
-	require_min_kernel_version_or_skip 4.9
 	check_prog unshare
 
 	test_pidns_run_strace "$@"
