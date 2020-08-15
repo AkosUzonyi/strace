@@ -13,11 +13,4 @@ require_min_kernel_version_or_skip 4.9
 check_prog timeout
 
 run_prog > /dev/null
-timeout 1 $STRACE -o /dev/null --pidns-translation -f -e trace=getpid $args || {
-        rc=$?
-        if [ $rc -eq 124 ]; then
-                fail_ "pidns translation took too long"
-        else
-                fail_ "$args failed with code $rc"
-        fi
-}
+run_strace --pidns-translation -f -e trace=getpid $args
