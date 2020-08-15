@@ -223,14 +223,10 @@ test_f_owner_ex(void)
 		{ ARG_STR(F_OWNER_TID), PT_NONE, 1234567890 },
 		{ ARG_STR(F_OWNER_PID), PT_NONE, 1234567890 },
 		{ ARG_STR(F_OWNER_PGRP), PT_NONE, 1234567890 },
-		{ ARG_STR(F_OWNER_TID), PT_TID, 0 },
-		{ ARG_STR(F_OWNER_PID), PT_TGID, 0 },
-		{ ARG_STR(F_OWNER_PGRP), PT_PGID, 0 },
+		{ ARG_STR(F_OWNER_TID), PT_TID, syscall(__NR_gettid) },
+		{ ARG_STR(F_OWNER_PID), PT_TGID, getpid() },
+		{ ARG_STR(F_OWNER_PGRP), PT_PGID, getpgid(0) },
 	};
-
-	a[3].pid = syscall(__NR_gettid);
-	a[4].pid = getpid();
-	a[5].pid = getpgid(0);
 
 	for (unsigned int i = 0; i < ARRAY_SIZE(a); i++)
 		test_f_owner_ex_umove_or_printaddr(a[i].type, a[i].type_name,
