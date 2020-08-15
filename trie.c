@@ -72,6 +72,9 @@ trie_create(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
 		return NULL;
 
 	t->empty_value = empty_value;
+	if (item_size_lg != 6)
+		t->empty_value &= ((1 << (1 << t->item_size_lg)) - 1);
+
 	t->data = NULL;
 	t->item_size_lg = item_size_lg;
 	t->node_key_bits = node_key_bits;
@@ -81,6 +84,28 @@ trie_create(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
 		/ t->node_key_bits;
 
 	return t;
+}
+
+static void *
+trie_create_data_block(struct trie *t)
+{
+	uint64_t fill_value = t->empty_value;
+	for (int i = 1; i < 1 << (6 - t->item_size_lg); i++) {
+		fill_value <<= (1 << t->item_size_lg);
+		fill_value |= t->empty_value;
+	}
+
+	uint8_t sz = t->data_block_key_bits + t->item_size_lg;
+	if (sz < 6)
+		sz = 6;
+
+	size_t count = 1 << (sz - 6);
+	uint64_t *data_block = calloc(count, 8);
+
+	for (size_t i = 0; i < count; i++)
+		data_block[i] = fill_value;
+
+	return data_block;
 }
 
 static uint64_t *
@@ -99,10 +124,13 @@ trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 			if (!auto_create)
 				return NULL;
 
-			*cur_node = calloc(1 << sz, 1);
+			if (cur_depth == t->max_depth)
+				*cur_node = trie_create_data_block(t);
+			else
+				*cur_node = calloc(1 << sz, 1);
 		}
 
-		if (cur_depth >= t->max_depth)
+		if (cur_depth == t->max_depth)
 			break;
 
 		size_t pos = (key >> offs) & ((1 << (sz - ptr_sz_lg)) - 1);
