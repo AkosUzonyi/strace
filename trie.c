@@ -7,8 +7,6 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #include "trie.h"
