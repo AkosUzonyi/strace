@@ -80,9 +80,14 @@ pidns_fork(pid_t pgid, bool new_sid)
 
 	if (!pid) {
 		close(strace_ids_pipe[1]);
-		if (read(strace_ids_pipe[0], pidns_strace_ids,
-		    sizeof(pidns_strace_ids)) < 0)
+
+		ssize_t len = read(strace_ids_pipe[0], pidns_strace_ids,
+				sizeof(pidns_strace_ids));
+		if (len < 0)
 			perror_msg_and_fail("read");
+		if (len != sizeof(pidns_strace_ids))
+			error_msg_and_fail("read returned < sizeof(pidns_strace_ids)");
+
 		close(strace_ids_pipe[0]);
 
 		if (pidns_strace_ids[PT_SID])
@@ -120,9 +125,13 @@ pidns_fork(pid_t pgid, bool new_sid)
 		pidns_strace_ids[PT_PGID] = pid;
 	}
 
-	if (write(strace_ids_pipe[1], pidns_strace_ids,
-	    sizeof(pidns_strace_ids)) < 0)
+	ssize_t len = write(strace_ids_pipe[1], pidns_strace_ids,
+	                     sizeof(pidns_strace_ids));
+	if (len < 0)
 		perror_msg_and_fail("write");
+	if (len != sizeof(pidns_strace_ids))
+		error_msg_and_fail("write returned < sizeof(pidns_strace_ids)");
+
 	close(strace_ids_pipe[0]);
 	close(strace_ids_pipe[1]);
 
