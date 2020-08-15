@@ -469,7 +469,6 @@ MISC_TESTS = \
 	strace-tt.test \
 	strace-ttt.test \
 	termsig.test \
-	trie.test \
 	threads-execve.test \
 	umovestr_cached.test \
 	# end of MISC_TESTS
