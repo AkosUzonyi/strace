@@ -29,7 +29,6 @@ AM_CPPFLAGS = $(ARCH_MFLAGS) \
 AM_LDFLAGS = $(ARCH_MFLAGS)
 
 libtests_a_SOURCES = \
-	../trie.c ../trie.h \
 	create_nl_socket.c \
 	create_tmpfile.c \
 	errno2name.c \
@@ -67,6 +66,7 @@ libtests_a_SOURCES = \
 	test_ucopy.h \
 	tests.h \
 	tprintf.c \
+	../trie.c \
 	# end of libtests_a_SOURCES
 libtests_a_CPPFLAGS = $(AM_CPPFLAGS) -D_FILE_OFFSET_BITS=64
 check_LIBRARIES = libtests.a
