@@ -8,6 +8,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "trie.h"
 
@@ -101,6 +102,8 @@ trie_create_data_block(struct trie *t)
 
 	size_t count = 1 << (sz - 6);
 	uint64_t *data_block = calloc(count, 8);
+	if (!data_block)
+		return NULL;
 
 	for (size_t i = 0; i < count; i++)
 		data_block[i] = fill_value;
@@ -128,6 +131,11 @@ trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 				*cur_node = trie_create_data_block(t);
 			else
 				*cur_node = calloc(1 << sz, 1);
+
+			if (!*cur_node) {
+				fprintf(stderr, "Out of memory");
+				exit(1);
+			}
 		}
 
 		if (cur_depth == t->max_depth)
