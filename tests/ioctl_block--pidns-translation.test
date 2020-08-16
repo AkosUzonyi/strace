@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Check ioctl syscall decoding.
+# Check pidns translation of ioctl(BLK*) syscall decoding.
 #
 # Copyright (c) 2020 The strace developers.
 # All rights reserved.
