@@ -759,6 +759,7 @@ syslog
 syslog-success
 tee
 tgkill
+tgkill--pidns-translation
 threads-execve
 threads-execve--quiet-thread-execve
 threads-execve-q
@@ -771,6 +772,7 @@ timerfd_xettime
 times
 times-fail
 tkill
+tkill--pidns-translation
 tracer_ppid_pgid_sid
 trie
 truncate

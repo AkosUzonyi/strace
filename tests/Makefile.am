@@ -241,11 +241,13 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	status-unfinished-threads \
 	so_peercred--pidns-translation \
 	syslog-success \
+	tgkill--pidns-translation \
 	threads-execve \
 	threads-execve--quiet-thread-execve \
 	threads-execve-q \
 	threads-execve-qq \
 	threads-execve-qqq \
+	tkill--pidns-translation \
 	tracer_ppid_pgid_sid \
 	trie \
 	unblock_reset_raise \
