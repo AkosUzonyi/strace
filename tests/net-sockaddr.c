@@ -394,7 +394,7 @@ check_ax25(void)
 		size = sizeof(ax25) + sizeof(ax25_address) * (i / 2);
 		rc = connect(-1, sax_void, size);
 		pidns_print_leader();
-	printf("connect(-1, {sa_family=AF_AX25"
+		printf("connect(-1, {sa_family=AF_AX25"
 		       ", fsa_ax25={sax25_call=VALID-13, sax25_ndigis=%d}"
 		       ", fsa_digipeater=[VALID2-7, OK-15, %s /* FINE-2 */"
 		       ", {ax25_call=\"\\xe6\\xda\\xc2\\xd8\\xd8\\xe6\\x12\""
@@ -464,7 +464,7 @@ check_x25(void)
 	for (size_t i = 0; i < 2; i++) {
 		rc = connect(-1, x25_void, sizeof(c_x25) + i);
 		pidns_print_leader();
-	printf("connect(-1, {sa_family=AF_X25"
+		printf("connect(-1, {sa_family=AF_X25"
 		       ", sx25_addr={x25_addr=\"0123456789abcde\"...}"
 		       "}, %zu) = %s\n",
 		       sizeof(c_x25) + i, sprintrc(rc));
@@ -564,7 +564,7 @@ check_ll(void)
 	if (((struct sockaddr_ll *) ll)->sll_ifindex) {
 		ret = connect(-1, ll, len);
 	pidns_print_leader();
-	printf("connect(-1, {sa_family=AF_PACKET"
+		printf("connect(-1, {sa_family=AF_PACKET"
 		       ", sll_protocol=htons(ETH_P_ALL)"
 		       ", sll_ifindex=%s"
 		       ", sll_hatype=ARPHRD_ETHER"
