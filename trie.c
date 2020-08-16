@@ -77,9 +77,6 @@ trie_create(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
 		return NULL;
 
 	t->empty_value = empty_value;
-	if (item_size_lg != 6)
-		t->empty_value &= ((1 << (1 << t->item_size_lg)) - 1);
-
 	t->data = NULL;
 	t->item_size_lg = item_size_lg;
 	t->node_key_bits = node_key_bits;
@@ -87,6 +84,9 @@ trie_create(uint8_t key_size, uint8_t item_size_lg, uint8_t node_key_bits,
 	t->key_size = key_size;
 	t->max_depth = (key_size - data_block_key_bits + node_key_bits - 1)
 		/ t->node_key_bits;
+
+	if (item_size_lg != 6)
+		t->empty_value &= (((uint64_t) 1 << (1 << t->item_size_lg)) - 1);
 
 	return t;
 }
