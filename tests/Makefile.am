@@ -66,7 +66,7 @@ libtests_a_SOURCES = \
 	test_ucopy.h \
 	tests.h \
 	tprintf.c \
-	../trie.c \
+	trie.c \
 	# end of libtests_a_SOURCES
 libtests_a_CPPFLAGS = $(AM_CPPFLAGS) -D_FILE_OFFSET_BITS=64
 check_LIBRARIES = libtests.a
@@ -249,7 +249,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	threads-execve-qqq \
 	tkill--pidns-translation \
 	tracer_ppid_pgid_sid \
-	trie \
+	trie_test \
 	unblock_reset_raise \
 	unix-pair-send-recv \
 	unix-pair-sendto-recvfrom \

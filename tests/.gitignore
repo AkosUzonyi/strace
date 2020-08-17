@@ -774,7 +774,7 @@ times-fail
 tkill
 tkill--pidns-translation
 tracer_ppid_pgid_sid
-trie
+trie_test
 truncate
 truncate64
 ugetrlimit
