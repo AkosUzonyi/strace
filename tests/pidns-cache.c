@@ -44,7 +44,7 @@ execute_syscalls(void)
 int
 main(void)
 {
-	long max_us = execute_syscalls() +
+	long max_us = execute_syscalls() * 2 +
 		SYSCALL_COUNT * MAX_TRANSLATION_US_PER_SYSCALL;
 
 	pidns_test_init();
