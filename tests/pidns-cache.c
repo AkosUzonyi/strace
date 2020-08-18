@@ -16,13 +16,12 @@
 # include <sys/time.h>
 # include <inttypes.h>
 
-# define SYSCALL_COUNT 50
+# define SYSCALL_COUNT 1000
 
 /**
- * Max us per syscall that translation should take. 1 ms is plenty enough time
- * for the cache, and very short for translating without the cache.
+ * Max ratio of the execution time with and without pidns translation.
  */
-# define MAX_TRANSLATION_US_PER_SYSCALL 1000
+# define MAX_TIME_RATIO 20
 
 static long
 execute_syscalls(void)
@@ -45,8 +44,7 @@ execute_syscalls(void)
 int
 main(void)
 {
-	long max_us = execute_syscalls() +
-		SYSCALL_COUNT * MAX_TRANSLATION_US_PER_SYSCALL;
+	long max_us = execute_syscalls() * MAX_TIME_RATIO;
 
 	pidns_test_init();
 
