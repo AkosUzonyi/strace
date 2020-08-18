@@ -14,6 +14,7 @@
 # include <stdio.h>
 # include <unistd.h>
 # include <sys/time.h>
+# include <inttypes.h>
 
 # define SYSCALL_COUNT 50
 
@@ -49,8 +50,10 @@ main(void)
 
 	pidns_test_init();
 
-	if (execute_syscalls() > max_us)
-		error_msg_and_fail("pidns translation took too long");
+	long us = execute_syscalls();
+	if (us > max_us)
+		error_msg_and_fail("pidns translation took too long: %ld us "
+		                   "(max: %ld us)", us, max_us);
 
 	return 0;
 }
