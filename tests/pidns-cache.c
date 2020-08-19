@@ -14,7 +14,6 @@
 # include <stdio.h>
 # include <unistd.h>
 # include <sys/time.h>
-# include <inttypes.h>
 
 # define SYSCALL_COUNT 1000
 
