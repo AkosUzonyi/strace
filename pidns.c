@@ -279,7 +279,7 @@ is_proc_ours(void)
 	static int cached_val = -1;
 
 	if (cached_val < 0)
-		cached_val = get_id_list(0, NULL, PT_TID) == 1;
+		cached_val = get_id_list(0, NULL, PT_TID) <= 1;
 
 	return cached_val;
 }
