@@ -168,14 +168,18 @@ get_ns_hierarchy(int proc_pid, unsigned int *ns_buf, size_t ns_buf_size)
 	xsprintf(path, "/proc/%s/ns/pid", pid_to_str(proc_pid));
 
 	int fd = open_file(path, O_RDONLY);
-	if (fd < 0)
+	if (fd < 0) {
+		perror_func_msg("opening %s", path);
 		return 0;
+	}
 
 	size_t n = 0;
 	while (n < ns_buf_size) {
 		strace_stat_t st;
-		if (fstat_fd(fd, &st))
+		if (fstat_fd(fd, &st)) {
+			perror_func_msg("fstat_fd");
 			break;
+		}
 
 		ns_buf[n++] = st.st_ino;
 		if (n >= ns_buf_size)
@@ -234,8 +238,10 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 	char status_path[PATH_MAX + 1];
 	xsprintf(status_path, "/proc/%s/status", pid_to_str(proc_pid));
 	FILE *f = fopen_stream(status_path, "r");
-	if (!f)
+	if (!f) {
+		error_func_msg("opening %s", status_path);
 		return 0;
+	}
 
 	char *line = NULL;
 	size_t linesize = 0;
@@ -247,6 +253,9 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 			break;
 		}
 	}
+
+	if (!p)
+		error_func_msg("no line found starting with %s", ns_str);
 
 	while (p) {
 		errno = 0;
