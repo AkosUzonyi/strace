@@ -408,6 +408,7 @@ test_pidns_run_strace()
 test_pidns()
 {
 	check_prog unshare
+	unshare -Urpf true || framework_skip_ "unshare -Urpf true failed"
 
 	test_pidns_run_strace "$@"
 
