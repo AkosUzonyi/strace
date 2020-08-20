@@ -23,6 +23,14 @@
 #include <unistd.h>
 #include <linux/sched.h>
 
+#ifndef CLONE_NEWUSER
+# define CLONE_NEWUSER 0x10000000
+#endif
+
+#ifndef CLONE_NEWPID
+# define CLONE_NEWPID 0x20000000
+#endif
+
 static int
 fork_chain(int depth)
 {
