@@ -252,7 +252,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		errno = 0;
 		long id = strtol(p, NULL, 10);
 
-		if (errno || id < 1 || id > INT_MAX) {
+		if (errno || id < 0 || id > INT_MAX) {
 			perror_func_msg("converting pid (%ld) to int", id);
 			break;
 		}
