@@ -66,7 +66,7 @@ libtests_a_SOURCES = \
 	test_ucopy.h \
 	tests.h \
 	tprintf.c \
-	trie.c \
+	trie_for_tests.c \
 	xmalloc_for_tests.c \
 	# end of libtests_a_SOURCES
 libtests_a_CPPFLAGS = $(AM_CPPFLAGS) -D_FILE_OFFSET_BITS=64
@@ -308,6 +308,11 @@ stack_fcall_attach_SOURCES = stack-fcall-attach.c \
 stack_fcall_mangled_SOURCES = stack-fcall-mangled.c \
 	stack-fcall-mangled-0.c stack-fcall-mangled-1.c \
 	stack-fcall-mangled-2.c stack-fcall-mangled-3.c
+
+trie_test_SOURCES = trie_test.c trie_for_tests.c
+trie_test_CPPFLAGS = $(AM_CPPFLAGS) $(CODE_COVERAGE_CPPFLAGS)
+trie_test_CFLAGS = $(AM_CFLAGS) $(CODE_COVERAGE_CFLAGS)
+trie_test_LDADD = $(LDADD) $(CODE_COVERAGE_LIBS)
 
 include gen_tests.am
 
