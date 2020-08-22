@@ -67,6 +67,7 @@ libtests_a_SOURCES = \
 	tests.h \
 	tprintf.c \
 	trie.c \
+	xmalloc_for_tests.c \
 	# end of libtests_a_SOURCES
 libtests_a_CPPFLAGS = $(AM_CPPFLAGS) -D_FILE_OFFSET_BITS=64
 check_LIBRARIES = libtests.a

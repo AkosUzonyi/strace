@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 #include "trie.h"
+#include "xmalloc.h"
 
 static const uint8_t ptr_sz_lg = (sizeof(void *) == 8 ? 6 : 5);
 
@@ -105,9 +106,7 @@ trie_create_data_block(struct trie *t)
 		sz = 6;
 
 	size_t count = 1 << (sz - 6);
-	uint64_t *data_block = calloc(count, 8);
-	if (!data_block)
-		return NULL;
+	uint64_t *data_block = xcalloc(count, 8);
 
 	for (size_t i = 0; i < count; i++)
 		data_block[i] = fill_value;
@@ -134,12 +133,7 @@ trie_get_node(struct trie *t, uint64_t key, bool auto_create)
 			if (cur_depth == t->max_depth)
 				*cur_node = trie_create_data_block(t);
 			else
-				*cur_node = calloc(1 << sz, 1);
-
-			if (!*cur_node) {
-				fprintf(stderr, "Out of memory");
-				exit(1);
-			}
+				*cur_node = xcalloc(1 << sz, 1);
 		}
 
 		if (cur_depth == t->max_depth)
