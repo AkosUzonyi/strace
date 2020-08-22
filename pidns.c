@@ -252,7 +252,7 @@ get_id_list(int proc_pid, int *id_buf, enum pid_type type)
 		errno = 0;
 		long id = strtol(p, NULL, 10);
 
-		if (errno || id < 0 || id > INT_MAX) {
+		if (id < 0 || id > INT_MAX || errno) {
 			perror_func_msg("converting pid (%ld) to int", id);
 			break;
 		}
@@ -457,9 +457,7 @@ translate_id_dir(struct translate_id_params *tip, const char *path,
 
 		errno = 0;
 		long proc_pid = strtol(entry->d_name, NULL, 10);
-		if (errno)
-			continue;
-		if (proc_pid < 1 || proc_pid > INT_MAX)
+		if (proc_pid < 1 || proc_pid > INT_MAX || errno)
 			continue;
 
 		if (read_task_dir) {
