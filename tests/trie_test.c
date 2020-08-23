@@ -18,12 +18,50 @@ assert_equals(const char *msg, uint64_t expected, uint64_t actual) {
 		                   ", actual: %" PRIu64, msg, expected, actual);
 }
 
+static void
+iterate_fn(void *data, uint64_t key, uint64_t value)
+{
+	uint64_t expected = key < 256 && key % 10 == 0 ? key + 42 : -1ULL;
+	assert_equals("iterate_fn", expected, value);
+
+	int *count = (int *) data;
+	if (value != -1ULL)
+		(*count)++;
+}
+
+static void
+test_trie_iterate_fn(void)
+{
+	struct trie *t = trie_create(8, 6, 3, 3, -1);
+	for (int i = 0; i < 26; i++)
+		trie_set(t, i * 10, i * 10 + 42);
+
+	static const struct {
+		uint64_t start;
+		uint64_t end;
+		int expected_count;
+	} iterate_params[] = {
+		{0, 256, 26},
+		{0, UINT64_MAX, 26},
+		{20, 90, 8},
+		{99, 999, 16},
+		{10000, 100000, 0},
+		{200, 100, 0},
+	};
+
+	for (size_t i = 0; i < ARRAY_SIZE(iterate_params); i++) {
+		int count = 0;
+		trie_iterate_keys(t, iterate_params[i].start, iterate_params[i].end, iterate_fn, &count);
+		assert_equals("iteration count", iterate_params[i].expected_count, count);
+	}
+}
+
 struct key_value_pair {
 	uint64_t key, value;
 };
 
-int
-main(void)
+static void
+test_trie_get(void)
 {
 	static const struct {
 		uint8_t key_size;
@@ -72,6 +110,12 @@ main(void)
 
 		trie_free(t);
 	}
+}
 
+int
+main(void)
+{
+	test_trie_get();
+	test_trie_iterate_fn();
 	return 0;
 }
