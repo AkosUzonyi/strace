@@ -430,10 +430,12 @@ translate_id_proc_pid(struct translate_id_params *tip, int proc_pid)
 }
 
 /**
- * Translates an id to our namespace, by reading all proc entries in dir.
+ * Translates an id to our namespace by reading all proc entries in a directory.
+ * The directory is either /proc or /proc/<pid>/task.
+ *
  *
  * @param tip            The parameters
- * @param path           The path of the dir to be read.
+ * @param path           The path of the directory to be read.
  * @param read_task_dir  Whether recurse to "task" subdirectory.
  */
 static void
