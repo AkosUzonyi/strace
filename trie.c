@@ -210,6 +210,12 @@ trie_iterate_keys_node(struct trie *t,
 	if (start > end || !node)
 		return 0;
 
+	if (t->key_size < 64) {
+		uint64_t key_max = ((uint64_t) 1 << t->key_size) - 1;
+		if (end > key_max)
+			end = key_max;
+	}
+
 	if (depth == t->max_depth) {
 		for (uint64_t i = start; i <= end; i++)
 			fn(fn_data, i, trie_data_block_get(t,
