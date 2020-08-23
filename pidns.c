@@ -409,17 +409,21 @@ translate_id_proc_pid(struct translate_id_params *tip, int proc_pid)
 	if (!pd->ns_count || pd->id_count[tip->type] < pd->ns_count)
 		return;
 
-	int our_ns_id_idx = pd->id_count[tip->type] - pd->ns_count;
+	int *id_hierarchy = pd->id_hierarchy[tip->type];
+	int id_count = pd->id_count[tip->type];
 
 	for (int i = 0; i < pd->ns_count; i++) {
-		if (pd->ns_hierarchy[i] != tip->from_ns)
+		unsigned int ns = pd->ns_hierarchy[i];
+		int ns_id = id_hierarchy[id_count - i - 1];
+		int our_id = id_hierarchy[id_count - pd->ns_count];
+
+		if (ns != tip->from_ns)
 			continue;
 
-		int id_idx = pd->id_count[tip->type] - i - 1;
-		if (pd->id_hierarchy[tip->type][id_idx] != tip->from_id)
+		if (ns_id != tip->from_id)
 			return;
 
-		tip->result_id = pd->id_hierarchy[tip->type][our_ns_id_idx];
+		tip->result_id = our_id;
 		tip->pd = pd;
 		return;
 	}
