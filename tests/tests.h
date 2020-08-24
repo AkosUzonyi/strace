@@ -267,6 +267,14 @@ void check_overflowgid(const int);
 /* Translate errno to its name. */
 const char *errno2name(void);
 
+/**
+ * Prints errno name and description with a leading space
+ * and a trailing newline.
+ *
+ * (using the format string: " %s (%m)\n")
+ */
+void print_errno(void);
+
 /* Translate signal number to its name. */
 const char *signal2name(int);
 

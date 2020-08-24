@@ -8,6 +8,15 @@
 
 #include "tests.h"
 #include <errno.h>
+#include <stdio.h>
+
+void
+print_errno(void)
+{
+	if (errno)
+		printf(" %s (%m)", errno2name());
+	puts("");
+}
 
 #define CASE(x) case x: return #x
 
