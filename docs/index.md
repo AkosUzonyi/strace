@@ -1,5 +1,5 @@
 # GSoC 2020 - PID namespace translation support
-Ákos Uzonyi, 2020.08.24.
+*Ákos Uzonyi, 2020.08.24.*
 
 ## Abstract
 When strace is tracing a process which is in an other process namespace than strace itself, PIDs in system call arguments and return values are printed as PIDs in the target process' namespace. This is normal behavior, as these are the actual values that are passed between the process and the kernel. But it would be useful to have an option for strace to translate these ids to strace's own pid namespace. For example when tracing a process inside a Docker container, the translated PIDs allows us, to access these the processes from the host environment (eg. inspecting processes created by the clone syscall). The goal of the project is to add a flag to strace, which enables this translation.
@@ -20,18 +20,16 @@ The implementation of this feature is done in 5 commits:
    Adds the main file responsible for the translation (pidns.c), a trie implementation, the --pidns-translation option, and a description to the manual.
 
 1. **Use printpid in decoders**\
-   Modifies syscall decoders, to print PIDs using the printpid function in pidns.c
+   Modifies syscall decoders, to print PIDs using the printpid function in pidns.c.
 
 1. **Use get_proc_pid for /proc paths**\
    Where a /proc/\<pid\> directory is accessed, adds a get_proc_pid call to translate the PID to the namespace of /proc.
 
 1. **Implement testing framework for pidns**\
-   Tests for this feature require to be run in a new PID namespace.
-
-   Adds a little framework for pidns tests (tests/pidns.c), which creates child processes in a new namespace, and helps printing the expected translation PID.
+   Adds a little framework for pidns tests (tests/pidns.c), which creates child processes in a new PID namespace, and helps printing the expected translation PID.
 
 1. **Add tests for PID namespace translation**\
-   Adds an extra test for each syscall where PIDs are printed.
+   Adds an extra test for each decoder modified in "Use printpid in decoders". These tests are run in a new PID namespace (created by the framework in the previous commit).
 
 ## TODO
 * Work on reviews
