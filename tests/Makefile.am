@@ -66,7 +66,6 @@ libtests_a_SOURCES = \
 	test_ucopy.h \
 	tests.h \
 	tprintf.c \
-	trie_for_tests.c \
 	xmalloc_for_tests.c \
 	# end of libtests_a_SOURCES
 libtests_a_CPPFLAGS = $(AM_CPPFLAGS) -D_FILE_OFFSET_BITS=64
