@@ -14,24 +14,19 @@ Also, various strace features which require reading files in /proc (thread enume
 ## Commits
 The implementation of this feature is done in 5 commits:
 
-1. PID namespace translation support
-
+1. **PID namespace translation support**\
    Adds the main file responsible for the translation (pidns.c), a trie implementation, the --pidns-translation option, and a description in the manual.
 
-1. Use printpid in decoders
-
+1. **Use printpid in decoders**\
    Modifies syscall decoders, to print PIDs using the printpid function in pidns.c
 
-1. Use get_proc_pid for /proc paths
-
+1. **Use get_proc_pid for /proc paths**\
    If /proc is mounted from an other namespace, it's necessary to translate PIDs to that namespace if strace want to read some information from /proc. This commit uses get_proc_pid function in pidns.c in each place where /proc/<pid> is accessed.
 
-1. Implement testing framework for pidns
-
+1. **Implement testing framework for pidns**\
    Tests for this feature require to be run in a new PID namespace.
 
-1. Add tests for PID namespace translation
-
+1. **Add tests for PID namespace translation**\
    Adds an extra test for each syscall where PIDs are printed.
 
 ## TODO
