@@ -1,4 +1,4 @@
-# GSoC 2020 - PID namespace translation support
+# GSoC 2020 - PID namespace translation support for strace
 *Ákos Uzonyi, 2020.08.24.*
 
 ## Abstract
@@ -11,7 +11,7 @@ Introduced a new `--pidns-translation` option, which makes strace print all PIDs
 
 Also, various strace features which require reading files in /proc (thread enumeration, file descriptor decoding, mmap cache) are now working even when /proc is mounted from a different namespace (PIDs are translated for /proc/\<pid\> paths)
 
-The code is not yet merged, but I'll work on it even after the deadline.
+The reason this seemingly simple feature took a whole summer to implement, is that the Linux kernel does not provide an interface for translating PIDs between namespaces. The approach used in this implementation is reading all the /proc/\<pid\>/status files, and finding the PID to be translated in the "NSpid:" line.
 
 ## Commits
 The implementation of this feature is done in 5 commits:
@@ -32,12 +32,12 @@ The implementation of this feature is done in 5 commits:
    Adds an extra test for each decoder modified in "Use printpid in decoders". These tests are run in a new PID namespace (created by the framework in the previous commit).
 
 ## TODO
-* Work on reviews
-* Fix errors appearing on various systems
+* ~~Work on reviews~~
+* ~~Fix errors appearing on various systems~~
 * *(Optional) Performance improvement: translation by SCM_CREDENTIALS messages over unix socket*
 
 ## Links
-[Commits on github](https://github.com/AkosUzonyi/strace/commits/pidns?author=AkosUzonyi&until=2020-10-31)\
+[Commits on github](https://github.com/strace/strace/commits/master?author=AkosUzonyi&until=2020-10-31)\
 (All commits listed here are made during GSoC 2020, although not all of them is related to the main project)
 
 [GSoC project page](https://summerofcode.withgoogle.com/projects/#5517277224501248)
